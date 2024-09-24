@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
@@ -70,7 +69,7 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
             'nombre_archivo': nombre_archivo,
             'snid': snid,
             'mjd': mjd[i],
-            'filtro': filtros[i] if filtros else None,  # Verificar que el filtro existe
+            'filtro': filtros[i] if filtros else None,
             'mag': mag[i],
             'magerr': magerr[i],
             'flx': flx[i],
@@ -157,6 +156,7 @@ def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
     )
     return fig
 
+# Filtrar los datos de la supernova seleccionada
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
 nobs_before_peak = df_supernova_seleccionada['nobs_before_peak'].iloc[0] if 'nobs_before_peak' in df_supernova_seleccionada.columns else None
 nobs_to_peak = df_supernova_seleccionada['nobs_to_peak'].iloc[0] if 'nobs_to_peak' in df_supernova_seleccionada.columns else None
@@ -165,21 +165,11 @@ st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada, nobs_before_pea
 # Filtrar supernovas por tipo y observaciones
 tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
 min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
+df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova].groupby('snid').filter(lambda x: len(x) >= min_observaciones)
 
-def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
-    df_filtrado = df[df['parsnip_pred'] == tipo_supernova]
-    supernovas_con_observaciones = df_filtrado.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-    supernovas_ordenadas = supernovas_con_observaciones.groupby('snid').apply(lambda x: x if len(x) >= min_observaciones else None).reset_index(drop=True)
-    supernovas_ordenadas['num_observaciones'] = supernovas_ordenadas.groupby('snid')['snid'].transform('count')
-    return supernovas_ordenadas.sort_values(by='num_observaciones', ascending=False)
-
-df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supernova, min_observaciones)
-
+# Graficar todas las supernovas filtradas
 if not df_supernovas_filtradas.empty:
-    supernovas_filtradas_por_num_obs = df_supernovas_filtradas['snid'].unique()
-    st.write(f"Se encontraron {len(supernovas_filtradas_por_num_obs)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
-    
-    for snid in supernovas_filtradas_por_num_obs:
+    for snid in df_supernovas_filtradas['snid'].unique():
         df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
         nobs_before_peak = df_supernova_seleccionada['nobs_before_peak'].iloc[0] if 'nobs_before_peak' in df_supernova_seleccionada.columns else None
         nobs_to_peak = df_supernova_seleccionada['nobs_to_peak'].iloc[0] if 'nobs_to_peak' in df_supernova_seleccionada.columns else None
