@@ -8,7 +8,6 @@ import plotly.graph_objects as go
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
 def obtener_lista_archivos_github(repo_url, subdirectorio=""):
-    # Verifica que no se repita 'api.api' en la URL
     api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectorio}"
     response = requests.get(api_url)
     if response.status_code == 200:
@@ -16,6 +15,7 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
         return archivos
     else:
         return []
+
 
 # URL correcta del repositorio en GitHub
 repo_url = "https://api.github.com/repos/SArcD/supernovaIA/contents/"
