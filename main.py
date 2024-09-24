@@ -36,6 +36,7 @@ def leer_archivo_supernova_contenido(contenido):
     # Variables y listas para almacenar los datos
     mjd, mag, magerr, flx, flxerr, filtros = [], [], [], [], [], []
     snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = None, None, None, None, None, None, None
+    observaciones_antes_pico, observaciones_pico, observaciones_despues_pico = None, None, None
 
     # Procesar línea por línea el contenido del archivo
     for linea in contenido.splitlines():
@@ -49,6 +50,12 @@ def leer_archivo_supernova_contenido(contenido):
             redshift = convertir_a_float(linea.split()[1])
         elif linea.startswith("MWEBV:"):
             mwebv = convertir_a_float(linea.split()[1])
+        elif linea.startswith("NOBS_BEFORE_PEAK:"):
+            observaciones_antes_pico = convertir_a_float(linea.split()[1])
+        elif linea.startswith("NOBS_TO_PEAK:"):
+            observaciones_pico = convertir_a_float(linea.split()[1])
+        elif linea.startswith("NOBS_AFTER_PEAK:"):
+            observaciones_despues_pico = convertir_a_float(linea.split()[1])
         elif linea.startswith("PARSNIP_PRED:"):
             parsnip_pred = ' '.join(linea.split()[1:])
         elif linea.startswith("SUPERRAENN_PRED:"):
@@ -62,10 +69,10 @@ def leer_archivo_supernova_contenido(contenido):
             mag.append(convertir_a_float(datos[6]))  # Magnitud (MAG)
             magerr.append(convertir_a_float(datos[7]))  # Error en la magnitud (MAGERR)
 
-    return mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv
+    return mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico
 
 # Función para guardar las curvas de luz como un DataFrame
-def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv):
+def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico):
     for i in range(len(mjd)):
         curva_vector = {
             'nombre_archivo': nombre_archivo,
@@ -81,57 +88,46 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
             'ra': ra,
             'decl': decl,
             'redshift': redshift,
-            'mwebv': mwebv
+            'mwebv': mwebv,
+            'observaciones_antes_pico': observaciones_antes_pico,
+            'observaciones_pico': observaciones_pico,
+            'observaciones_despues_pico': observaciones_despues_pico
         }
         lista_vectores.append(curva_vector)
 
-# Descargar y procesar los archivos de supernovas desde GitHub
-@st.cache_data
-def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
-    lista_archivos = obtener_lista_archivos_github(repo_url, subdirectorio)
-    lista_vectores = []
-
-    for archivo_url in lista_archivos:
-        nombre_archivo = archivo_url.split("/")[-1]
-        contenido = descargar_archivo_desde_github(archivo_url)
-
-        if contenido:
-            mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = leer_archivo_supernova_contenido(contenido)
-            guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv)
-
-    return pd.DataFrame(lista_vectores)
-
-# Cargar los datos de supernovas desde GitHub
-st.write("Descargando y procesando archivos de supernovas...")
-repo_url = "https://github.com/SArcD/supernovaIA"
-df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
-
-# Guardar los datos en un archivo CSV
-df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
-st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
-
-# Crear el gráfico de posiciones de supernovas
-def crear_grafico_posiciones():
-    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
-    return fig
-
-# Mostrar el gráfico de posiciones en Streamlit
-st.plotly_chart(crear_grafico_posiciones())
-
-# Seleccionar supernova
-snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
-
-# Función para graficar la curva de luz de una supernova específica
+# Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
     fig = go.Figure()
+
+    # Ordenar los datos por MJD para evitar errores de líneas no consecutivas
+    df_supernova = df_supernova.sort_values(by='mjd')
+
     for filtro in df_supernova['filtro'].unique():
         df_filtro = df_supernova[df_supernova['filtro'] == filtro]
-        fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
+        fig.add_trace(go.Scatter(
+            x=df_filtro['mjd'], 
+            y=df_filtro['mag'], 
+            mode='lines+markers', 
+            name=filtro
+        ))
 
-    # Invertir el eje Y porque las magnitudes menores son más brillantes
+    # Extraer la información relevante para el título
+    snid = df_supernova['snid'].iloc[0]
+    tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
+    ra = df_supernova['ra'].iloc[0]
+    decl = df_supernova['decl'].iloc[0]
+    redshift = df_supernova['redshift'].iloc[0]
+    observaciones_antes_pico = df_supernova['observaciones_antes_pico'].iloc[0]
+    observaciones_pico = df_supernova['observaciones_pico'].iloc[0]
+    observaciones_despues_pico = df_supernova['observaciones_despues_pico'].iloc[0]
+
+    # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
     fig.update_layout(
-        title=f'Curva de luz de {snid_seleccionado}',
+        title=(
+            f'Curva de luz de {snid} ({tipo_supernova})\n'
+            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift} - '
+            f'Antes del pico: {observaciones_antes_pico}, Pico: {observaciones_pico}, Después del pico: {observaciones_despues_pico}'
+        ),
         xaxis_title='MJD (Modified Julian Date)',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
@@ -139,6 +135,9 @@ def graficar_curva_de_luz(df_supernova):
     )
 
     return fig
+
+# Seleccionar supernova
+snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
 # Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
@@ -172,14 +171,9 @@ if not df_supernovas_filtradas.empty:
     
     # Graficar todas las supernovas que cumplan con los criterios
     for snid in supernovas_filtradas_por_num_obs:
-        st.write(f"Graficando la supernova: {snid} con {len(df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid])} observaciones.")
+        st.write(f"Graficando la supernova: {snid}")
         df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
         st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
 
 else:
     st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
-
-
-
-
-
