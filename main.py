@@ -147,14 +147,11 @@ def crear_grafico_posiciones_rectangulares():
 
 # Crear el gráfico de posiciones Declinación vs Redshift
 def crear_grafico_decl_vs_redshift():
-    fig = px.scatter(df_curvas_luz,
-                     x='redshift',
-                     y='decl',
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-                     hover_data=['snid', 'ra', 'superraenn_pred'],  # Mostrar SNID, RA y SUPERRAENN al pasar el cursor
-                     title='Declinación vs Redshift de Supernovas',
-                     labels={'redshift': 'Redshift (Distancia Cosmológica)', 'decl': 'Declinación (Dec)'})
+    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='decl', color='parsnip_pred', 
+                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas (Dec) vs Redshift')
     return fig
+
+
 
 
 # Mostrar un selector para que el usuario elija el tipo de gráfico
