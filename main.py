@@ -239,7 +239,13 @@ if not df_supernovas_filtradas.empty:
     for snid in supernovas_filtradas_por_num_obs:
         st.write(f"Graficando la supernova: {snid} con {len(df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid])} observaciones.")
         df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
-        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+        
+        # Obtener los valores de NOBS_BEFORE_PEAK y NOBS_TO_PEAK para esta supernova
+        nobs_before_peak = df_supernova_seleccionada['nobs_before_peak'].iloc[0] if 'nobs_before_peak' in df_supernova_seleccionada.columns else None
+        nobs_to_peak = df_supernova_seleccionada['nobs_to_peak'].iloc[0] if 'nobs_to_peak' in df_supernova_seleccionada.columns else None
+        
+        # Mostrar la gráfica
+        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada, nobs_before_peak, nobs_to_peak))
 
 else:
     st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
