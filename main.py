@@ -151,7 +151,7 @@ opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["
 # Mostrar el gráfico según la opción seleccionada
 if opcion_grafico == "Coordenadas Polares":
     st.plotly_chart(crear_grafico_posiciones())
-else:
+elif opcion_grafico == "Coordenadas Rectangulares" :
     st.plotly_chart(crear_grafico_posiciones_rectangulares())
 
 
