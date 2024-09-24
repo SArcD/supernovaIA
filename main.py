@@ -95,6 +95,40 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
         }
         lista_vectores.append(curva_vector)
 
+# Descargar y procesar los archivos de supernovas desde GitHub
+@st.cache_data
+def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
+    lista_archivos = obtener_lista_archivos_github(repo_url, subdirectorio)
+    lista_vectores = []
+
+    for archivo_url in lista_archivos:
+        nombre_archivo = archivo_url.split("/")[-1]
+        contenido = descargar_archivo_desde_github(archivo_url)
+
+        if contenido:
+            mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico = leer_archivo_supernova_contenido(contenido)
+            guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico)
+
+    return pd.DataFrame(lista_vectores)
+
+# Cargar los datos de supernovas desde GitHub
+st.write("Descargando y procesando archivos de supernovas...")
+repo_url = "https://github.com/SArcD/supernovaIA"
+df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
+
+# Guardar los datos en un archivo CSV
+df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
+st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
+
+# Crear el gráfico de posiciones de supernovas
+def crear_grafico_posiciones():
+    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
+                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
+    return fig
+
+# Mostrar el gráfico de posiciones en Streamlit
+st.plotly_chart(crear_grafico_posiciones())
+
 # Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
     fig = go.Figure()
@@ -146,7 +180,7 @@ st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
 # --- NUEVA FUNCIONALIDAD ---
 
 # Caja de texto para especificar el tipo de supernova
-tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):") 
+tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
 
 # Entrada para el número mínimo de observaciones
 min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
@@ -158,7 +192,7 @@ def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
 
     # Agrupar por SNID y contar el número de observaciones por supernova
     supernovas_con_observaciones = df_filtrado.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-
+    
     return supernovas_con_observaciones
 
 # Filtrar las supernovas por el tipo y número mínimo de observaciones
@@ -166,11 +200,11 @@ df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supern
 
 # Mostrar los resultados si hay supernovas que cumplan con los criterios
 if not df_supernovas_filtradas.empty:
-    supernovas_filtradas_por_num_obs = df_supernovas_filtradas['snid'].unique()
-    st.write(f"Se encontraron {len(supernovas_filtradas_por_num_obs)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
+    supernovas_filtradas_por_snid = df_supernovas_filtradas['snid'].unique()
+    st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
     
     # Graficar todas las supernovas que cumplan con los criterios
-    for snid in supernovas_filtradas_por_num_obs:
+    for snid in supernovas_filtradas_por_snid:
         st.write(f"Graficando la supernova: {snid}")
         df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
         st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
