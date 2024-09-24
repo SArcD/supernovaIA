@@ -1,4 +1,4 @@
-import requests
+ import requests
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -38,7 +38,6 @@ def convertir_a_float(valor, valor_default=None):
         return valor_default
 
 # Función para leer el archivo descargado y extraer los datos relevantes
-@st.cache_data
 def leer_archivo_supernova_contenido(contenido):
     # Variables y listas para almacenar los datos
     mjd, mag, magerr, flx, flxerr, filtros = [], [], [], [], [], []
@@ -79,7 +78,6 @@ def leer_archivo_supernova_contenido(contenido):
     return mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico
 
 # Función para guardar las curvas de luz como un DataFrame
-@st.cache_data
 def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico):
     for i in range(len(mjd)):
         curva_vector = {
@@ -129,7 +127,6 @@ df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', in
 st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
 
 # Crear el gráfico de posiciones de supernovas
-@st.cache_data
 def crear_grafico_posiciones():
     fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
                            hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
@@ -137,7 +134,7 @@ def crear_grafico_posiciones():
 
 # Mostrar el gráfico de posiciones en Streamlit
 #st.plotly_chart(crear_grafico_posiciones())
-@st.cache_data
+
 def crear_grafico_posiciones_rectangulares():
     fig = px.scatter(df_curvas_luz,
                      x='ra',
@@ -151,7 +148,6 @@ def crear_grafico_posiciones_rectangulares():
     return fig
 
 # Crear el gráfico de posiciones Declinación vs Redshift
-@st.cache_data
 def crear_grafico_decl_vs_redshift():
     fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='decl', color='parsnip_pred', 
                            hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas (Dec) vs Redshift')
@@ -174,33 +170,29 @@ elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
 ##cronologia
 
 # Crear el gráfico de posiciones con un deslizador de MJD y un botón para controlar la velocidad
-@st.cache_data
-# Crear el gráfico de posiciones con un deslizador de MJD optimizado
 def crear_grafico_posiciones_rectangulares_con_deslizador():
     # Filtrar los tipos de supernovas (asegúrate de que se incluyan todos)
     df_filtrado = df_curvas_luz[df_curvas_luz['parsnip_pred'].isin(['SN Ia', 'SN Ib', 'SN II'])]
-
-    # Agrupar las observaciones en intervalos de tiempo (por ejemplo, cada 10 días)
-    df_filtrado['mjd_agrupado'] = df_filtrado['mjd'] // 10 * 10
 
     # Crear la gráfica usando los tipos de supernovas seleccionados
     fig = px.scatter(df_filtrado,
                      x='ra',
                      y='decl',
-                     animation_frame='mjd_agrupado',  # Animación basada en la agrupación de MJD
+                     animation_frame='mjd',  # Crear la animación basada en MJD
                      animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
                      size_max=10,
                      range_x=[df_filtrado['ra'].min() - 10, df_filtrado['ra'].max() + 10],
                      range_y=[df_filtrado['decl'].min() - 10, df_filtrado['decl'].max() + 10],
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-                     hover_data=['snid', 'redshift', 'superraenn_pred'],
+                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED para mostrar todos los tipos
+                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
                      title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)', 'parsnip_pred': 'Tipo de Supernova'})
+                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)', 'parsnip_pred': 'Tipo de Supernova'}
+                     )
 
-    # Configurar el deslizador
-    min_mjd = df_filtrado['mjd_agrupado'].min()
-    max_mjd = df_filtrado['mjd_agrupado'].max()
-
+    # Configurar el deslizador de MJD
+    min_mjd = df_filtrado['mjd'].min()
+    max_mjd = df_filtrado['mjd'].max()
+    
     fig.update_layout(
         sliders=[{
             "currentvalue": {"prefix": "MJD: "},
@@ -209,29 +201,52 @@ def crear_grafico_posiciones_rectangulares_con_deslizador():
                                                "mode": "immediate", "fromcurrent": True}],
                        "label": f"{frame}", "method": "animate"}
                       for frame in range(int(min_mjd), int(max_mjd) + 1)]
-        }]
+        }],
+        xaxis_title="Ascensión Recta (RA)",
+        yaxis_title="Declinación (Dec)"
     )
 
     # Añadir botones para controlar la velocidad de la animación
     fig.update_layout(
         updatemenus=[{
             "buttons": [
-                {"args": [None, {"frame": {"duration": 1000}, "fromcurrent": True}], "label": "Velocidad Normal", "method": "animate"},
-                {"args": [None, {"frame": {"duration": 500}, "fromcurrent": True}], "label": "2x Velocidad", "method": "animate"},
-                {"args": [None, {"frame": {"duration": 250}, "fromcurrent": True}], "label": "4x Velocidad", "method": "animate"},
-                {"args": [None, {"frame": {"duration": 100}, "fromcurrent": True}], "label": "8x Velocidad", "method": "animate"}
+                {
+                    "args": [None, {"frame": {"duration": 1000, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "Velocidad Normal",
+                    "method": "animate"
+                },
+                {
+                    "args": [None, {"frame": {"duration": 500, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "2x Velocidad",
+                    "method": "animate"
+                },
+                {
+                    "args": [None, {"frame": {"duration": 250, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "4x Velocidad",
+                    "method": "animate"
+                },
+                {
+                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "8x Velocidad",
+                    "method": "animate"
+                }
             ],
             "direction": "left",
+            "pad": {"r": 10, "t": 87},
             "showactive": True,
+            "type": "buttons",
+            "x": 0.1,
+            "xanchor": "right",
+            "y": 0,
+            "yanchor": "top"
         }]
     )
 
     return fig
 
 
-# Función para graficar la curva de luz de una supernova específica con información en el título
-@st.cache_data
 
+# Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
     fig = go.Figure()
 
@@ -272,9 +287,6 @@ def graficar_curva_de_luz(df_supernova):
 
     return fig
 
-st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
-
-
 # Seleccionar supernova
 snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
@@ -291,8 +303,6 @@ tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN I
 min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
 
 # Función para filtrar supernovas por tipo y número mínimo de observaciones
-@st.cache_data
-
 def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
     # Filtrar por tipo de supernova (PARSNIP_PRED)
     df_filtrado = df[df['parsnip_pred'] == tipo_supernova]
