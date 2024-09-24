@@ -106,35 +106,21 @@ def crear_grafico_posiciones():
                            hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
     return fig
 
-# Mostrar el gráfico de posiciones y capturar clics
-grafico = st.plotly_chart(crear_grafico_posiciones(), use_container_width=True)
+st.plotly_chart(crear_grafico_posiciones())
 
-# Capturar eventos de clics en el gráfico
-if 'clickData' not in st.session_state:
-    st.session_state.clickData = None
+# Seleccionar supernova
+snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
-# Mostrar los detalles del clic si ocurre un evento de clic en el gráfico
-click_event = grafico._clickData
+# Función para graficar la curva de luz de una supernova específica
+def graficar_curva_de_luz(df_supernova):
+    fig = go.Figure()
+    for filtro in df_supernova['filtro'].unique():
+        df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+        fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
 
-if click_event:
-    st.session_state.clickData = click_event['points'][0]['customdata'][0]  # SNID desde los datos de hover
+    fig.update_layout(title=f'Curva de luz de {snid_seleccionado}', xaxis_title='MJD', yaxis_title='Magnitud')
+    return fig
 
-# Verificar si hubo un clic en una supernova
-snid_seleccionado = st.session_state.clickData
-
-if snid_seleccionado:
-    st.write(f"Supernova seleccionada: {snid_seleccionado}")
-
-    # Función para graficar la curva de luz de una supernova específica
-    def graficar_curva_de_luz(df_supernova):
-        fig = go.Figure()
-        for filtro in df_supernova['filtro'].unique():
-            df_filtro = df_supernova[df_supernova['filtro'] == filtro]
-            fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
-
-        fig.update_layout(title=f'Curva de luz de {snid_seleccionado}', xaxis_title='MJD', yaxis_title='Magnitud')
-        return fig
-
-    # Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
-    df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
-    st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
+df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
+st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
