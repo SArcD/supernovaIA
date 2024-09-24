@@ -158,7 +158,6 @@ st.plotly_chart(crear_grafico_posiciones())
 #st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
 
 
-# Función para encontrar el MJD del pico (mínima magnitud) y calcular días relativos al pico
 import plotly.graph_objects as go
 import pandas as pd
 import streamlit as st
@@ -202,6 +201,7 @@ def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
     )
 
     return fig
+
 # Seleccionar supernova
 snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
