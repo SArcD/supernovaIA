@@ -287,6 +287,9 @@ def graficar_curva_de_luz(df_supernova):
 
     return fig
 
+st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
+
+
 # Seleccionar supernova
 snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
