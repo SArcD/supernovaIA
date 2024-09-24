@@ -5,7 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
-@st.cache_data
 def obtener_lista_archivos_github(repo_url, subdirectorio=""):
     api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectorio}"
     st.write(f"Obteniendo lista de archivos desde: {api_url}")
@@ -20,16 +19,6 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
         st.write(f"Código de error: {response.status_code}")
         return []
 
-
-# Función para descargar y leer el contenido de un archivo desde GitHub
-@st.cache_data
-#def descargar_archivo_desde_github(url):
-#    response = requests.get(url)
-#    if response.status_code == 200:
-#        return response.text
-#    else:
-#        return None
-
 # Función para descargar y leer el contenido de un archivo desde GitHub
 def descargar_archivo_desde_github(url):
     st.write(f"Descargando archivo: {url}")
@@ -41,6 +30,12 @@ def descargar_archivo_desde_github(url):
         st.write(f"Error al descargar {url}")
         return None
 
+# Función para intentar convertir un valor a float de forma segura
+def convertir_a_float(valor, valor_default=None):
+    try:
+        return float(valor)
+    except ValueError:
+        return valor_default
 
 # Función para leer el archivo descargado y extraer los datos relevantes
 def leer_archivo_supernova_contenido(contenido):
@@ -48,29 +43,30 @@ def leer_archivo_supernova_contenido(contenido):
     mjd, mag, magerr, flx, flxerr, filtros = [], [], [], [], [], []
     snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = None, None, None, None, None, None, None
 
+    # Procesar línea por línea el contenido del archivo
     for linea in contenido.splitlines():
         if linea.startswith("SNID:"):
             snid = linea.split()[1]
         elif linea.startswith("RA:"):
-            ra = float(linea.split()[1])
+            ra = convertir_a_float(linea.split()[1])
         elif linea.startswith("DECL:"):
-            decl = float(linea.split()[1])
+            decl = convertir_a_float(linea.split()[1])
         elif linea.startswith("REDSHIFT_FINAL:"):
-            redshift = float(linea.split()[1])
+            redshift = convertir_a_float(linea.split()[1])
         elif linea.startswith("MWEBV:"):
-            mwebv = float(linea.split()[1])
+            mwebv = convertir_a_float(linea.split()[1])
         elif linea.startswith("PARSNIP_PRED:"):
             parsnip_pred = ' '.join(linea.split()[1:])
         elif linea.startswith("SUPERRAENN_PRED:"):
             superraenn_pred = ' '.join(linea.split()[1:])
-        elif linea.startswith("OBS:"):
+        elif linea.startswith("OBS:"):  # Extraer observaciones
             datos = linea.split()
-            mjd.append(float(datos[1]))
-            filtros.append(datos[2])
-            flx.append(float(datos[4]))
-            flxerr.append(float(datos[5]))
-            mag.append(float(datos[6]))
-            magerr.append(float(datos[7]))
+            mjd.append(convertir_a_float(datos[1]))  # MJD (Modified Julian Date)
+            filtros.append(datos[2])     # Filtro (g, r, i, z, etc.)
+            flx.append(convertir_a_float(datos[4]))  # Flujo (FLUXCAL)
+            flxerr.append(convertir_a_float(datos[5]))  # Error en el flujo (FLUXCALERR)
+            mag.append(convertir_a_float(datos[6]))  # Magnitud (MAG)
+            magerr.append(convertir_a_float(datos[7]))  # Error en la magnitud (MAGERR)
 
     return mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv
 
@@ -96,7 +92,6 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
         lista_vectores.append(curva_vector)
 
 # Descargar y procesar los archivos de supernovas desde GitHub
-@st.cache_data
 def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
     lista_archivos = obtener_lista_archivos_github(repo_url, subdirectorio)
     lista_vectores = []
@@ -112,18 +107,21 @@ def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
     return pd.DataFrame(lista_vectores)
 
 # Cargar los datos de supernovas desde GitHub
-repo_url = "https://api.github.com/repos/SArcD/supernovaIA/contents/"
+st.write("Descargando y procesando archivos de supernovas...")
+repo_url = "https://github.com/SArcD/supernovaIA"
 df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
 
 # Guardar los datos en un archivo CSV
 df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
+st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
 
-# Mostrar el gráfico de posiciones en Streamlit
+# Crear el gráfico de posiciones de supernovas
 def crear_grafico_posiciones():
     fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
                            hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
     return fig
 
+# Mostrar el gráfico de posiciones en Streamlit
 st.plotly_chart(crear_grafico_posiciones())
 
 # Seleccionar supernova
