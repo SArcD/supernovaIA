@@ -138,6 +138,15 @@ def graficar_curva_de_luz(df_supernova):
         fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
 
     fig.update_layout(title=f'Curva de luz de {snid_seleccionado}', xaxis_title='MJD', yaxis_title='Magnitud')
+        # Invertir el eje Y porque las magnitudes menores son más brillantes
+    fig.update_layout(
+        title=f'Curva de luz de {snid_seleccionado}',
+        xaxis_title='MJD (Modified Julian Date)',
+        yaxis_title='Magnitud',
+        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+        showlegend=True
+    )
+    
     return fig
 
 # Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
