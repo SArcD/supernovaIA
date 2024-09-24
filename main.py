@@ -147,7 +147,7 @@ st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
 # --- NUEVA FUNCIONALIDAD ---
 
 # Caja de texto para especificar el tipo de supernova
-tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):") 
 
 # Entrada para el número mínimo de observaciones
 min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
@@ -160,17 +160,13 @@ def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
     # Agrupar por SNID y contar el número de observaciones por supernova
     supernovas_con_observaciones = df_filtrado.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
 
-    # Ordenar por el número de observaciones, de mayor a menor
-    supernovas_ordenadas = supernovas_con_observaciones.groupby('snid').apply(lambda x: x if len(x) >= min_observaciones else None).reset_index(drop=True)
-    supernovas_ordenadas['num_observaciones'] = supernovas_ordenadas.groupby('snid')['snid'].transform('count')
-    return supernovas_ordenadas.sort_values(by='num_observaciones', ascending=False)
+    return supernovas_con_observaciones
 
 # Filtrar las supernovas por el tipo y número mínimo de observaciones
 df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supernova, min_observaciones)
 
 # Mostrar los resultados si hay supernovas que cumplan con los criterios
 if not df_supernovas_filtradas.empty:
-    # Ordenar por el número de puntos de observación
     supernovas_filtradas_por_num_obs = df_supernovas_filtradas['snid'].unique()
     st.write(f"Se encontraron {len(supernovas_filtradas_por_num_obs)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
     
