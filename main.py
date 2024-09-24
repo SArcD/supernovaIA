@@ -208,9 +208,12 @@ snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de 
 # Filtrar los datos de la supernova seleccionada
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
 
-# Mostrar la gráfica de curva de luz
-st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+# Obtener los valores de NOBS_BEFORE_PEAK y NOBS_TO_PEAK de la supernova seleccionada
+nobs_before_peak = df_supernova_seleccionada['nobs_before_peak'].iloc[0] if 'nobs_before_peak' in df_supernova_seleccionada.columns else None
+nobs_to_peak = df_supernova_seleccionada['nobs_to_peak'].iloc[0] if 'nobs_to_peak' in df_supernova_seleccionada.columns else None
 
+# Mostrar la gráfica de curva de luz utilizando los días relativos al pico
+st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada, nobs_before_peak, nobs_to_peak))
 
 # Caja de texto para especificar el tipo de supernova
 tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
