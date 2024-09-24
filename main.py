@@ -4,7 +4,6 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
 def obtener_lista_archivos_github(repo_url, subdirectorio=""):
@@ -15,12 +14,6 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
         return archivos
     else:
         return []
-
-
-# URL correcta del repositorio en GitHub
-repo_url = "https://api.github.com/repos/SArcD/supernovaIA/contents/"
-
-
 
 # Función para descargar y leer el contenido de un archivo desde GitHub
 @st.cache_data
