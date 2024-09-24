@@ -132,27 +132,76 @@ def crear_grafico_posiciones():
 st.plotly_chart(crear_grafico_posiciones())
 
 # Seleccionar supernova
-snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
+#snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
 # Función para graficar la curva de luz de una supernova específica
+#def graficar_curva_de_luz(df_supernova):
+#    fig = go.Figure()
+#    for filtro in df_supernova['filtro'].unique():
+#        df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+#        fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
+
+#    fig.update_layout(title=f'Curva de luz de {snid_seleccionado}', xaxis_title='MJD', yaxis_title='Magnitud')
+#        # Invertir el eje Y porque las magnitudes menores son más brillantes
+#    fig.update_layout(
+#        title=f'Curva de luz de {snid_seleccionado}',
+#        xaxis_title='MJD (Modified Julian Date)',
+#        yaxis_title='Magnitud',
+#        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+#        showlegend=True
+#    )
+    
+#    return fig
+
+# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
+#df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
+#st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+
+
+# Función para encontrar el MJD del pico (mínima magnitud) y calcular días relativos al pico
+def calcular_dias_relativos(df_supernova):
+    # Identificar el MJD del pico de luminosidad (mínima magnitud)
+    if df_supernova['mag'].isnull().all():
+        return df_supernova['mjd']  # Si todos los valores son nulos, devolver el MJD original
+
+    mjd_pico = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']  # MJD del pico de luminosidad
+    df_supernova['dias_relativos'] = df_supernova['mjd'] - mjd_pico  # Calcular días antes y después del pico
+    
+    return df_supernova
+
+# Función para graficar la curva de luz de una supernova con el eje X en días relativos al pico
 def graficar_curva_de_luz(df_supernova):
+    # Calcular días relativos al pico de luminosidad
+    df_supernova = calcular_dias_relativos(df_supernova)
+    
     fig = go.Figure()
+
+    # Graficar para cada filtro
     for filtro in df_supernova['filtro'].unique():
         df_filtro = df_supernova[df_supernova['filtro'] == filtro]
-        fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
+        fig.add_trace(go.Scatter(
+            x=df_filtro['dias_relativos'],  # Usar días relativos al pico como eje X
+            y=df_filtro['mag'],
+            mode='lines+markers',
+            name=filtro
+        ))
 
-    fig.update_layout(title=f'Curva de luz de {snid_seleccionado}', xaxis_title='MJD', yaxis_title='Magnitud')
-        # Invertir el eje Y porque las magnitudes menores son más brillantes
+    # Invertir el eje Y porque las magnitudes menores son más brillantes
     fig.update_layout(
-        title=f'Curva de luz de {snid_seleccionado}',
-        xaxis_title='MJD (Modified Julian Date)',
+        title=f'Curva de luz de {snid_seleccionado} (días relativos al pico de luminosidad)',
+        xaxis_title='Días relativos al pico de luminosidad',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
         showlegend=True
     )
-    
+
     return fig
 
-# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
+# Seleccionar supernova
+snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
+
+# Filtrar los datos de la supernova seleccionada
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
+
+# Mostrar la gráfica de curva de luz
 st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
