@@ -140,6 +140,11 @@ def graficar_curva_de_luz(df_supernova):
 
     return fig
 
+# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
+df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
+st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+
+
 # --- NUEVA FUNCIONALIDAD ---
 
 # Caja de texto para especificar el tipo de supernova
@@ -182,6 +187,4 @@ else:
 
 
 
-# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
-df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
-st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+
