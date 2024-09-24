@@ -3,6 +3,10 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from scipy.cluster.hierarchy import dendrogram, linkage
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
