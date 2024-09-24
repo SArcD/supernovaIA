@@ -26,13 +26,13 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
 # Función para descargar y leer el contenido de un archivo desde GitHub
 @st.cache_data
 def descargar_archivo_desde_github(url):
-    st.write(f"Descargando archivo: {url}")
+    #st.write(f"Descargando archivo: {url}")
     response = requests.get(url)
     if response.status_code == 200:
         #st.write(f"Archivo descargado correctamente")
         return response.text
     else:
-        st.write(f"Error al descargar {url}")
+        #st.write(f"Error al descargar {url}")
         return None
 
 
