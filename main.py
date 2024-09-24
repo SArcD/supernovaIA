@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
+@st.cache_data
 def obtener_lista_archivos_github(repo_url, subdirectorio=""):
     api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectorio}"
     st.write(f"Obteniendo lista de archivos desde: {api_url}")
@@ -20,6 +21,7 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
         return []
 
 # Función para descargar y leer el contenido de un archivo desde GitHub
+@st.cache_data
 def descargar_archivo_desde_github(url):
     st.write(f"Descargando archivo: {url}")
     response = requests.get(url)
@@ -92,6 +94,7 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
         lista_vectores.append(curva_vector)
 
 # Descargar y procesar los archivos de supernovas desde GitHub
+@st.cache_data
 def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
     lista_archivos = obtener_lista_archivos_github(repo_url, subdirectorio)
     lista_vectores = []
