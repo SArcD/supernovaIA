@@ -244,6 +244,7 @@ def crear_grafico_posiciones_rectangulares_con_deslizador():
 
     return fig
 
+st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
 
 
 # Función para graficar la curva de luz de una supernova específica con información en el título
