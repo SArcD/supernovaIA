@@ -8,12 +8,18 @@ import plotly.graph_objects as go
 @st.cache_data
 def obtener_lista_archivos_github(repo_url, subdirectorio=""):
     api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectorio}"
+    st.write(f"Obteniendo lista de archivos desde: {api_url}")
+
     response = requests.get(api_url)
     if response.status_code == 200:
         archivos = [archivo['download_url'] for archivo in response.json() if archivo['name'].endswith(".snana.dat")]
+        st.write(f"Se encontraron {len(archivos)} archivos .snana.dat en {subdirectorio}")
         return archivos
     else:
+        st.write(f"Error al obtener la lista de archivos de {repo_url}")
+        st.write(f"Código de error: {response.status_code}")
         return []
+
 
 # Función para descargar y leer el contenido de un archivo desde GitHub
 @st.cache_data
