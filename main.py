@@ -211,3 +211,34 @@ if not df_supernovas_filtradas.empty:
 
 else:
     st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
+
+
+
+# Seleccionar el tipo de supernova
+tipo_supernova_clustering = st.text_input("Ingresa el tipo de supernova para realizar el clustering (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+
+# Filtrar las supernovas por el tipo seleccionado
+df_supernovas_clustering = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova_clustering]
+
+if not df_supernovas_clustering.empty:
+    # Normalizar los datos relevantes para el clustering
+    parametros_clustering = ['redshift', 'ra', 'decl', 'observaciones_antes_pico', 'observaciones_pico', 'observaciones_despues_pico']
+    
+    # Eliminar filas con valores nulos en los parámetros seleccionados
+    df_supernovas_clustering = df_supernovas_clustering.dropna(subset=parametros_clustering)
+    
+    # Escalar los datos
+    scaler = StandardScaler()
+    datos_clustering = scaler.fit_transform(df_supernovas_clustering[parametros_clustering])
+
+    # Aplicar clustering jerárquico
+    Z = linkage(datos_clustering, method='ward')
+
+    # Mostrar el dendrograma
+    st.write("Dendrograma de Clustering Jerárquico:")
+    plt.figure(figsize=(10, 7))
+    dendrogram(Z, labels=df_supernovas_clustering['snid'].values, leaf_rotation=90)
+    st.pyplot(plt)
+
+else:
+    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova_clustering}' para realizar el clustering.")
