@@ -133,7 +133,27 @@ def crear_grafico_posiciones():
     return fig
 
 # Mostrar el gráfico de posiciones en Streamlit
-st.plotly_chart(crear_grafico_posiciones())
+#st.plotly_chart(crear_grafico_posiciones())
+
+def crear_grafico_posiciones_rectangulares():
+    fig = px.scatter(df_curvas_luz,
+                     x='ra',
+                     y='decl',
+                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
+                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, redshift y SUPERRAENN al pasar el cursor
+                     title='Posición de las Supernovas en el Cielo (RA vs Dec)',
+                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'})
+    return fig
+
+# Mostrar un selector para que el usuario elija el tipo de gráfico
+opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Coordenadas Polares", "RA vs Dec"])
+
+# Mostrar el gráfico según la opción seleccionada
+if opcion_grafico == "Coordenadas Polares":
+    st.plotly_chart(crear_grafico_posiciones_polares())
+else:
+    st.plotly_chart(crear_grafico_posiciones_rectangulares())
+
 
 # Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
