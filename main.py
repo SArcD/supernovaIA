@@ -145,15 +145,28 @@ def crear_grafico_posiciones_rectangulares():
                      labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'})
     return fig
 
+# Crear el gráfico de posiciones Declinación vs Redshift
+def crear_grafico_decl_vs_redshift():
+    fig = px.scatter(df_curvas_luz,
+                     x='redshift',
+                     y='decl',
+                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
+                     hover_data=['snid', 'ra', 'superraenn_pred'],  # Mostrar SNID, RA y SUPERRAENN al pasar el cursor
+                     title='Declinación vs Redshift de Supernovas',
+                     labels={'redshift': 'Redshift (Distancia Cosmológica)', 'decl': 'Declinación (Dec)'})
+    return fig
+
+
 # Mostrar un selector para que el usuario elija el tipo de gráfico
-opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Ascensión Recta vs Corrimiento al Rojo", "Declinación vs Ascensión Recta"])
+opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Ascensión Recta vs Corrimiento al Rojo", "Declinación vs Corrimiento al Rojo", "Declinación vs Ascensión Recta"])
 
 # Mostrar el gráfico según la opción seleccionada
 if opcion_grafico == "Ascensión Recta vs Corrimiento al Rojo":
     st.plotly_chart(crear_grafico_posiciones())
 elif opcion_grafico == "Declinación vs Ascensión Recta" :
     st.plotly_chart(crear_grafico_posiciones_rectangulares())
-
+elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
+    st.plotly_chart(crear_grafico_decl_vs_redshift())
 
 # Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
