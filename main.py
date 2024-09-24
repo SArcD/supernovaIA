@@ -6,6 +6,8 @@ import plotly.graph_objects as go
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
 
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
@@ -218,31 +220,33 @@ else:
 
 
 
-# Seleccionar el tipo de supernova
-tipo_supernova_clustering = st.text_input("Ingresa el tipo de supernova para realizar el clustering (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+# --- CLUSTERING JERÁRQUICO CON PCA ---
+st.write("Clustering de supernovas usando PCA")
 
-# Filtrar las supernovas por el tipo seleccionado
-df_supernovas_clustering = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova_clustering]
+# Entrada para el tipo de supernova
+tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
 
-if not df_supernovas_clustering.empty:
-    # Normalizar los datos relevantes para el clustering
-    parametros_clustering = ['redshift', 'ra', 'decl', 'observaciones_antes_pico', 'observaciones_pico', 'observaciones_despues_pico']
-    
-    # Eliminar filas con valores nulos en los parámetros seleccionados
-    df_supernovas_clustering = df_supernovas_clustering.dropna(subset=parametros_clustering)
-    
-    # Escalar los datos
-    scaler = StandardScaler()
-    datos_clustering = scaler.fit_transform(df_supernovas_clustering[parametros_clustering])
+# Entrada para el número mínimo de observaciones
+min_observaciones = st.number_input("Número mínimo de observaciones:", min_value=1, value=5)
 
-    # Aplicar clustering jerárquico
-    Z = linkage(datos_clustering, method='ward')
+# Filtrar supernovas por tipo y número mínimo de observaciones
+df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
+df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
 
-    # Mostrar el dendrograma
-    st.write("Dendrograma de Clustering Jerárquico:")
-    plt.figure(figsize=(10, 7))
-    dendrogram(Z, labels=df_supernovas_clustering['snid'].values, leaf_rotation=90)
-    st.pyplot(plt)
+# Normalizar las características para el clustering
+scaler = StandardScaler()
+features = ['ra', 'decl', 'redshift']  # Parámetros que se usarán para el clustering
+X = scaler.fit_transform(df_supernovas_filtradas[features])
 
-else:
-    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova_clustering}' para realizar el clustering.")
+# Aplicar PCA para reducir las dimensiones a 2 componentes principales
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X)
+
+# Convertir el resultado de PCA en un DataFrame
+df_pca = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
+df_pca['snid'] = df_supernovas_filtradas['snid'].values
+df_pca['parsnip_pred'] = df_supernovas_filtradas['parsnip_pred'].values
+
+# Graficar los resultados de PCA
+fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='parsnip_pred', hover_data=['snid'], title='Clustering de Supernovas con PCA')
+st.plotly_chart(fig_pca)
