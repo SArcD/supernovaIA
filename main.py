@@ -144,7 +144,7 @@ def crear_grafico_posiciones_rectangulares():
                      title='Posición de las Supernovas en el Cielo (RA vs Dec)',
                      labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
                      color_discrete_sequence=px.colors.sequential.Viridis  # Usar la paleta de colores Viridis
-                     ))
+                     )
     return fig
 
 # Crear el gráfico de posiciones Declinación vs Redshift
