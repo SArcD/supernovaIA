@@ -13,28 +13,19 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
     response = requests.get(api_url)
     if response.status_code == 200:
         archivos = [archivo['download_url'] for archivo in response.json() if archivo['name'].endswith(".snana.dat")]
-        #st.write(f"Se encontraron {len(archivos)} archivos .snana.dat en {subdirectorio}")
         return archivos
     else:
         st.write(f"Error al obtener la lista de archivos de {repo_url}")
-        #st.write(f"Código de error: {response.status_code}")
         return []
-
-        #archivos = [archivo['download_url'] for archivo in response.json() if archivo['name'].endswith(".snana.dat")]
-
 
 # Función para descargar y leer el contenido de un archivo desde GitHub
 @st.cache_data
 def descargar_archivo_desde_github(url):
-    #st.write(f"Descargando archivo: {url}")
     response = requests.get(url)
     if response.status_code == 200:
-        #st.write(f"Archivo descargado correctamente")
         return response.text
     else:
-        #st.write(f"Error al descargar {url}")
         return None
-
 
 # Función para intentar convertir un valor a float de forma segura
 def convertir_a_float(valor, valor_default=None):
@@ -83,7 +74,7 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
             'nombre_archivo': nombre_archivo,
             'snid': snid,
             'mjd': mjd[i],
-            'filtro': filtros[i],
+            'filtro': filtros[i] if filtros else None,  # Verificar que el filtro existe
             'mag': mag[i],
             'magerr': magerr[i],
             'flx': flx[i],
@@ -111,7 +102,9 @@ def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
             mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = leer_archivo_supernova_contenido(contenido)
             guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv)
 
-    return pd.DataFrame(lista_vectores)
+    df = pd.DataFrame(lista_vectores)
+    st.write(df.head())  # Verificar si 'filtro' está presente en el DataFrame
+    return df
 
 # Cargar los datos de supernovas desde GitHub
 st.write("Descargando y procesando archivos de supernovas...")
@@ -132,35 +125,7 @@ def crear_grafico_posiciones():
 st.plotly_chart(crear_grafico_posiciones())
 
 # Seleccionar supernova
-#snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
-
-# Función para graficar la curva de luz de una supernova específica
-#def graficar_curva_de_luz(df_supernova):
-#    fig = go.Figure()
-#    for filtro in df_supernova['filtro'].unique():
-#        df_filtro = df_supernova[df_supernova['filtro'] == filtro]
-#        fig.add_trace(go.Scatter(x=df_filtro['mjd'], y=df_filtro['mag'], mode='lines+markers', name=filtro))
-
-#    fig.update_layout(title=f'Curva de luz de {snid_seleccionado}', xaxis_title='MJD', yaxis_title='Magnitud')
-#        # Invertir el eje Y porque las magnitudes menores son más brillantes
-#    fig.update_layout(
-#        title=f'Curva de luz de {snid_seleccionado}',
-#        xaxis_title='MJD (Modified Julian Date)',
-#        yaxis_title='Magnitud',
-#        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
-#        showlegend=True
-#    )
-    
-#    return fig
-
-# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
-#df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
-#st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
-
-
-import plotly.graph_objects as go
-import pandas as pd
-import streamlit as st
+snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
 # Función para calcular días relativos al pico utilizando NOBS_BEFORE_PEAK, NOBS_TO_PEAK, y NOBS_AFTER_PEAK
 def calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_peak):
@@ -176,6 +141,11 @@ def calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_pea
 
 # Función para graficar la curva de luz de una supernova con días relativos al pico
 def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
+    # Verificar si la columna 'filtro' existe
+    if 'filtro' not in df_supernova.columns:
+        st.error("Error: La columna 'filtro' no se encuentra en los datos procesados.")
+        return go.Figure()
+
     # Calcular días relativos al pico usando la información de observaciones antes del pico
     df_supernova = calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_peak)
     
@@ -201,9 +171,6 @@ def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
     )
 
     return fig
-
-# Seleccionar supernova
-snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
 # Filtrar los datos de la supernova seleccionada
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
