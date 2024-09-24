@@ -149,9 +149,9 @@ def crear_grafico_posiciones_rectangulares():
 opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Coordenadas Polares", "RA vs Dec"])
 
 # Mostrar el gráfico según la opción seleccionada
-if opcion_grafico == "Coordenadas Polares":
+if opcion_grafico == "Ascensión Recta vs Corrimiento al Rojo":
     st.plotly_chart(crear_grafico_posiciones())
-elif opcion_grafico == "Coordenadas Rectangulares" :
+elif opcion_grafico == "Declinación vs Ascensión Recta" :
     st.plotly_chart(crear_grafico_posiciones_rectangulares())
 
 
