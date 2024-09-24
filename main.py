@@ -224,10 +224,10 @@ else:
 st.write("Clustering de supernovas usando PCA")
 
 # Entrada para el tipo de supernova
-tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+tipo_supernova = st.text_input("Ingresar el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
 
 # Entrada para el número mínimo de observaciones
-min_observaciones = st.number_input("Número mínimo de observaciones:", min_value=1, value=5)
+min_observaciones = st.number_input("El número mínimo de observaciones:", min_value=1, value=5)
 
 # Filtrar supernovas por tipo y número mínimo de observaciones
 df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
