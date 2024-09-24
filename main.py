@@ -159,20 +159,26 @@ st.plotly_chart(crear_grafico_posiciones())
 
 
 # Función para encontrar el MJD del pico (mínima magnitud) y calcular días relativos al pico
-def calcular_dias_relativos(df_supernova):
-    # Identificar el MJD del pico de luminosidad (mínima magnitud)
-    if df_supernova['mag'].isnull().all():
-        return df_supernova['mjd']  # Si todos los valores son nulos, devolver el MJD original
+import plotly.graph_objects as go
+import pandas as pd
+import streamlit as st
 
-    mjd_pico = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']  # MJD del pico de luminosidad
+# Función para calcular días relativos al pico utilizando NOBS_BEFORE_PEAK, NOBS_TO_PEAK, y NOBS_AFTER_PEAK
+def calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_peak):
+    # Si no hay pico indicado, calcular el MJD del pico (mínima magnitud)
+    if df_supernova['mag'].isnull().all() or nobs_to_peak is None:
+        return df_supernova['mjd']  # Si no hay datos, devolver el MJD original
+
+    # Calcular días relativos usando NOBS_BEFORE_PEAK, NOBS_TO_PEAK
+    mjd_pico = df_supernova['mjd'].iloc[nobs_before_peak]  # El día del pico será el MJD en la posición antes del pico
     df_supernova['dias_relativos'] = df_supernova['mjd'] - mjd_pico  # Calcular días antes y después del pico
     
     return df_supernova
 
-# Función para graficar la curva de luz de una supernova con el eje X en días relativos al pico
-def graficar_curva_de_luz(df_supernova):
-    # Calcular días relativos al pico de luminosidad
-    df_supernova = calcular_dias_relativos(df_supernova)
+# Función para graficar la curva de luz de una supernova con días relativos al pico
+def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
+    # Calcular días relativos al pico usando la información de observaciones antes del pico
+    df_supernova = calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_peak)
     
     fig = go.Figure()
 
@@ -188,7 +194,7 @@ def graficar_curva_de_luz(df_supernova):
 
     # Invertir el eje Y porque las magnitudes menores son más brillantes
     fig.update_layout(
-        title=f'Curva de luz de {snid_seleccionado} (días relativos al pico de luminosidad)',
+        title=f'Curva de luz de {df_supernova["snid"].iloc[0]} (días relativos al pico de luminosidad)',
         xaxis_title='Días relativos al pico de luminosidad',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
@@ -196,7 +202,6 @@ def graficar_curva_de_luz(df_supernova):
     )
 
     return fig
-
 # Seleccionar supernova
 snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
 
