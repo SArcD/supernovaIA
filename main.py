@@ -146,7 +146,7 @@ def crear_grafico_posiciones_rectangulares():
     return fig
 
 # Mostrar un selector para que el usuario elija el tipo de gráfico
-opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Coordenadas Polares", "RA vs Dec"])
+opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Ascensión Recta vs Corrimiento al Rojo", "Declinación vs Ascensión Recta"])
 
 # Mostrar el gráfico según la opción seleccionada
 if opcion_grafico == "Ascensión Recta vs Corrimiento al Rojo":
