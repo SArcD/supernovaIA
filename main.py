@@ -1,10 +1,7 @@
 import requests
 import pandas as pd
 import streamlit as st
-import plotly.graph_objects as go
-import pandas as pd
-import streamlit as st
-import plotly.express as px  # Importación de Plotly Express
+import plotly.express as px
 import plotly.graph_objects as go
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
@@ -37,9 +34,11 @@ def convertir_a_float(valor, valor_default=None):
 
 # Función para leer el archivo descargado y extraer los datos relevantes
 def leer_archivo_supernova_contenido(contenido):
+    # Variables para almacenar datos de la supernova
     mjd, mag, magerr, flx, flxerr, filtros = [], [], [], [], [], []
     snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = None, None, None, None, None, None, None
 
+    # Procesar cada línea del archivo de supernova
     for linea in contenido.splitlines():
         if linea.startswith("SNID:"):
             snid = linea.split()[1]
@@ -55,14 +54,14 @@ def leer_archivo_supernova_contenido(contenido):
             parsnip_pred = ' '.join(linea.split()[1:])
         elif linea.startswith("SUPERRAENN_PRED:"):
             superraenn_pred = ' '.join(linea.split()[1:])
-        elif linea.startswith("OBS:"):
+        elif linea.startswith("OBS:"):  # Extraer observaciones
             datos = linea.split()
-            mjd.append(convertir_a_float(datos[1]))  # MJD
+            mjd.append(convertir_a_float(datos[1]))  # MJD (Modified Julian Date)
             filtros.append(datos[2])  # Filtro (g, r, i, z, etc.)
-            flx.append(convertir_a_float(datos[4]))  # Flujo
-            flxerr.append(convertir_a_float(datos[5]))  # Error en el flujo
-            mag.append(convertir_a_float(datos[6]))  # Magnitud
-            magerr.append(convertir_a_float(datos[7]))  # Error en la magnitud
+            flx.append(convertir_a_float(datos[4]))  # Flujo (FLUXCAL)
+            flxerr.append(convertir_a_float(datos[5]))  # Error en el flujo (FLUXCALERR)
+            mag.append(convertir_a_float(datos[6]))  # Magnitud (MAG)
+            magerr.append(convertir_a_float(datos[7]))  # Error en la magnitud (MAGERR)
 
     return mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv
 
@@ -73,7 +72,7 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
             'nombre_archivo': nombre_archivo,
             'snid': snid,
             'mjd': mjd[i],
-            'filtro': filtros[i] if filtros else None,
+            'filtro': filtros[i] if filtros else None,  # Verificar que el filtro existe
             'mag': mag[i],
             'magerr': magerr[i],
             'flx': flx[i],
@@ -130,17 +129,19 @@ def calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_pea
 
 # Función para graficar la curva de luz
 def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
-    # Verificar si la columna 'filtro' existe y si tiene datos válidos
     if 'filtro' not in df_supernova.columns or df_supernova['filtro'].isnull().all():
         st.warning(f"La supernova {df_supernova['snid'].iloc[0]} no tiene datos en la columna 'filtro'.")
         return go.Figure()
 
-    # Calcular días relativos al pico usando la información de observaciones antes del pico
     df_supernova = calcular_dias_relativos_con_pico(df_supernova, nobs_before_peak, nobs_to_peak)
     
     fig = go.Figure()
 
-    # Graficar solo los filtros que tienen datos
+    # Graficar sólo si hay datos en 'filtro'
+    if df_supernova['filtro'].dropna().empty:
+        st.warning(f"La supernova {df_supernova['snid'].iloc[0]} no tiene datos de filtro para graficar.")
+        return go.Figure()
+
     for filtro in df_supernova['filtro'].dropna().unique():
         df_filtro = df_supernova[df_supernova['filtro'] == filtro]
         fig.add_trace(go.Scatter(
@@ -150,7 +151,6 @@ def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
             name=filtro
         ))
 
-    # Invertir el eje Y porque las magnitudes menores son más brillantes
     fig.update_layout(
         title=f'Curva de luz de {df_supernova["snid"].iloc[0]} (días relativos al pico)',
         xaxis_title='Días relativos al pico de luminosidad',
@@ -162,21 +162,11 @@ def graficar_curva_de_luz(df_supernova, nobs_before_peak, nobs_to_peak):
 
 # Filtrar los datos de la supernova seleccionada
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
+
 nobs_before_peak = df_supernova_seleccionada['nobs_before_peak'].iloc[0] if 'nobs_before_peak' in df_supernova_seleccionada.columns else None
 nobs_to_peak = df_supernova_seleccionada['nobs_to_peak'].iloc[0] if 'nobs_to_peak' in df_supernova_seleccionada.columns else None
-st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada, nobs_before_peak, nobs_to_peak))
 
-# Filtrar supernovas por tipo y observaciones
-tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
-df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova].groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-
-# Graficar todas las supernovas filtradas
-if not df_supernovas_filtradas.empty:
-    for snid in df_supernovas_filtradas['snid'].unique():
-        df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
-        nobs_before_peak = df_supernova_seleccionada['nobs_before_peak'].iloc[0] if 'nobs_before_peak' in df_supernova_seleccionada.columns else None
-        nobs_to_peak = df_supernova_seleccionada['nobs_to_peak'].iloc[0] if 'nobs_to_peak' in df_supernova_seleccionada.columns else None
-        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada, nobs_before_peak, nobs_to_peak))
+if 'filtro' in df_supernova_seleccionada.columns:
+    st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada, nobs_before_peak, nobs_to_peak))
 else:
-    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
+    st.error(f"No se encontraron datos de 'filtro' para la supernova seleccionada.")
