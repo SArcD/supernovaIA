@@ -142,8 +142,8 @@ def crear_grafico_posiciones_rectangulares():
                      color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
                      hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, redshift y SUPERRAENN al pasar el cursor
                      title='Posición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'},
-                     color_discrete_sequence=px.colors.sequential.Viridis  # Usar la paleta de colores Viridis
+                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
+                     #color_discrete_sequence=px.colors.sequential.Viridis  # Usar la paleta de colores Viridis
                      )
     return fig
 
