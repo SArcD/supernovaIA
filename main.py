@@ -13,12 +13,15 @@ def obtener_lista_archivos_github(repo_url, subdirectorio=""):
     response = requests.get(api_url)
     if response.status_code == 200:
         archivos = [archivo['download_url'] for archivo in response.json() if archivo['name'].endswith(".snana.dat")]
-        st.write(f"Se encontraron {len(archivos)} archivos .snana.dat en {subdirectorio}")
+        #st.write(f"Se encontraron {len(archivos)} archivos .snana.dat en {subdirectorio}")
         return archivos
     else:
         st.write(f"Error al obtener la lista de archivos de {repo_url}")
-        st.write(f"Código de error: {response.status_code}")
+        #st.write(f"Código de error: {response.status_code}")
         return []
+
+        #archivos = [archivo['download_url'] for archivo in response.json() if archivo['name'].endswith(".snana.dat")]
+
 
 # Función para descargar y leer el contenido de un archivo desde GitHub
 @st.cache_data
@@ -26,11 +29,12 @@ def descargar_archivo_desde_github(url):
     st.write(f"Descargando archivo: {url}")
     response = requests.get(url)
     if response.status_code == 200:
-        st.write(f"Archivo descargado correctamente")
+        #st.write(f"Archivo descargado correctamente")
         return response.text
     else:
         st.write(f"Error al descargar {url}")
         return None
+
 
 # Función para intentar convertir un valor a float de forma segura
 def convertir_a_float(valor, valor_default=None):
