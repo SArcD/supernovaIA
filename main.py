@@ -2,6 +2,10 @@ import requests
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+import pandas as pd
+import streamlit as st
+import plotly.express as px  # Importación de Plotly Express
+import plotly.graph_objects as go
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
