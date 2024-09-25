@@ -606,11 +606,11 @@ df_cluster_filtrado['subcluster'] = clustering_subclusters.fit_predict(columnas_
 # --- Aplicar PCA y luego t-SNE ---
 
 # Aplicar PCA primero para reducir a más de 2 componentes (por ejemplo, 20 componentes)
-pca = PCA(n_components=20)
+pca = PCA(n_components=2)
 pca_data_cluster = pca.fit_transform(columnas_numericas_scaled_filtrado)
 
 # Ahora aplicar t-SNE sobre el resultado de PCA
-tsne = TSNE(n_components=2, perplexity=30, early_exaggeration=10, learning_rate=200, random_state=42)
+tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=200, random_state=42)
 tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 
 # Crear un DataFrame con los resultados de t-SNE y los subclusters
