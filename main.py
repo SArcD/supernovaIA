@@ -472,8 +472,8 @@ df_pca = pd.DataFrame(pca_data, columns=['PC1', 'PC2'])
 df_pca['cluster'] = df_supernovas_clustering['cluster']
 
 # Visualización de clusters con PCA
-fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualizados con PCA')
-st.plotly_chart(fig_pca)
+#fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualizados con PCA')
+#st.plotly_chart(fig_pca)
 
 
 
