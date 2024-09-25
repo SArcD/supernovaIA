@@ -422,28 +422,30 @@ from sklearn.cluster import AgglomerativeClustering
 st.write("Verificando contenido de df_parametros:")
 st.write(df_parametros)
 
-# Eliminar filas con valores NaN
-df_supernovas_clustering = df_parametros.dropna()
+import numpy as np
+import plotly.graph_objects as go
+import streamlit as st
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import AgglomerativeClustering
 
-# Seleccionar las columnas numéricas para el clustering
-columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
+# Supón que ya tienes el DataFrame df_curvas_luz que contiene las curvas de luz
 
-# Normalizar los datos
+# Normalizar las columnas numéricas para el clustering (puedes ajustar según sea necesario)
+columnas_numericas = df_parametros.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
 scaler = StandardScaler()
 columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
 # Clustering jerárquico
 num_clusters = st.number_input('Selecciona el número de clusters', min_value=2, max_value=10, value=5, step=1)
-
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
-df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
+df_parametros['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
-# Función para graficar la curva de luz de una supernova específica
+# Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
     fig = go.Figure()
 
     # Calcular días relativos al pico de luminosidad
-    df_supernova['dias_relativos'] = df_supernova['mjd'] - df_supernova['mjd'].min()
+    df_supernova = calcular_dias_relativos(df_supernova)
 
     for filtro in df_supernova['filtro'].unique():
         df_filtro = df_supernova[df_supernova['filtro'] == filtro]
@@ -454,19 +456,22 @@ def graficar_curva_de_luz(df_supernova):
             name=filtro
         ))
 
-    # Información de la supernova para el título
-    snid = df_supernova['SNID'].iloc[0]
+    # Extraer la información relevante para el título
+    snid = df_supernova['snid'].iloc[0]
     tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
-    ra = df_supernova['RA'].iloc[0]
-    decl = df_supernova['Dec'].iloc[0]
-    redshift = df_supernova['Redshift'].iloc[0]
+    ra = df_supernova['ra'].iloc[0]
+    decl = df_supernova['decl'].iloc[0]
+    redshift = df_supernova['redshift'].iloc[0]
 
-    # Actualizar el diseño del gráfico
+    # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
     fig.update_layout(
-        title=f'Curva de luz de {snid} ({tipo_supernova})\nRA: {ra}°, Dec: {decl}°, Redshift: {redshift}',
+        title=(
+            f'Curva de luz de {snid} ({tipo_supernova})\n'
+            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
+        ),
         xaxis_title='Días relativos al pico de luminosidad',
         yaxis_title='Magnitud',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y porque las magnitudes menores son más brillantes
+        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
         showlegend=True
     )
 
@@ -476,30 +481,30 @@ def graficar_curva_de_luz(df_supernova):
 cluster_seleccionado = st.selectbox('Selecciona el cluster para ver las supernovas:', range(num_clusters))
 
 # Filtrar las supernovas por el cluster seleccionado
-df_supernovas_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_seleccionado]
+df_supernovas_cluster = df_parametros[df_parametros['cluster'] == cluster_seleccionado]
 supernovas_filtradas_por_snid = df_supernovas_cluster['SNID'].unique()
 
-if len(supernovas_filtradas_por_snid) > 0:
-    st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas en el Cluster {cluster_seleccionado}.")
+# Asegurarse de que las columnas necesarias están presentes en df_curvas_luz
+columnas_necesarias = ['snid', 'filtro', 'mjd', 'mag']
+if not all(col in df_curvas_luz.columns for col in columnas_necesarias):
+    st.write(f"Las columnas necesarias para graficar no están presentes: {columnas_necesarias}")
+else:
+    if len(supernovas_filtradas_por_snid) > 0:
+        st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas en el Cluster {cluster_seleccionado}.")
 
-    # Deslizador para seleccionar una supernova dentro del cluster
-    index_seleccionado = st.slider('Selecciona una supernova para ver su curva de luz:',
-                                   min_value=0, max_value=len(supernovas_filtradas_por_snid)-1, step=1)
-    snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
+        # Deslizador para seleccionar una supernova dentro del cluster
+        index_seleccionado = st.slider('Selecciona una supernova para ver su curva de luz:',
+                                       min_value=0, max_value=len(supernovas_filtradas_por_snid)-1, step=1)
+        snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
 
-    # Filtrar la supernova seleccionada
-    df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['SNID'] == snid_seleccionado]
+        # Filtrar la supernova seleccionada en el DataFrame correcto (df_curvas_luz)
+        df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
 
-    # Verificar que las columnas necesarias están presentes
-    columnas_necesarias = ['filtro', 'mjd', 'mag']
-    if all(col in df_supernova_seleccionada.columns for col in columnas_necesarias):
         # Graficar la curva de luz de la supernova seleccionada
         fig = graficar_curva_de_luz(df_supernova_seleccionada)
         st.plotly_chart(fig)
     else:
-        st.write(f"Las columnas necesarias para graficar no están presentes: {columnas_necesarias}")
-else:
-    st.write(f"No se encontraron supernovas en el Cluster {cluster_seleccionado}.")
+        st.write(f"No se encontraron supernovas en el Cluster {cluster_seleccionado}.")
 
 
 import plotly.graph_objects as go
