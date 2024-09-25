@@ -403,7 +403,7 @@ from scipy.stats import gaussian_kde
 import plotly.express as px
 
 # Eliminar filas con valores NaN
-df_supernovas_clustering = df_parametros.dropna()
+df_supernovas_clustering = resumen.dropna()
 
 # Seleccionar las columnas numéricas para el clustering
 columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
