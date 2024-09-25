@@ -490,15 +490,14 @@ tsne_data = tsne.fit_transform(pca_data)
 # Crear una figura de Plotly
 fig = go.Figure()
 
-# Colorear los puntos según las agrupaciones de clusters
 for cluster_id in np.unique(df_supernovas_clustering['cluster']):
-    indices = np.where(df_supernovas_clustering['cluster'] == cluster_id)
+    indices = df_supernovas_clustering['cluster'] == cluster_id
 
     scatter_trace = go.Scatter(
-        x=tsne_data[indices, 0].flatten(),
-        y=tsne_data[indices, 1].flatten(),
+        x=tsne_data[indices, 0],
+        y=tsne_data[indices, 1],
         mode='markers',
-        text=df_supernovas_clustering.loc[indices[0], ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        text=df_supernovas_clustering.loc[indices, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
         hovertemplate="%{text}",
         marker=dict(
             size=7,
