@@ -416,7 +416,7 @@ df_supernovas_clustering = df_parametros.dropna()
 # Seleccionar las columnas numéricas para el clustering
 #columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
 columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
-st.write(columnas_numericas)
+#st.write(columnas_numericas)
 
 
 # Normalizar los datos
@@ -424,7 +424,10 @@ scaler = StandardScaler()
 columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
 # Clustering jerárquico
-num_clusters = 2
+#num_clusters = 2
+num_clusters = st.number_input('Selecciona el número de clusters', min_value=2, max_value=10, value=5, step=1)
+
+
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
 df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
