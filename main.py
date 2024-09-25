@@ -431,7 +431,7 @@ from sklearn.cluster import AgglomerativeClustering
 # Supón que ya tienes el DataFrame df_curvas_luz que contiene las curvas de luz
 
 # Normalizar las columnas numéricas para el clustering (puedes ajustar según sea necesario)
-columnas_numericas = df_parametros.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
+columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
 scaler = StandardScaler()
 columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
