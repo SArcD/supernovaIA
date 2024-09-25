@@ -278,6 +278,94 @@ else:
     st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
 
 
+import pandas as pd
+import streamlit as st
+import plotly.graph_objects as go
+
+# Función para calcular Δm15 para supernovas tipo Ia
+def calcular_delta_m15(df_supernova, filtro='g'):
+    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+    
+    if df_filtro.empty:
+        return 'NA'  # No hay datos en este filtro
+    
+    # Obtener el MJD del pico de luminosidad
+    mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
+    
+    # Filtrar observaciones de 15 días después del pico
+    df_15_dias_despues = df_filtro[(df_filtro['mjd'] > mjd_pico) & (df_filtro['mjd'] <= mjd_pico + 15)]
+    
+    if not df_15_dias_despues.empty:
+        mag_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mag']
+        mag_15_dias_despues = df_15_dias_despues['mag'].mean()
+        delta_m15 = mag_15_dias_despues - mag_pico
+        return delta_m15
+    else:
+        return 'NA'
+
+# Función para calcular la duración de la meseta para supernovas tipo II o Ibc
+def calcular_duracion_meseta(df_supernova, filtro='r'):
+    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+    
+    if df_filtro.empty:
+        return 'NA'  # No hay datos en este filtro
+    
+    # Encontrar el MJD del pico
+    mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
+    
+    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más (adaptación de la meseta)
+    df_meseta = df_filtro[df_filtro['mag'] <= (df_filtro['mag'].min() + 1)]
+    
+    if not df_meseta.empty:
+        duracion_meseta = df_meseta['mjd'].max() - mjd_pico
+        return duracion_meseta
+    else:
+        return 'NA'
+
+# Crear DataFrame con los parámetros de las supernovas
+def crear_dataframe_parametros(df_supernovas):
+    resultados = []
+    
+    for snid in df_supernovas['snid'].unique():
+        df_supernova = df_supernovas[df_supernovas['snid'] == snid]
+        tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
+        ra = df_supernova['ra'].iloc[0]
+        decl = df_supernova['decl'].iloc[0]
+        redshift = df_supernova['redshift'].iloc[0]
+        
+        if tipo_supernova == 'SN Ia':
+            delta_m15 = calcular_delta_m15(df_supernova, filtro='g')
+            resultados.append({
+                'SNID': snid,
+                'Tipo': tipo_supernova,
+                'Δm15 (g)': delta_m15,
+                'RA': ra,
+                'Dec': decl,
+                'Redshift': redshift
+            })
+        elif tipo_supernova in ['SN II', 'SN Ibc']:
+            duracion_meseta = calcular_duracion_meseta(df_supernova, filtro='r')
+            resultados.append({
+                'SNID': snid,
+                'Tipo': tipo_supernova,
+                'Duración Meseta (r)': duracion_meseta,
+                'RA': ra,
+                'Dec': decl,
+                'Redshift': redshift
+            })
+    
+    return pd.DataFrame(resultados)
+
+# Filtrar supernovas por tipo y número mínimo de observaciones
+tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
+df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
+df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
+
+# Mostrar DataFrame con los resultados
+df_parametros = crear_dataframe_parametros(df_supernovas_filtradas)
+st.write(df_parametros)
+
 
 # --- CLUSTERING JERÁRQUICO CON PCA ---
 st.write("Clustering de supernovas usando PCA")
