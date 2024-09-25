@@ -275,6 +275,26 @@ def calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i
     else:
         return 'NA'
 
+# Función para calcular la duración de la meseta para supernovas tipo II o Ibc
+def calcular_duracion_meseta(df_supernova, filtro='r'):
+    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+    
+    if df_filtro.empty:
+        return 'NA'  # No hay datos en este filtro
+    
+    # Encontrar el MJD del pico
+    mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
+    
+    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más (adaptación de la meseta)
+    df_meseta = df_filtro[df_filtro['mag'] <= (df_filtro['mag'].min() + 1)]
+    
+    if not df_meseta.empty:
+        duracion_meseta = df_meseta['mjd'].max() - mjd_pico
+        return duracion_meseta
+    else:
+        return 'NA'
+
+
 # Función para calcular la velocidad de caída de la luminosidad después de la meseta
 def calcular_velocidad_caida(df_supernova, filtro='r'):
     df_filtro = df_supernova[df_supernova['filtro'] == filtro]
