@@ -8,8 +8,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-
-
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
 def obtener_lista_archivos_github(repo_url, subdirectorio=""):
@@ -126,109 +124,26 @@ df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
 df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
 st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
 
-# Crear el gráfico de posiciones de supernovas
-def crear_grafico_posiciones():
-    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
-    return fig
-
-# Mostrar el gráfico de posiciones en Streamlit
-#st.plotly_chart(crear_grafico_posiciones())
-
-def crear_grafico_posiciones_rectangulares():
-    fig = px.scatter(df_curvas_luz,
-                     x='ra',
-                     y='decl',
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, redshift y SUPERRAENN al pasar el cursor
-                     title='Posición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
-                     #color_discrete_sequence=px.colors.sequential.Viridis  # Usar la paleta de colores Viridis
-                     )
-    return fig
-
-# Crear el gráfico de posiciones Declinación vs Redshift
-def crear_grafico_decl_vs_redshift():
-    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='decl', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas (Dec) vs Redshift')
-    return fig
-
-
-
-
-# Mostrar un selector para que el usuario elija el tipo de gráfico
-opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Ascensión Recta vs Corrimiento al Rojo", "Declinación vs Corrimiento al Rojo", "Declinación vs Ascensión Recta"])
-
-# Mostrar el gráfico según la opción seleccionada
-if opcion_grafico == "Ascensión Recta vs Corrimiento al Rojo":
-    st.plotly_chart(crear_grafico_posiciones())
-elif opcion_grafico == "Declinación vs Ascensión Recta" :
-    st.plotly_chart(crear_grafico_posiciones_rectangulares())
-elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
-    st.plotly_chart(crear_grafico_decl_vs_redshift())
-
-##cronologia
-
-#import pandas as pd
-#import plotly.express as px
-#import streamlit as st
-
-# Cargar el archivo CSV que contiene las coordenadas RA, Dec, y otros datos
-#df_curvas_luz = pd.read_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv')
-
-# Obtener el rango de MJD en el dataset para configurar el deslizador
-#min_mjd = df_curvas_luz['mjd'].min()
-#max_mjd = df_curvas_luz['mjd'].max()
-
-# Crear el gráfico de posiciones con un deslizador de MJD
-#def crear_grafico_posiciones_rectangulares_con_deslizador():
-#    fig = px.scatter(df_curvas_luz,
-#                     x='ra',
-#                     y='decl',
-#                     animation_frame='mjd',  # Crear la animación basada en MJD
-#                     animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
-#                     size_max=10,
-#                     range_x=[df_curvas_luz['ra'].min() - 10, df_curvas_luz['ra'].max() + 10],
-#                     range_y=[df_curvas_luz['decl'].min() - 10, df_curvas_luz['decl'].max() + 10],
-#                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-#                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
-#                     title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
-#                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
-#                     )
-
-#    # Configurar el deslizador de MJD
-#    fig.update_layout(
-#        sliders=[{
-#            "currentvalue": {"prefix": "MJD: "},
-#            "pad": {"b": 10},
-#            "steps": [{"args": [[f"{frame}"], {"frame": {"duration": 500, "redraw": True},
-#                                               "mode": "immediate", "fromcurrent": True}],
-#                       "label": f"{frame}", "method": "animate"}
-#                      for frame in range(int(min_mjd), int(max_mjd) + 1)]
-#        }],
-#        xaxis_title="Ascensión Recta (RA)",
-#        yaxis_title="Declinación (Dec)"
-#    )
-
-#    return fig
-
-# Mostrar el gráfico de posiciones en Streamlit con el deslizador
-#st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
-
+# Función para calcular días relativos al pico de luminosidad
+def calcular_dias_relativos(df_supernova):
+    # Calcular el MJD del pico de luminosidad (mínima magnitud)
+    mjd_pico = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']
+    df_supernova['dias_relativos'] = df_supernova['mjd'] - mjd_pico
+    return df_supernova
 
 # Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
     fig = go.Figure()
 
-    # Ordenar los datos por MJD para evitar errores de líneas no consecutivas
-    df_supernova = df_supernova.sort_values(by='mjd')
+    # Calcular días relativos al pico de luminosidad
+    df_supernova = calcular_dias_relativos(df_supernova)
 
     for filtro in df_supernova['filtro'].unique():
         df_filtro = df_supernova[df_supernova['filtro'] == filtro]
         fig.add_trace(go.Scatter(
-            x=df_filtro['mjd'], 
-            y=df_filtro['mag'], 
-            mode='lines+markers', 
+            x=df_filtro['dias_relativos'],  # Usar días relativos al pico como eje X
+            y=df_filtro['mag'],
+            mode='lines+markers',
             name=filtro
         ))
 
@@ -249,7 +164,7 @@ def graficar_curva_de_luz(df_supernova):
             f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift} - '
             f'Antes del pico: {observaciones_antes_pico}, Pico: {observaciones_pico}, Después del pico: {observaciones_despues_pico}'
         ),
-        xaxis_title='MJD (Modified Julian Date)',
+        xaxis_title='Días relativos al pico de luminosidad',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
         showlegend=True
@@ -331,4 +246,3 @@ df_pca['parsnip_pred'] = df_supernovas_filtradas['parsnip_pred'].values
 # Graficar los resultados de PCA
 fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='parsnip_pred', hover_data=['snid'], title='Clustering de Supernovas con PCA')
 st.plotly_chart(fig_pca)
-
