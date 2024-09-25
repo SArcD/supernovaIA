@@ -336,7 +336,7 @@ def calcular_magnitud_meseta(df_supernova, filtro='r'):
     return mag_promedio
 
 # Modificación en el resumen de supernovas para incluir SN II
-def crear_dataframe_parametros(df_supernovas, tipo_supernova_seleccionado):
+def crear_dataframe_parametros(df_supernovas, tipo_supernova):
     resultados = []
     
     for snid in df_supernovas['snid'].unique():
@@ -381,11 +381,11 @@ def crear_dataframe_parametros(df_supernovas, tipo_supernova_seleccionado):
         }
         
         # Agregar Δm15 solo si el tipo de supernova es Ia
-        if tipo_supernova_seleccionado == 'SN Ia':
+        if tipo_supernova == 'SN Ia':
             resumen['Δm15 (g/i)'] = delta_m15
         
         # Agregar parámetros solo si el tipo de supernova es SN II o Ibc
-        if tipo_supernova_seleccionado in ['SN II', 'SN Ibc']:
+        if tipo_supernova in ['SN II', 'SN Ibc']:
             resumen['Duración Meseta (r)'] = duracion_meseta
             resumen['Velocidad Caída (r)'] = velocidad_caida
             resumen['Magnitud Promedio Meseta (r)'] = mag_promedio_meseta
@@ -402,7 +402,7 @@ from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 import plotly.express as px
 
-df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova_seleccionado)
+df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova)
 
 # Eliminar filas con valores NaN
 df_supernovas_clustering = df_parametros.dropna()
