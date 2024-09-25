@@ -1,10 +1,10 @@
 import requests
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-import plotly.express as px
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
@@ -122,6 +122,15 @@ df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
 df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
 st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
 
+# Crear el gráfico de posiciones de supernovas
+def crear_grafico_posiciones():
+    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
+                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
+    return fig
+
+# Mostrar el gráfico de posiciones en Streamlit
+st.plotly_chart(crear_grafico_posiciones())
+
 # Función para calcular días relativos al pico de luminosidad
 def calcular_dias_relativos(df_supernova):
     # Calcular el MJD del pico de luminosidad (mínima magnitud)
@@ -154,7 +163,10 @@ def graficar_curva_de_luz(df_supernova):
 
     # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
     fig.update_layout(
-        title=(f'Curva de luz de {snid} ({tipo_supernova}) - RA: {ra}, Dec: {decl}, Redshift: {redshift}'),
+        title=(
+            f'Curva de luz de {snid} ({tipo_supernova})\n'
+            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
+        ),
         xaxis_title='Días relativos al pico de luminosidad',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
@@ -163,17 +175,37 @@ def graficar_curva_de_luz(df_supernova):
 
     return fig
 
-# --- NUEVA FUNCIÓN: Deslizador horizontal para mostrar las curvas de luz ---
+# Seleccionar el tipo de supernova y el número mínimo de observaciones con un deslizador
+tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
 
-# Crear el deslizador para seleccionar un índice de supernova
-indices_supernovas = list(df_curvas_luz['snid'].unique())
-index_seleccionado = st.slider('Selecciona el índice de la supernova:', min_value=0, max_value=len(indices_supernovas)-1, step=1)
-snid_seleccionado = indices_supernovas[index_seleccionado]
+# Función para filtrar supernovas por tipo y número mínimo de observaciones
+def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
+    # Filtrar por tipo de supernova (PARSNIP_PRED)
+    df_filtrado = df[df['parsnip_pred'] == tipo_supernova]
 
-# Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
-df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
-st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+    # Agrupar por SNID y contar el número de observaciones por supernova
+    supernovas_con_observaciones = df_filtrado.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
+    
+    return supernovas_con_observaciones
 
+# Filtrar las supernovas por el tipo y número mínimo de observaciones
+df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supernova, min_observaciones)
+
+# Mostrar los resultados si hay supernovas que cumplan con los criterios
+if not df_supernovas_filtradas.empty:
+    supernovas_filtradas_por_snid = df_supernovas_filtradas['snid'].unique()
+    st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
+    
+    # Deslizador horizontal para seleccionar una supernova y mostrar su curva de luz
+    index_seleccionado = st.slider('Selecciona la supernova para ver su curva de luz:', 
+                                   min_value=0, max_value=len(supernovas_filtradas_por_snid)-1, step=1)
+    snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
+    df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid_seleccionado]
+    st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+
+else:
+    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
 
 # --- Mostrar DataFrame con detalles de las supernovas filtradas ---
 
@@ -208,7 +240,7 @@ def calcular_duracion_meseta(df_supernova, filtro='r'):
     # Encontrar el MJD del pico
     mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
     
-    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más (adaptación de la meseta)
+    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más
     df_meseta = df_filtro[df_filtro['mag'] <= (df_filtro['mag'].min() + 1)]
     
     if not df_meseta.empty:
