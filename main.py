@@ -412,85 +412,107 @@ st.write(df_parametros)
 
 
 import pandas as pd
-import streamlit as st
-import plotly.express as px
-from sklearn.cluster import AgglomerativeClustering
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import linkage
+import plotly.graph_objects as go
+import plotly.express as px
+from scipy.stats import gaussian_kde
 
-# Función para seleccionar columnas relevantes según el tipo de supernova
-def seleccionar_columnas_relevantes(df, tipo_supernova):
-    # Selección básica de columnas comunes
-    columnas_comunes = ['magnitud_pico_g', 'magnitud_pico_r', 'magnitud_pico_i', 'Duración del evento', 'Redshift']
-    
-    # Agregar columnas específicas según el tipo de supernova
-    if tipo_supernova == 'SN Ia':
-        columnas_comunes.append('Δm15 (g)')
-    elif tipo_supernova in ['SN II', 'SN Ibc']:
-        columnas_comunes.append('Duración Meseta (r)')
-    
-    # Filtrar las columnas que realmente existan en el DataFrame
-    columnas_presentes = [col for col in columnas_comunes if col in df.columns]
-    
-    # Filtrar filas sin valores NaN en las columnas seleccionadas
-    df_filtrado = df[columnas_presentes].dropna()
-    
-    return df_filtrado
+# Eliminar filas con valores NaN
+df_supernovas_clustering = df_parametros.dropna()
 
+# Seleccionar las columnas numéricas para el clustering
+columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
 
+# Normalizar los datos
+scaler = StandardScaler()
+columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
-# Función para aplicar el clustering jerárquico y agregar la columna de clusters
-def aplicar_clustering_jerarquico(df):
-    # Normalizar los datos
-    scaler = StandardScaler()
-    datos_normalizados = scaler.fit_transform(df)
-    
-    # Aplicar clustering jerárquico
-    clustering = AgglomerativeClustering(n_clusters=3)  # Puedes ajustar el número de clusters
-    df['Cluster'] = clustering.fit_predict(datos_normalizados)
-    
-    return df, datos_normalizados
+# Calcular la matriz de distancias
+dist_matrix = pdist(columnas_numericas_scaled, metric='euclidean')
 
-# Función para aplicar PCA y t-SNE, y visualizar los clusters
-def visualizar_clusters(df, datos_normalizados):
-    # Aplicar PCA para reducir a 2 dimensiones
-    pca = PCA(n_components=2)
-    datos_pca = pca.fit_transform(datos_normalizados)
-    
-    # Aplicar t-SNE para visualización
-    tsne = TSNE(n_components=2, perplexity=30, random_state=42)
-    datos_tsne = tsne.fit_transform(datos_normalizados)
-    
-    # Crear DataFrame para PCA
-    df_pca = pd.DataFrame(datos_pca, columns=['PC1', 'PC2'])
-    df_pca['Cluster'] = df['Cluster']
-    
-    # Crear DataFrame para t-SNE
-    df_tsne = pd.DataFrame(datos_tsne, columns=['t-SNE1', 't-SNE2'])
-    df_tsne['Cluster'] = df['Cluster']
-    
-    # Visualización usando Plotly
-    fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='Cluster', title='Clusters visualizados con PCA')
-    fig_tsne = px.scatter(df_tsne, x='t-SNE1', y='t-SNE2', color='Cluster', title='Clusters visualizados con t-SNE')
-    
-    return fig_pca, fig_tsne
+# Definir el número de clusters
+num_clusters = 5  # Ajusta según tus necesidades
 
-# Seleccionar el tipo de supernova
-tipo_supernova = st.selectbox("Selecciona el tipo de supernova:", ["SN Ia", "SN II", "SN Ibc"])
+# Clustering jerárquico
+Z = linkage(dist_matrix, method='ward')
+clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
+df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
-# Preparar los datos del DataFrame para el clustering
-df_parametros_filtrados = seleccionar_columnas_relevantes(df_parametros, tipo_supernova)
+# Aplicar PCA
+pca = PCA(n_components=2)
+pca_data = pca.fit_transform(columnas_numericas_scaled)
+df_pca = pd.DataFrame(pca_data, columns=['PC1', 'PC2'])
+df_pca['cluster'] = df_supernovas_clustering['cluster']
 
-# Aplicar el clustering jerárquico
-df_parametros_clustering, datos_normalizados = aplicar_clustering_jerarquico(df_parametros_filtrados)
-
-# Visualizar los resultados usando PCA y t-SNE
-fig_pca, fig_tsne = visualizar_clusters(df_parametros_clustering, datos_normalizados)
-
-# Mostrar los gráficos en Streamlit
+# Visualización de clusters con PCA
+fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualizados con PCA')
 st.plotly_chart(fig_pca)
+
+# Aplicar t-SNE
+tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
+tsne_data = tsne.fit_transform(pca_data)
+df_tsne = pd.DataFrame(tsne_data, columns=['t-SNE1', 't-SNE2'])
+df_tsne['cluster'] = df_supernovas_clustering['cluster']
+
+# Visualización de clusters con t-SNE y curvas de densidad de kernel
+fig_tsne = go.Figure()
+
+# Agregar los contornos de densidad de kernel y los puntos
+for cluster_id in np.unique(df_tsne['cluster']):
+    indices = np.where(df_tsne['cluster'] == cluster_id)
+
+    # Calcular la densidad de kernel
+    kde = gaussian_kde(tsne_data[indices].T)
+    x_range = np.linspace(np.min(tsne_data[:, 0])-5, np.max(tsne_data[:, 0])+5, 100)
+    y_range = np.linspace(np.min(tsne_data[:, 1])-5, np.max(tsne_data[:, 1])+5, 100)
+    xx, yy = np.meshgrid(x_range, y_range)
+    positions = np.vstack([xx.ravel(), yy.ravel()])
+    zz = np.reshape(kde(positions).T, xx.shape)
+
+    # Añadir curvas de densidad de kernel
+    contour_trace = go.Contour(
+        x=x_range,
+        y=y_range,
+        z=zz,
+        colorscale='Blues',
+        opacity=0.3,
+        showscale=False,
+        name=f'Contour {cluster_id}'
+    )
+    fig_tsne.add_trace(contour_trace)
+
+    # Añadir los puntos del scatter
+    scatter_trace = go.Scatter(
+        x=tsne_data[indices, 0].flatten(),
+        y=tsne_data[indices, 1].flatten(),
+        mode='markers',
+        text=df_supernovas_clustering.loc[df_tsne['cluster'] == cluster_id, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        hovertemplate="%{text}",
+        marker=dict(size=7, line=dict(width=0.5, color='black')),
+        name=f'Cluster {cluster_id}'
+    )
+    fig_tsne.add_trace(scatter_trace)
+
+# Actualizar el layout de la visualización de t-SNE
+fig_tsne.update_layout(
+    title='Gráfico de Dispersión de t-SNE con Curvas de Densidad de Kernel',
+    xaxis_title='Dimensión 1',
+    yaxis_title='Dimensión 2',
+    showlegend=True,
+    legend_title='Clusters',
+    width=1084
+)
+
+# Mostrar el gráfico de t-SNE
 st.plotly_chart(fig_tsne)
 
-# Mostrar el DataFrame final con los clusters asignados
-st.write(df_parametros_clustering)
+# Mostrar el DataFrame final con el cluster asignado
+st.write(df_supernovas_clustering)
+
