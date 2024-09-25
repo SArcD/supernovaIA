@@ -455,8 +455,12 @@ df_pca['cluster'] = df_supernovas_clustering['cluster']
 fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualizados con PCA')
 st.plotly_chart(fig_pca)
 
+# Ajustar perplexity para t-SNE basado en el número de muestras
+n_samples = len(df_supernovas_clustering)
+perplexity_value = min(30, n_samples // 3)  # Ajustar perplexity al número de muestras
+
 # Aplicar t-SNE
-tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
+tsne = TSNE(n_components=2, perplexity=perplexity_value, early_exaggeration=10, learning_rate=5)
 tsne_data = tsne.fit_transform(pca_data)
 df_tsne = pd.DataFrame(tsne_data, columns=['t-SNE1', 't-SNE2'])
 df_tsne['cluster'] = df_supernovas_clustering['cluster']
