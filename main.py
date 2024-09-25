@@ -381,17 +381,19 @@ def crear_dataframe_parametros(df_supernovas, tipo_supernova):
         }
         
         # Agregar Δm15 solo si el tipo de supernova es Ia
-        if tipo_supernova == 'SN Ia':
+        if tipo_supernova_seleccionado == 'SN Ia':
             resumen['Δm15 (g/i)'] = delta_m15
         
         # Agregar parámetros solo si el tipo de supernova es SN II o Ibc
-        if tipo_supernova in ['SN II', 'SN Ibc']:
+        if tipo_supernova_seleccionado in ['SN II', 'SN Ibc']:
             resumen['Duración Meseta (r)'] = duracion_meseta
             resumen['Velocidad Caída (r)'] = velocidad_caida
             resumen['Magnitud Promedio Meseta (r)'] = mag_promedio_meseta
         
         resultados.append(resumen)
 
+    return pd.DataFrame(resultados)
+    
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
