@@ -622,20 +622,25 @@ columnas_numericas_filtrado = df_cluster_filtrado.select_dtypes(include=['number
 # Calcular el número de filas para el subplot
 num_rows = len(columnas_numericas_filtrado)
 
-# Crear subplots para cada parámetro numérico
+# Crear subplots para cada parámetro numérico, similar a la primera rutina de clustering
 fig_box = make_subplots(rows=num_rows, cols=1, subplot_titles=columnas_numericas_filtrado)
 
 # Agregar gráficos de caja para cada columna numérica, comparando los subclusters dentro del cluster seleccionado
 for i, column in enumerate(columnas_numericas_filtrado):
-    for subcluster in df_cluster_filtrado['subcluster'].unique():
+    for subcluster in range(num_subclusters):
         cluster_data = df_cluster_filtrado[df_cluster_filtrado['subcluster'] == subcluster][column]
-        box = go.Box(y=cluster_data, name=f'Subcluster {subcluster}')
+        box = go.Box(y=cluster_data, boxpoints='all', notched=True, name=f'Subcluster {subcluster}')
+        box.hovertemplate = 'id: %{text}'  # Agregar el valor de la columna 'SNID' al hovertemplate
+        box.text = df_cluster_filtrado[df_cluster_filtrado['subcluster'] == subcluster]['SNID']  # Asignar los valores de 'SNID' al texto
         fig_box.add_trace(box, row=i+1, col=1)
 
-# Mostrar los gráficos de caja
-fig_box.update_layout(height=400*num_rows, title_text=f'Comparación de Variables entre Subclusters dentro del Cluster {cluster_seleccionado}')
-st.plotly_chart(fig_box)
+# Ajustar el layout para que sea similar al gráfico original
+fig_box.update_layout(showlegend=False, height=400*num_rows, width=800,
+                      title_text=f'Comparación de Variables entre Subclusters dentro del Cluster {cluster_seleccionado}',
+                      margin=dict(t=100, b=100, l=50, r=50))
 
+# Mostrar los gráficos de caja
+st.plotly_chart(fig_box)
 # Mostrar el DataFrame con los subclusters asignados dentro del cluster seleccionado
 st.write(f"DataFrame con subclusters asignados dentro del Cluster {cluster_seleccionado}:")
 st.write(df_cluster_filtrado[['SNID', 'subcluster']])
