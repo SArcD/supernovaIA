@@ -316,7 +316,7 @@ def crear_dataframe_parametros(df_supernovas):
         duracion_meseta = 'NA'
         
         if tipo_supernova == 'SN Ia':
-            delta_m15 = calcular_delta_m15(df_supernova, filtro='g')
+            delta_m15 = calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='B')
         elif tipo_supernova in ['SN II', 'SN Ibc']:
             duracion_meseta = calcular_duracion_meseta(df_supernova, filtro='r')
         
@@ -334,7 +334,6 @@ def crear_dataframe_parametros(df_supernovas):
         resultados.append(resumen)
 
     return pd.DataFrame(resultados)
-
 # Crear y mostrar el DataFrame con los parámetros
 df_parametros = crear_dataframe_parametros(df_curvas_luz)
 st.write(df_parametros)
