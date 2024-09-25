@@ -471,13 +471,14 @@ st.plotly_chart(fig)
 
 #########################3
 
-# Mostrar los clusters generados
 st.write(f"Se generaron {num_clusters} clusters.")
 for cluster_id in range(num_clusters):
     st.write(f"Cluster {cluster_id}:")
 
     # Filtrar las supernovas por cluster
     df_supernovas_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]
+    
+    # Cambiar 'snid' por 'SNID'
     supernovas_filtradas_por_snid = df_supernovas_cluster['SNID'].unique()  # Cambiado a 'SNID'
 
     if len(supernovas_filtradas_por_snid) > 0:
@@ -501,6 +502,7 @@ for cluster_id in range(num_clusters):
             st.write(f"Las columnas necesarias para graficar no están presentes en los datos: {columnas_necesarias}")
     else:
         st.write(f"No se encontraron supernovas en el Cluster {cluster_id}.")
+
 
 
 
