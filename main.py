@@ -250,11 +250,18 @@ else:
 # --- Mostrar DataFrame con detalles de las supernovas filtradas ---
 
 # Función para calcular Δm15 para supernovas tipo Ia
-def calcular_delta_m15(df_supernova, filtro='g'):
-    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+
+# Función para calcular Δm15 para supernovas tipo Ia con la opción de filtro alternativo
+def calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i'):
+    df_filtro = df_supernova[df_supernova['filtro'] == filtro_preferido]
     
+    # Si no hay datos en el filtro preferido, usar el filtro alternativo
+    if df_filtro.empty and filtro_alternativo:
+        df_filtro = df_supernova[df_supernova['filtro'] == filtro_alternativo]
+    
+    # Si aún no hay datos, devolver NA
     if df_filtro.empty:
-        return 'NA'  # No hay datos en este filtro
+        return 'NA'  # No hay datos ni en el filtro preferido ni en el alternativo
     
     # Obtener el MJD del pico de luminosidad
     mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
@@ -270,7 +277,8 @@ def calcular_delta_m15(df_supernova, filtro='g'):
     else:
         return 'NA'
 
-# Función para calcular la duración de la meseta para supernovas tipo II o Ibc
+
+#a duración de la meseta para supernovas tipo II o Ibc
 def calcular_duracion_meseta(df_supernova, filtro='r'):
     df_filtro = df_supernova[df_supernova['filtro'] == filtro]
     
