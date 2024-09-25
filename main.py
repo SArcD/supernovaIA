@@ -632,7 +632,7 @@ for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
         x=df_tsne_cluster.loc[indices, 't-SNE1'],
         y=df_tsne_cluster.loc[indices, 't-SNE2'],
         mode='markers',
-        text=df_cluster_filtrado.loc[indices, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        text=df_cluster_filtrado.loc[indices, ['SNID', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
         hovertemplate="%{text}",
         marker=dict(size=7, line=dict(width=0.5, color='black')),
         name=f'Subcluster {subcluster_id}'
