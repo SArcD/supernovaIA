@@ -419,19 +419,26 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-# Función para seleccionar parámetros relevantes para el clustering
-def preparar_datos_para_clustering(df):
-    # Seleccionar las columnas relevantes para el clustering
-    columnas_clustering = [
-        'magnitud_pico_g', 'magnitud_pico_r', 'magnitud_pico_i',  # Magnitudes del pico por filtro
-        'Duración del evento', 'Δm15 (g)', 'Duración Meseta (r)',  # Duración del evento, Δm15, duración meseta
-        'Redshift'
-    ]
+# Función para seleccionar columnas relevantes según el tipo de supernova
+def seleccionar_columnas_relevantes(df, tipo_supernova):
+    # Selección básica de columnas comunes
+    columnas_comunes = ['magnitud_pico_g', 'magnitud_pico_r', 'magnitud_pico_i', 'Duración del evento', 'Redshift']
     
-    # Eliminar las filas con NA en estas columnas
-    df_filtrado = df[columnas_clustering].dropna()
+    # Agregar columnas específicas según el tipo de supernova
+    if tipo_supernova == 'SN Ia':
+        columnas_comunes.append('Δm15 (g)')
+    elif tipo_supernova in ['SN II', 'SN Ibc']:
+        columnas_comunes.append('Duración Meseta (r)')
+    
+    # Filtrar las columnas que realmente existan en el DataFrame
+    columnas_presentes = [col for col in columnas_comunes if col in df.columns]
+    
+    # Filtrar filas sin valores NaN en las columnas seleccionadas
+    df_filtrado = df[columnas_presentes].dropna()
     
     return df_filtrado
+
+
 
 # Función para aplicar el clustering jerárquico y agregar la columna de clusters
 def aplicar_clustering_jerarquico(df):
@@ -469,11 +476,14 @@ def visualizar_clusters(df, datos_normalizados):
     
     return fig_pca, fig_tsne
 
+# Seleccionar el tipo de supernova
+tipo_supernova = st.selectbox("Selecciona el tipo de supernova:", ["SN Ia", "SN II", "SN Ibc"])
+
 # Preparar los datos del DataFrame para el clustering
-df_parametros = preparar_datos_para_clustering(df_parametros)
+df_parametros_filtrados = seleccionar_columnas_relevantes(df_parametros, tipo_supernova)
 
 # Aplicar el clustering jerárquico
-df_parametros_clustering, datos_normalizados = aplicar_clustering_jerarquico(df_parametros)
+df_parametros_clustering, datos_normalizados = aplicar_clustering_jerarquico(df_parametros_filtrados)
 
 # Visualizar los resultados usando PCA y t-SNE
 fig_pca, fig_tsne = visualizar_clusters(df_parametros_clustering, datos_normalizados)
@@ -481,3 +491,6 @@ fig_pca, fig_tsne = visualizar_clusters(df_parametros_clustering, datos_normaliz
 # Mostrar los gráficos en Streamlit
 st.plotly_chart(fig_pca)
 st.plotly_chart(fig_tsne)
+
+# Mostrar el DataFrame final con los clusters asignados
+st.write(df_parametros_clustering)
