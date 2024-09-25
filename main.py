@@ -402,8 +402,12 @@ from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 import plotly.express as px
 
+# Corregir la llamada a la función `crear_dataframe_parametros`
 df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova)
 
+# Mostrar el DataFrame para verificar que tiene datos
+st.write("Verificando contenido de df_parametros:")
+st.write(df_parametros)
 # Eliminar filas con valores NaN
 df_supernovas_clustering = df_parametros.dropna()
 
