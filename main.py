@@ -408,23 +408,76 @@ st.write(df_parametros)
 
 
 
-# --- CLUSTERING JERÁRQUICO CON PCA ---
-st.write("Clustering de supernovas usando PCA")
+################### CLUSTERING 
 
-# Normalizar las características para el clustering
-scaler = StandardScaler()
-features = ['ra', 'decl', 'redshift']  # Parámetros que se usarán para el clustering
-X = scaler.fit_transform(df_curvas_luz[features])
 
-# Aplicar PCA para reducir las dimensiones a 2 componentes principales
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X)
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
-# Convertir el resultado de PCA en un DataFrame
-df_pca = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
-df_pca['snid'] = df_curvas_luz['snid'].values
-df_pca['parsnip_pred'] = df_curvas_luz['parsnip_pred'].values
+# Función para seleccionar parámetros relevantes para el clustering
+def preparar_datos_para_clustering(df):
+    # Seleccionar las columnas relevantes para el clustering
+    columnas_clustering = [
+        'magnitud_pico_g', 'magnitud_pico_r', 'magnitud_pico_i',  # Magnitudes del pico por filtro
+        'Duración del evento', 'Δm15 (g)', 'Duración Meseta (r)',  # Duración del evento, Δm15, duración meseta
+        'Redshift'
+    ]
+    
+    # Eliminar las filas con NA en estas columnas
+    df_filtrado = df[columnas_clustering].dropna()
+    
+    return df_filtrado
 
-# Graficar los resultados de PCA
-fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='parsnip_pred', hover_data=['snid'], title='Clustering de Supernovas con PCA')
+# Función para aplicar el clustering jerárquico y agregar la columna de clusters
+def aplicar_clustering_jerarquico(df):
+    # Normalizar los datos
+    scaler = StandardScaler()
+    datos_normalizados = scaler.fit_transform(df)
+    
+    # Aplicar clustering jerárquico
+    clustering = AgglomerativeClustering(n_clusters=3)  # Puedes ajustar el número de clusters
+    df['Cluster'] = clustering.fit_predict(datos_normalizados)
+    
+    return df, datos_normalizados
+
+# Función para aplicar PCA y t-SNE, y visualizar los clusters
+def visualizar_clusters(df, datos_normalizados):
+    # Aplicar PCA para reducir a 2 dimensiones
+    pca = PCA(n_components=2)
+    datos_pca = pca.fit_transform(datos_normalizados)
+    
+    # Aplicar t-SNE para visualización
+    tsne = TSNE(n_components=2, perplexity=30, random_state=42)
+    datos_tsne = tsne.fit_transform(datos_normalizados)
+    
+    # Crear DataFrame para PCA
+    df_pca = pd.DataFrame(datos_pca, columns=['PC1', 'PC2'])
+    df_pca['Cluster'] = df['Cluster']
+    
+    # Crear DataFrame para t-SNE
+    df_tsne = pd.DataFrame(datos_tsne, columns=['t-SNE1', 't-SNE2'])
+    df_tsne['Cluster'] = df['Cluster']
+    
+    # Visualización usando Plotly
+    fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='Cluster', title='Clusters visualizados con PCA')
+    fig_tsne = px.scatter(df_tsne, x='t-SNE1', y='t-SNE2', color='Cluster', title='Clusters visualizados con t-SNE')
+    
+    return fig_pca, fig_tsne
+
+# Preparar los datos del DataFrame para el clustering
+df_parametros = preparar_datos_para_clustering(df_parametros)
+
+# Aplicar el clustering jerárquico
+df_parametros_clustering, datos_normalizados = aplicar_clustering_jerarquico(df_parametros)
+
+# Visualizar los resultados usando PCA y t-SNE
+fig_pca, fig_tsne = visualizar_clusters(df_parametros_clustering, datos_normalizados)
+
+# Mostrar los gráficos en Streamlit
 st.plotly_chart(fig_pca)
+st.plotly_chart(fig_tsne)
