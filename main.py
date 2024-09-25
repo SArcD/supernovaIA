@@ -416,7 +416,7 @@ df_supernovas_clustering = df_parametros.dropna()
 # Seleccionar las columnas numéricas para el clustering
 #columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
 columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
-st.write(columas_numericas)
+st.write(columnas_numericas)
 
 
 # Normalizar los datos
