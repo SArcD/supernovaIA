@@ -438,7 +438,7 @@ columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 # Clustering jerárquico
 num_clusters = st.number_input('Selecciona el número de clusters', min_value=2, max_value=10, value=5, step=1)
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
-df_parametros['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
+df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
 # Función para graficar la curva de luz de una supernova específica con información en el título
 def graficar_curva_de_luz(df_supernova):
