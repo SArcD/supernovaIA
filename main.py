@@ -615,7 +615,7 @@ fig_pca_subcluster = px.scatter(df_pca_cluster, x='PC1', y='PC2', color='subclus
 #st.plotly_chart(fig_pca_subcluster)
 
 # Aplicar t-SNE para visualizar los subclusters dentro del cluster seleccionado
-tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=200, random_state=42)
+tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=200, random_state=42)
 tsne_data_cluster = tsne.fit_transform(columnas_numericas_scaled_filtrado)
 
 # Crear un DataFrame con los resultados de t-SNE y los subclusters
