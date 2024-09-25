@@ -528,7 +528,6 @@ st.plotly_chart(fig)
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 import streamlit as st
 
 # Seleccionar las columnas numéricas, excluyendo 'RA' y 'Dec'
@@ -549,12 +548,8 @@ if len(variables_seleccionadas) > 0:
     # Seleccionar la columna de clusters como la variable objetivo
     y = df_supernovas_clustering['cluster']
     
-    # Normalizar los datos
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    
     # Dividir el conjunto de datos en conjunto de entrenamiento y prueba
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
     # Entrenar un árbol de decisión ajustando los hiperparámetros
     clf = DecisionTreeClassifier(random_state=42, max_depth=5, min_samples_split=5, min_samples_leaf=2)
