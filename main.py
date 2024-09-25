@@ -404,49 +404,6 @@ from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 import plotly.express as px
 
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import AgglomerativeClustering
-import streamlit as st
-
-# Suponemos que df_supernovas_clustering ya está generado tras el clustering
-df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova)
-
-# Mostrar el DataFrame para verificar que tiene datos
-st.write("Verificando contenido de df_parametros:")
-st.write(df_parametros)
-
-# Eliminar filas con valores NaN
-df_supernovas_clustering = df_parametros.dropna()
-
-# Seleccionar las columnas numéricas para el clustering
-columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
-
-# Normalizar los datos
-scaler = StandardScaler()
-columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
-
-# Clustering jerárquico
-num_clusters = st.number_input('Selecciona el número de clusters', min_value=2, max_value=10, value=5, step=1)
-clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
-df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
-
-# Recolectar nombres de supernovas en cada cluster y almacenarlos
-nombres_supernovas_clusters = {}
-
-for cluster_id in range(num_clusters):
-    # Filtrar las supernovas por cluster
-    supernovas_en_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]['SNID'].tolist()
-    
-    # Almacenar en el diccionario con el nombre 'cluster_X'
-    nombres_supernovas_clusters[f'cluster_{cluster_id}'] = supernovas_en_cluster
-
-# Mostrar los nombres de las supernovas en cada cluster
-for cluster_id, supernovas in nombres_supernovas_clusters.items():
-    st.write(f"Supernovas en {cluster_id}:")
-    st.write(supernovas)
 
 
 ########
