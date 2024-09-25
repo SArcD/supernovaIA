@@ -1,12 +1,10 @@
 import requests
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
-from scipy.cluster.hierarchy import dendrogram, linkage
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+import plotly.express as px
 
 # Función para obtener la lista de archivos de un repositorio en GitHub usando la API
 @st.cache_data
@@ -153,17 +151,10 @@ def graficar_curva_de_luz(df_supernova):
     ra = df_supernova['ra'].iloc[0]
     decl = df_supernova['decl'].iloc[0]
     redshift = df_supernova['redshift'].iloc[0]
-    observaciones_antes_pico = df_supernova['observaciones_antes_pico'].iloc[0]
-    observaciones_pico = df_supernova['observaciones_pico'].iloc[0]
-    observaciones_despues_pico = df_supernova['observaciones_despues_pico'].iloc[0]
 
     # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
     fig.update_layout(
-        title=(
-            f'Curva de luz de {snid} ({tipo_supernova})\n'
-            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift} - '
-            f'Antes del pico: {observaciones_antes_pico}, Pico: {observaciones_pico}, Después del pico: {observaciones_despues_pico}'
-        ),
+        title=(f'Curva de luz de {snid} ({tipo_supernova}) - RA: {ra}, Dec: {decl}, Redshift: {redshift}'),
         xaxis_title='Días relativos al pico de luminosidad',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
@@ -172,56 +163,19 @@ def graficar_curva_de_luz(df_supernova):
 
     return fig
 
-# Seleccionar supernova
-snid_seleccionado = st.selectbox("Selecciona una supernova para ver su curva de luz:", df_curvas_luz['snid'].unique())
+# --- NUEVA FUNCIÓN: Deslizador horizontal para mostrar las curvas de luz ---
+
+# Crear el deslizador para seleccionar un índice de supernova
+indices_supernovas = list(df_curvas_luz['snid'].unique())
+index_seleccionado = st.slider('Selecciona el índice de la supernova:', min_value=0, max_value=len(indices_supernovas)-1, step=1)
+snid_seleccionado = indices_supernovas[index_seleccionado]
 
 # Filtrar los datos de la supernova seleccionada y mostrar la curva de luz
 df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
 st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
 
-# --- NUEVA FUNCIONALIDAD ---
-
-# Caja de texto para especificar el tipo de supernova
-tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-
-# Entrada para el número mínimo de observaciones
-min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
-
-# Función para filtrar supernovas por tipo y número mínimo de observaciones
-def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
-    # Filtrar por tipo de supernova (PARSNIP_PRED)
-    df_filtrado = df[df['parsnip_pred'] == tipo_supernova]
-
-    # Agrupar por SNID y contar el número de observaciones por supernova
-    supernovas_con_observaciones = df_filtrado.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-    
-    return supernovas_con_observaciones
-
-# Filtrar las supernovas por el tipo y número mínimo de observaciones
-df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supernova, min_observaciones)
-
-# Mostrar los resultados si hay supernovas que cumplan con los criterios
-if not df_supernovas_filtradas.empty:
-    supernovas_filtradas_por_snid = df_supernovas_filtradas['snid'].unique()
-    st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
-    
-    # Graficar todas las supernovas que cumplan con los criterios
-    for snid in supernovas_filtradas_por_snid:
-        st.write(f"Graficando la supernova: {snid}")
-        df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
-        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
-
-else:
-    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
-
 
 # --- Mostrar DataFrame con detalles de las supernovas filtradas ---
-import pandas as pd
-import streamlit as st
-import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-import plotly.express as px
 
 # Función para calcular Δm15 para supernovas tipo Ia
 def calcular_delta_m15(df_supernova, filtro='g'):
@@ -309,33 +263,17 @@ def crear_dataframe_parametros(df_supernovas):
 
     return pd.DataFrame(resultados)
 
-# Filtrar supernovas por tipo y número mínimo de observaciones
-#tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-#min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
-df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
-df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-
 # Crear y mostrar el DataFrame con los parámetros
-df_parametros = crear_dataframe_parametros(df_supernovas_filtradas)
+df_parametros = crear_dataframe_parametros(df_curvas_luz)
 st.write(df_parametros)
 
 # --- CLUSTERING JERÁRQUICO CON PCA ---
 st.write("Clustering de supernovas usando PCA")
 
-# Entrada para el tipo de supernova
-tipo_supernova = st.text_input("Ingresar el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-
-# Entrada para el número mínimo de observaciones
-min_observaciones = st.number_input("El número mínimo de observaciones:", min_value=1, value=5)
-
-# Filtrar supernovas por tipo y número mínimo de observaciones
-df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
-df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-
 # Normalizar las características para el clustering
 scaler = StandardScaler()
 features = ['ra', 'decl', 'redshift']  # Parámetros que se usarán para el clustering
-X = scaler.fit_transform(df_supernovas_filtradas[features])
+X = scaler.fit_transform(df_curvas_luz[features])
 
 # Aplicar PCA para reducir las dimensiones a 2 componentes principales
 pca = PCA(n_components=2)
@@ -343,8 +281,8 @@ X_pca = pca.fit_transform(X)
 
 # Convertir el resultado de PCA en un DataFrame
 df_pca = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
-df_pca['snid'] = df_supernovas_filtradas['snid'].values
-df_pca['parsnip_pred'] = df_supernovas_filtradas['parsnip_pred'].values
+df_pca['snid'] = df_curvas_luz['snid'].values
+df_pca['parsnip_pred'] = df_curvas_luz['parsnip_pred'].values
 
 # Graficar los resultados de PCA
 fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='parsnip_pred', hover_data=['snid'], title='Clustering de Supernovas con PCA')
