@@ -603,20 +603,15 @@ num_subclusters = st.number_input('Selecciona el número de subclusters dentro d
 clustering_subclusters = AgglomerativeClustering(n_clusters=num_subclusters, linkage='ward')
 df_cluster_filtrado['subcluster'] = clustering_subclusters.fit_predict(columnas_numericas_scaled_filtrado)
 
-# Aplicar PCA para visualizar los subclusters
-pca = PCA(n_components=2)
+# --- Aplicar PCA y luego t-SNE ---
+
+# Aplicar PCA primero para reducir a más de 2 componentes (por ejemplo, 20 componentes)
+pca = PCA(n_components=20)
 pca_data_cluster = pca.fit_transform(columnas_numericas_scaled_filtrado)
-df_pca_cluster = pd.DataFrame(pca_data_cluster, columns=['PC1', 'PC2'])
-df_pca_cluster['subcluster'] = df_cluster_filtrado['subcluster']
 
-# Visualización de los subclusters dentro del cluster seleccionado usando PCA
-fig_pca_subcluster = px.scatter(df_pca_cluster, x='PC1', y='PC2', color='subcluster',
-                                title=f'Subclusters dentro del Cluster {cluster_seleccionado} usando Clustering Aglomerativo')
-#st.plotly_chart(fig_pca_subcluster)
-
-# Aplicar t-SNE para visualizar los subclusters dentro del cluster seleccionado
-tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=200, random_state=42)
-tsne_data_cluster = tsne.fit_transform(columnas_numericas_scaled_filtrado)
+# Ahora aplicar t-SNE sobre el resultado de PCA
+tsne = TSNE(n_components=2, perplexity=30, early_exaggeration=10, learning_rate=200, random_state=42)
+tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 
 # Crear un DataFrame con los resultados de t-SNE y los subclusters
 df_tsne_cluster = pd.DataFrame(tsne_data_cluster, columns=['t-SNE1', 't-SNE2'])
@@ -632,8 +627,8 @@ for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
         x=df_tsne_cluster.loc[indices, 't-SNE1'],
         y=df_tsne_cluster.loc[indices, 't-SNE2'],
         mode='markers',
-        #text=df_cluster_filtrado.loc[indices, ['SNID', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
-        #hovertemplate="%{text}",
+        text=df_cluster_filtrado.loc[indices, ['SNID', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        hovertemplate="%{text}",
         marker=dict(size=7, line=dict(width=0.5, color='black')),
         name=f'Subcluster {subcluster_id}'
     )
@@ -641,7 +636,7 @@ for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
 
 # Configurar el diseño del gráfico de t-SNE
 fig_tsne_subcluster.update_layout(
-    title=f'Subclusters dentro del Cluster {cluster_seleccionado} usando t-SNE',
+    title=f'Subclusters dentro del Cluster {cluster_seleccionado} usando t-SNE después de PCA',
     xaxis_title='t-SNE1',
     yaxis_title='t-SNE2',
     showlegend=True,
@@ -651,8 +646,6 @@ fig_tsne_subcluster.update_layout(
 
 # Mostrar el gráfico de t-SNE en Streamlit
 st.plotly_chart(fig_tsne_subcluster)
-
-
 
 
 # Crear gráficos de caja para comparar las variables entre subclusters dentro del cluster seleccionado
