@@ -456,25 +456,28 @@ fig_tsne = go.Figure()
 for cluster_id in np.unique(df_tsne['cluster']):
     indices = np.where(df_tsne['cluster'] == cluster_id)
 
-    # Calcular la densidad de kernel
-    kde = gaussian_kde(tsne_data[indices].T)
-    x_range = np.linspace(np.min(tsne_data[:, 0])-5, np.max(tsne_data[:, 0])+5, 100)
-    y_range = np.linspace(np.min(tsne_data[:, 1])-5, np.max(tsne_data[:, 1])+5, 100)
-    xx, yy = np.meshgrid(x_range, y_range)
-    positions = np.vstack([xx.ravel(), yy.ravel()])
-    zz = np.reshape(kde(positions).T, xx.shape)
+    try:
+        # Calcular la densidad de kernel
+        kde = gaussian_kde(tsne_data[indices].T)
+        x_range = np.linspace(np.min(tsne_data[:, 0])-5, np.max(tsne_data[:, 0])+5, 100)
+        y_range = np.linspace(np.min(tsne_data[:, 1])-5, np.max(tsne_data[:, 1])+5, 100)
+        xx, yy = np.meshgrid(x_range, y_range)
+        positions = np.vstack([xx.ravel(), yy.ravel()])
+        zz = np.reshape(kde(positions).T, xx.shape)
 
-    # Añadir curvas de densidad de kernel
-    contour_trace = go.Contour(
-        x=x_range,
-        y=y_range,
-        z=zz,
-        colorscale='Blues',
-        opacity=0.3,
-        showscale=False,
-        name=f'Contour {cluster_id}'
-    )
-    fig_tsne.add_trace(contour_trace)
+        # Añadir curvas de densidad de kernel
+        contour_trace = go.Contour(
+            x=x_range,
+            y=y_range,
+            z=zz,
+            colorscale='Blues',
+            opacity=0.3,
+            showscale=False,
+            name=f'Contour {cluster_id}'
+        )
+        fig_tsne.add_trace(contour_trace)
+    except np.linalg.LinAlgError:
+        st.write(f"Error al calcular gaussian_kde para el cluster {cluster_id}. Pocos datos o matriz mal condicionada.")
 
     # Añadir los puntos del scatter
     scatter_trace = go.Scatter(
@@ -500,8 +503,3 @@ fig_tsne.update_layout(
 
 # Mostrar el gráfico de t-SNE
 st.plotly_chart(fig_tsne)
-
-# Mostrar el DataFrame final con el cluster asignado
-st.write(df_supernovas_clustering)
-
-
