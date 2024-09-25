@@ -170,14 +170,16 @@ tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 # Crear el gráfico de t-SNE
 fig_tsne_subcluster = go.Figure()
 
-for cluster_id in np.unique(df_supernovas_clustering['cluster']):
-    indices = df_supernovas_clustering['cluster'] == cluster_id
+for subcluster_id in np.unique(df_supernovas_clustering['cluster']):
+    indices = df_supernovas_clustering['cluster'] == subcluster_id
+
     scatter_trace = go.Scatter(
-        x=tsne_data_cluster[indices, 0], y=tsne_data_cluster[indices, 1],
+        x=tsne_data_cluster[indices, 0],
+        y=tsne_data_cluster[indices, 1],
         mode='markers',
         text=df_supernovas_clustering.loc[indices, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
         marker=dict(size=7, line=dict(width=0.5, color='black')),
-        name=f'Cluster {cluster_id}'
+        name=f'Cluster {subcluster_id}'
     )
     fig_tsne_subcluster.add_trace(scatter_trace)
 
