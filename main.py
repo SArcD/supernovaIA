@@ -216,71 +216,12 @@ else:
 
 
 # --- Mostrar DataFrame con detalles de las supernovas filtradas ---
-
-# Función para obtener el DataFrame de resumen
-def obtener_resumen_supernovas(df_supernovas):
-    # Lista para almacenar los resúmenes por supernova
-    resumen_supernovas = []
-
-    # Agrupar por supernova
-    for snid, grupo in df_supernovas.groupby('snid'):
-        # Extraer datos generales de la supernova
-        redshift = grupo['redshift'].iloc[0]
-        ra = grupo['ra'].iloc[0]
-        decl = grupo['decl'].iloc[0]
-        
-        # Calcular la duración del evento (desde antes del pico hasta la última medición)
-        mjd_pico = grupo.loc[grupo['mag'].idxmin(), 'mjd']
-        duracion_evento = grupo['mjd'].max() - mjd_pico
-
-        # Calcular la magnitud del pico para cada filtro
-        magnitudes_pico = {}
-        for filtro in grupo['filtro'].unique():
-            grupo_filtro = grupo[grupo['filtro'] == filtro]
-            magnitud_pico_filtro = grupo_filtro['mag'].min() if not grupo_filtro['mag'].isnull().all() else 'NA'
-            magnitudes_pico[f'filtro_{filtro}'] = magnitud_pico_filtro
-
-        # Agregar los datos al resumen
-        resumen_supernovas.append({
-            'snid': snid,
-            **magnitudes_pico,  # Añadir las magnitudes del pico por filtro
-            'duracion_evento': duracion_evento,
-            'redshift': redshift,
-            'ra': ra,
-            'decl': decl
-        })
-
-    # Convertir a DataFrame
-    df_resumen = pd.DataFrame(resumen_supernovas)
-
-    return df_resumen
-
-# Filtrar las supernovas por el tipo y número mínimo de observaciones
-df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supernova, min_observaciones)
-
-# Mostrar los resultados si hay supernovas que cumplan con los criterios
-if not df_supernovas_filtradas.empty:
-    supernovas_filtradas_por_snid = df_supernovas_filtradas['snid'].unique()
-    st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
-    
-    # Graficar todas las supernovas que cumplan con los criterios
-    for snid in supernovas_filtradas_por_snid:
-        st.write(f"Graficando la supernova: {snid}")
-        df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid]
-        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
-    
-    # Obtener y mostrar el resumen de las supernovas en un DataFrame
-    df_resumen_supernovas = obtener_resumen_supernovas(df_supernovas_filtradas)
-    st.write("Resumen de las supernovas filtradas:")
-    st.dataframe(df_resumen_supernovas)
-
-else:
-    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
-
-
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import plotly.express as px
 
 # Función para calcular Δm15 para supernovas tipo Ia
 def calcular_delta_m15(df_supernova, filtro='g'):
@@ -333,12 +274,14 @@ def crear_dataframe_parametros(df_supernovas):
         decl = df_supernova['decl'].iloc[0]
         redshift = df_supernova['redshift'].iloc[0]
         
+        # Dependiendo del tipo de supernova, calculamos Δm15 o la duración de la meseta
         if tipo_supernova == 'SN Ia':
             delta_m15 = calcular_delta_m15(df_supernova, filtro='g')
             resultados.append({
                 'SNID': snid,
                 'Tipo': tipo_supernova,
                 'Δm15 (g)': delta_m15,
+                'Duración Meseta (r)': 'NA',  # No aplica para supernovas tipo Ia
                 'RA': ra,
                 'Dec': decl,
                 'Redshift': redshift
@@ -348,6 +291,7 @@ def crear_dataframe_parametros(df_supernovas):
             resultados.append({
                 'SNID': snid,
                 'Tipo': tipo_supernova,
+                'Δm15 (g)': 'NA',  # No aplica para supernovas tipo II o Ibc
                 'Duración Meseta (r)': duracion_meseta,
                 'RA': ra,
                 'Dec': decl,
@@ -357,15 +301,14 @@ def crear_dataframe_parametros(df_supernovas):
     return pd.DataFrame(resultados)
 
 # Filtrar supernovas por tipo y número mínimo de observaciones
-#tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-#min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
+tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
 df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
 df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
 
 # Mostrar DataFrame con los resultados
 df_parametros = crear_dataframe_parametros(df_supernovas_filtradas)
 st.write(df_parametros)
-
 
 # --- CLUSTERING JERÁRQUICO CON PCA ---
 st.write("Clustering de supernovas usando PCA")
