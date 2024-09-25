@@ -522,3 +522,43 @@ fig.update_layout(
 
 # Mostrar el gráfico de t-SNE en Streamlit
 st.plotly_chart(fig)
+
+###########
+
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import streamlit as st
+
+# Seleccionar las columnas numéricas, excluyendo 'RA' y 'Dec'
+columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
+
+# Seleccionar la columna de clusters como la variable objetivo
+y = df_supernovas_clustering['cluster']
+
+# Normalizar los datos
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(columnas_numericas)
+
+# Dividir el conjunto de datos en conjunto de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
+
+# Entrenar un árbol de decisión
+clf = DecisionTreeClassifier(random_state=42)
+clf.fit(X_train, y_train)
+
+# Mostrar las reglas de decisión aprendidas por el árbol
+tree_rules = export_text(clf, feature_names=columnas_numericas.columns.tolist())
+st.text("Reglas de decisión del árbol:")
+st.text(tree_rules)
+
+# Evaluar el modelo
+score = clf.score(X_test, y_test)
+st.write(f"Precisión del modelo en el conjunto de prueba: {score:.2f}")
+
+# Mostrar las reglas de decisión en Streamlit
+st.write("Reglas de decisión del árbol de decisión:")
+st.text(tree_rules)
+
+
