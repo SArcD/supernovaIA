@@ -402,7 +402,7 @@ from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 import plotly.express as px
 
-df_parametros = crear_dataframe_parametros(df_supernovas, tipo_supernova)
+df_parametros = crear_dataframe_parametros(df_supernova, tipo_supernova)
 
 # Eliminar filas con valores NaN
 df_supernovas_clustering = df_parametros.dropna()
