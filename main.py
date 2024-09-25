@@ -411,111 +411,47 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import streamlit as st
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import AgglomerativeClustering
-from plotly.subplots import make_subplots
+import streamlit as st
 
-# Función para guardar las curvas de luz como un DataFrame
-def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico):
-    for i in range(len(mjd)):
-        curva_vector = {
-            'nombre_archivo': nombre_archivo,
-            'snid': snid,
-            'mjd': mjd[i],
-            'filtro': filtros[i],
-            'mag': mag[i],
-            'magerr': magerr[i],
-            'flx': flx[i],
-            'flxerr': flxerr[i],
-            'parsnip_pred': parsnip_pred,
-            'superraenn_pred': superraenn_pred,
-            'ra': ra,
-            'decl': decl,
-            'redshift': redshift,
-            'mwebv': mwebv,
-            'observaciones_antes_pico': observaciones_antes_pico,
-            'observaciones_pico': observaciones_pico,
-            'observaciones_despues_pico': observaciones_despues_pico
-        }
-        lista_vectores.append(curva_vector)
+# Suponemos que df_supernovas_clustering ya está generado tras el clustering
+df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova)
 
-# Simular que ya tenemos las curvas de luz procesadas y almacenadas en `df_curvas_luz`
-lista_vectores = []
-# Llamar a tu función para guardar los vectores de cada supernova (esto debe ocurrir durante la descarga de datos)
-# procesar_supernova(...) # Aquí es donde llenarías lista_vectores al procesar los archivos de supernovas
+# Mostrar el DataFrame para verificar que tiene datos
+st.write("Verificando contenido de df_parametros:")
+st.write(df_parametros)
 
-df_curvas_luz = pd.DataFrame(lista_vectores)
+# Eliminar filas con valores NaN
+df_supernovas_clustering = df_parametros.dropna()
 
-# Simular que ya tenemos los clusters creados
-# Seleccionar las columnas numéricas y normalizarlas
-columnas_numericas = df_curvas_luz.select_dtypes(include=['number'])
+# Seleccionar las columnas numéricas para el clustering
+columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
+
+# Normalizar los datos
 scaler = StandardScaler()
 columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
-# Realizar clustering jerárquico
+# Clustering jerárquico
 num_clusters = st.number_input('Selecciona el número de clusters', min_value=2, max_value=10, value=5, step=1)
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
-df_curvas_luz['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
+df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
-# Crear un diccionario que almacena los SNIDs por cluster
+# Recolectar nombres de supernovas en cada cluster y almacenarlos
 nombres_supernovas_clusters = {}
+
 for cluster_id in range(num_clusters):
-    nombres_supernovas_clusters[cluster_id] = df_curvas_luz[df_curvas_luz['cluster'] == cluster_id]['snid'].unique()
+    # Filtrar las supernovas por cluster
+    supernovas_en_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]['SNID'].tolist()
+    
+    # Almacenar en el diccionario con el nombre 'cluster_X'
+    nombres_supernovas_clusters[f'cluster_{cluster_id}'] = supernovas_en_cluster
 
-# Función para graficar la curva de luz de una supernova específica con información en el título
-def graficar_curva_de_luz(df_supernova):
-    fig = go.Figure()
+# Mostrar los nombres de las supernovas en cada cluster
+for cluster_id, supernovas in nombres_supernovas_clusters.items():
+    st.write(f"Supernovas en {cluster_id}:")
+    st.write(supernovas)
 
-    # Calcular días relativos al pico de luminosidad
-    mjd_pico = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']
-    df_supernova['dias_relativos'] = df_supernova['mjd'] - mjd_pico
-
-    for filtro in df_supernova['filtro'].unique():
-        df_filtro = df_supernova[df_supernova['filtro'] == filtro]
-        fig.add_trace(go.Scatter(
-            x=df_filtro['dias_relativos'],  # Usar días relativos al pico como eje X
-            y=df_filtro['mag'],
-            mode='lines+markers',
-            name=filtro
-        ))
-
-    # Extraer la información relevante para el título
-    snid = df_supernova['snid'].iloc[0]
-    ra = df_supernova['ra'].iloc[0]
-    decl = df_supernova['decl'].iloc[0]
-    redshift = df_supernova['redshift'].iloc[0]
-
-    # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
-    fig.update_layout(
-        title=(f'Curva de luz de {snid}\nRA: {ra}°, Dec: {decl}°, Redshift: {redshift}'),
-        xaxis_title='Días relativos al pico de luminosidad',
-        yaxis_title='Magnitud',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
-        showlegend=True
-    )
-
-    return fig
-
-# Filtrar supernovas por cluster seleccionado
-cluster_seleccionado = st.selectbox("Selecciona el cluster para ver sus supernovas:", list(nombres_supernovas_clusters.keys()))
-supernovas_en_cluster = nombres_supernovas_clusters[cluster_seleccionado]
-
-if len(supernovas_en_cluster) > 0:
-    # Deslizador para seleccionar una supernova dentro del cluster
-    index_seleccionado = st.slider(f'Selecciona una supernova en el Cluster {cluster_seleccionado}:',
-                                   min_value=0, max_value=len(supernovas_en_cluster)-1, step=1)
-
-    # Obtener el SNID de la supernova seleccionada
-    snid_seleccionado = supernovas_en_cluster[index_seleccionado]
-
-    # Filtrar los datos de esa supernova en particular
-    df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
-
-    # Graficar la curva de luz de la supernova seleccionada
-    st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
-else:
-    st.write(f"No hay supernovas en el Cluster {cluster_seleccionado}.")
 
 
 #######3
