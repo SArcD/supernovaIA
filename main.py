@@ -169,30 +169,34 @@ elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
 
 ##cronologia
 
-# Crear el gráfico de posiciones con un deslizador de MJD y un botón para controlar la velocidad
-def crear_grafico_posiciones_rectangulares_con_deslizador():
-    # Filtrar los tipos de supernovas (asegúrate de que se incluyan todos)
-    df_filtrado = df_curvas_luz[df_curvas_luz['parsnip_pred'].isin(['SN Ia', 'SN Ib', 'SN II'])]
+import pandas as pd
+import plotly.express as px
+import streamlit as st
 
-    # Crear la gráfica usando los tipos de supernovas seleccionados
-    fig = px.scatter(df_filtrado,
+# Cargar el archivo CSV que contiene las coordenadas RA, Dec, y otros datos
+df_curvas_luz = pd.read_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv')
+
+# Obtener el rango de MJD en el dataset para configurar el deslizador
+min_mjd = df_curvas_luz['mjd'].min()
+max_mjd = df_curvas_luz['mjd'].max()
+
+# Crear el gráfico de posiciones con un deslizador de MJD
+def crear_grafico_posiciones_rectangulares_con_deslizador():
+    fig = px.scatter(df_curvas_luz,
                      x='ra',
                      y='decl',
                      animation_frame='mjd',  # Crear la animación basada en MJD
                      animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
                      size_max=10,
-                     range_x=[df_filtrado['ra'].min() - 10, df_filtrado['ra'].max() + 10],
-                     range_y=[df_filtrado['decl'].min() - 10, df_filtrado['decl'].max() + 10],
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED para mostrar todos los tipos
+                     range_x=[df_curvas_luz['ra'].min() - 10, df_curvas_luz['ra'].max() + 10],
+                     range_y=[df_curvas_luz['decl'].min() - 10, df_curvas_luz['decl'].max() + 10],
+                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
                      hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
                      title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)', 'parsnip_pred': 'Tipo de Supernova'}
+                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
                      )
 
     # Configurar el deslizador de MJD
-    min_mjd = df_filtrado['mjd'].min()
-    max_mjd = df_filtrado['mjd'].max()
-    
     fig.update_layout(
         sliders=[{
             "currentvalue": {"prefix": "MJD: "},
@@ -206,44 +210,9 @@ def crear_grafico_posiciones_rectangulares_con_deslizador():
         yaxis_title="Declinación (Dec)"
     )
 
-    # Añadir botones para controlar la velocidad de la animación
-    fig.update_layout(
-        updatemenus=[{
-            "buttons": [
-                {
-                    "args": [None, {"frame": {"duration": 1000, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "Velocidad Normal",
-                    "method": "animate"
-                },
-                {
-                    "args": [None, {"frame": {"duration": 500, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "2x Velocidad",
-                    "method": "animate"
-                },
-                {
-                    "args": [None, {"frame": {"duration": 250, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "4x Velocidad",
-                    "method": "animate"
-                },
-                {
-                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "8x Velocidad",
-                    "method": "animate"
-                }
-            ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": True,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
-        }]
-    )
-
     return fig
 
+# Mostrar el gráfico de posiciones en Streamlit con el deslizador
 st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
 
 
