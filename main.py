@@ -348,8 +348,8 @@ def crear_dataframe_parametros(df_supernovas, tipo_supernova_seleccionado):
     return pd.DataFrame(resultados)
 
 # Seleccionar supernova
-tipo_supernova_seleccionado = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
+#tipo_supernova_seleccionado = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+#min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
 
 # Filtrar supernovas por tipo y número mínimo de observaciones
 df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova_seleccionado]
