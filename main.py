@@ -425,6 +425,46 @@ num_clusters = 3
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
 df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+# Obtener los nombres de las columnas numéricas, excluyendo la columna de clusters 'cluster'
+columnas_numericas = df_supernovas_clustering.select_dtypes(include='number').drop(columns=['cluster']).columns
+
+# Calcular el número de filas y columnas del panel (una columna por parámetro)
+num_rows = len(columnas_numericas)
+num_cols = 1  # Una columna para cada parámetro
+
+# Ajustar el espacio vertical y la altura de los subplots
+subplot_height = 400  # Ajusta la altura según tu preferencia
+vertical_spacing = 0.01  # Ajusta el espacio vertical según tu preferencia
+
+# Crear subplots para cada parámetro
+fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=columnas_numericas, vertical_spacing=vertical_spacing)
+
+# Crear un gráfico de caja para cada parámetro y comparar los clusters
+for i, column in enumerate(columnas_numericas):
+    # Obtener los datos de cada cluster para el parámetro actual
+    cluster_data = [df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
+
+    # Agregar el gráfico de caja al subplot correspondiente
+    for j in range(num_clusters):
+        box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
+        box.hovertemplate = 'id: %{text}'  # Agregar el valor de la columna 'SNID' al hovertemplate
+        box.text = df_supernovas_clustering[df_supernovas_clustering['cluster'] == j]['SNID']  # Asignar los valores de 'SNID' al texto
+        fig.add_trace(box, row=i+1, col=1)
+
+# Actualizar el diseño y mostrar el panel de gráficos
+fig.update_layout(showlegend=False, height=subplot_height*num_rows, width=800,
+                  title_text='Comparación de Clusters - Gráfico de Caja',
+                  margin=dict(t=100, b=100, l=50, r=50))  # Ajustar los márgenes del layout
+
+# Mostrar la gráfica de caja en Streamlit
+st.plotly_chart(fig)
+
+
+
 # Aplicar PCA
 pca = PCA(n_components=2)
 pca_data = pca.fit_transform(columnas_numericas_scaled)
