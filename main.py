@@ -122,6 +122,9 @@ df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
 df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
 st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
 
+
+#########3
+
 # Crear el gráfico de posiciones de supernovas
 def crear_grafico_posiciones():
     fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
@@ -129,7 +132,44 @@ def crear_grafico_posiciones():
     return fig
 
 # Mostrar el gráfico de posiciones en Streamlit
-st.plotly_chart(crear_grafico_posiciones())
+#st.plotly_chart(crear_grafico_posiciones())
+
+def crear_grafico_posiciones_rectangulares():
+    fig = px.scatter(df_curvas_luz,
+                     x='ra',
+                     y='decl',
+                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
+                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, redshift y SUPERRAENN al pasar el cursor
+                     title='Posición de las Supernovas en el Cielo (RA vs Dec)',
+                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
+                     #color_discrete_sequence=px.colors.sequential.Viridis  # Usar la paleta de colores Viridis
+                     )
+    return fig
+
+# Crear el gráfico de posiciones Declinación vs Redshift
+def crear_grafico_decl_vs_redshift():
+    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='decl', color='parsnip_pred', 
+                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas (Dec) vs Redshift')
+    return fig
+
+
+
+
+# Mostrar un selector para que el usuario elija el tipo de gráfico
+opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Ascensión Recta vs Corrimiento al Rojo", "Declinación vs Corrimiento al Rojo", "Declinación vs Ascensión Recta"])
+
+# Mostrar el gráfico según la opción seleccionada
+if opcion_grafico == "Ascensión Recta vs Corrimiento al Rojo":
+    st.plotly_chart(crear_grafico_posiciones())
+elif opcion_grafico == "Declinación vs Ascensión Recta" :
+    st.plotly_chart(crear_grafico_posiciones_rectangulares())
+elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
+    st.plotly_chart(crear_grafico_decl_vs_redshift())
+
+
+
+#######
+
 
 # Función para calcular días relativos al pico de luminosidad
 def calcular_dias_relativos(df_supernova):
