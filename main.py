@@ -249,8 +249,6 @@ else:
 
 # --- Mostrar DataFrame con detalles de las supernovas filtradas ---
 
-# Función para calcular Δm15 para supernovas tipo Ia
-
 # Función para calcular Δm15 para supernovas tipo Ia con la opción de filtro alternativo
 def calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i'):
     df_filtro = df_supernova[df_supernova['filtro'] == filtro_preferido]
@@ -277,8 +275,7 @@ def calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i
     else:
         return 'NA'
 
-
-#a duración de la meseta para supernovas tipo II o Ibc
+# Función para calcular la duración de la meseta para supernovas tipo II o Ibc
 def calcular_duracion_meseta(df_supernova, filtro='r'):
     df_filtro = df_supernova[df_supernova['filtro'] == filtro]
     
@@ -288,7 +285,7 @@ def calcular_duracion_meseta(df_supernova, filtro='r'):
     # Encontrar el MJD del pico
     mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
     
-    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más
+    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más (adaptación de la meseta)
     df_meseta = df_filtro[df_filtro['mag'] <= (df_filtro['mag'].min() + 1)]
     
     if not df_meseta.empty:
@@ -298,7 +295,7 @@ def calcular_duracion_meseta(df_supernova, filtro='r'):
         return 'NA'
 
 # Función para calcular los parámetros adicionales y crear el DataFrame
-def crear_dataframe_parametros(df_supernovas):
+def crear_dataframe_parametros(df_supernovas, tipo_supernova_seleccionado):
     resultados = []
     
     for snid in df_supernovas['snid'].unique():
@@ -324,7 +321,7 @@ def crear_dataframe_parametros(df_supernovas):
         duracion_meseta = 'NA'
         
         if tipo_supernova == 'SN Ia':
-            delta_m15 = calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='B')
+            delta_m15 = calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i')
         elif tipo_supernova in ['SN II', 'SN Ibc']:
             duracion_meseta = calcular_duracion_meseta(df_supernova, filtro='r')
         
@@ -333,18 +330,36 @@ def crear_dataframe_parametros(df_supernovas):
             'SNID': snid,
             **magnitudes_pico,  # Añadir magnitudes de pico por filtro
             'Duración del evento': duracion_evento,
-            'Δm15 (g)': delta_m15,
-            'Duración Meseta (r)': duracion_meseta,
             'RA': ra,
             'Dec': decl,
             'Redshift': redshift
         }
+        
+        # Agregar Δm15 solo si el tipo de supernova es Ia
+        if tipo_supernova_seleccionado == 'SN Ia':
+            resumen['Δm15 (g/i)'] = delta_m15
+        
+        # Agregar duración de la meseta solo si el tipo de supernova es SN II o Ibc
+        if tipo_supernova_seleccionado in ['SN II', 'SN Ibc']:
+            resumen['Duración Meseta (r)'] = duracion_meseta
+        
         resultados.append(resumen)
 
     return pd.DataFrame(resultados)
+
+# Seleccionar supernova
+tipo_supernova_seleccionado = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
+min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
+
+# Filtrar supernovas por tipo y número mínimo de observaciones
+df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova_seleccionado]
+df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
+
 # Crear y mostrar el DataFrame con los parámetros
-df_parametros = crear_dataframe_parametros(df_curvas_luz)
+df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova_seleccionado)
 st.write(df_parametros)
+
+
 
 # --- CLUSTERING JERÁRQUICO CON PCA ---
 st.write("Clustering de supernovas usando PCA")
