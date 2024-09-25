@@ -612,7 +612,48 @@ df_pca_cluster['subcluster'] = df_cluster_filtrado['subcluster']
 # Visualización de los subclusters dentro del cluster seleccionado usando PCA
 fig_pca_subcluster = px.scatter(df_pca_cluster, x='PC1', y='PC2', color='subcluster',
                                 title=f'Subclusters dentro del Cluster {cluster_seleccionado} usando Clustering Aglomerativo')
-st.plotly_chart(fig_pca_subcluster)
+#st.plotly_chart(fig_pca_subcluster)
+
+# Aplicar t-SNE para visualizar los subclusters dentro del cluster seleccionado
+tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=200, random_state=42)
+tsne_data_cluster = tsne.fit_transform(columnas_numericas_scaled_filtrado)
+
+# Crear un DataFrame con los resultados de t-SNE y los subclusters
+df_tsne_cluster = pd.DataFrame(tsne_data_cluster, columns=['t-SNE1', 't-SNE2'])
+df_tsne_cluster['subcluster'] = df_cluster_filtrado['subcluster']
+
+# Visualización de los subclusters dentro del cluster seleccionado usando t-SNE
+fig_tsne_subcluster = go.Figure()
+
+for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
+    indices = df_tsne_cluster['subcluster'] == subcluster_id
+    
+    scatter_trace = go.Scatter(
+        x=df_tsne_cluster.loc[indices, 't-SNE1'],
+        y=df_tsne_cluster.loc[indices, 't-SNE2'],
+        mode='markers',
+        text=df_cluster_filtrado.loc[indices, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        hovertemplate="%{text}",
+        marker=dict(size=7, line=dict(width=0.5, color='black')),
+        name=f'Subcluster {subcluster_id}'
+    )
+    fig_tsne_subcluster.add_trace(scatter_trace)
+
+# Configurar el diseño del gráfico de t-SNE
+fig_tsne_subcluster.update_layout(
+    title=f'Subclusters dentro del Cluster {cluster_seleccionado} usando t-SNE',
+    xaxis_title='t-SNE1',
+    yaxis_title='t-SNE2',
+    showlegend=True,
+    legend_title='Subclusters',
+    width=1084  # Ajustar el ancho del gráfico
+)
+
+# Mostrar el gráfico de t-SNE en Streamlit
+st.plotly_chart(fig_tsne_subcluster)
+
+
+
 
 # Crear gráficos de caja para comparar las variables entre subclusters dentro del cluster seleccionado
 
