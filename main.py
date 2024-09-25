@@ -471,46 +471,6 @@ st.plotly_chart(fig)
 
 #########################3
 
-
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import streamlit as st
-
-# Función para graficar la curva de luz de una supernova específica
-def graficar_curva_de_luz(df_supernova):
-    fig = go.Figure()
-
-    for filtro in df_supernova['filtro'].unique():
-        df_filtro = df_supernova[df_supernova['filtro'] == filtro]
-        fig.add_trace(go.Scatter(
-            x=df_filtro['mjd'],  # Usar MJD como eje X
-            y=df_filtro['mag'],
-            mode='lines+markers',
-            name=filtro
-        ))
-
-    # Extraer la información relevante para el título
-    snid = df_supernova['SNID'].iloc[0]
-    tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
-    ra = df_supernova['ra'].iloc[0]
-    decl = df_supernova['decl'].iloc[0]
-    redshift = df_supernova['redshift'].iloc[0]
-
-    # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
-    fig.update_layout(
-        title=(
-            f'Curva de luz de {snid} ({tipo_supernova})\n'
-            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
-        ),
-        xaxis_title='MJD (Días Julianos Modificados)',
-        yaxis_title='Magnitud',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
-        showlegend=True
-    )
-
-    return fig
-
 # Mostrar los clusters generados
 st.write(f"Se generaron {num_clusters} clusters.")
 for cluster_id in range(num_clusters):
@@ -518,7 +478,7 @@ for cluster_id in range(num_clusters):
 
     # Filtrar las supernovas por cluster
     df_supernovas_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]
-    supernovas_filtradas_por_snid = df_supernovas_cluster['SNID'].unique()
+    supernovas_filtradas_por_snid = df_supernovas_cluster['snid'].unique()
 
     if len(supernovas_filtradas_por_snid) > 0:
         st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas en el Cluster {cluster_id}.")
@@ -529,15 +489,21 @@ for cluster_id in range(num_clusters):
         snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
         
         # Filtrar la supernova seleccionada
-        df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['SNID'] == snid_seleccionado]
+        df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['snid'] == snid_seleccionado]
         
-        # Graficar la curva de luz de la supernova seleccionada
-        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
-
+        # Verificar que las columnas necesarias existen antes de graficar
+        columnas_necesarias = ['filtro', 'mjd', 'mag']
+        if all(col in df_supernova_seleccionada.columns for col in columnas_necesarias):
+            # Graficar la curva de luz de la supernova seleccionada
+            fig = graficar_curva_de_luz(df_supernova_seleccionada)
+            st.plotly_chart(fig)
+        else:
+            st.write(f"Las columnas necesarias para graficar no están presentes en los datos: {columnas_necesarias}")
     else:
         st.write(f"No se encontraron supernovas en el Cluster {cluster_id}.")
 
 
+##########3
 
 # Aplicar PCA
 pca = PCA(n_components=2)
