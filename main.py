@@ -392,37 +392,15 @@ def crear_dataframe_parametros(df_supernovas, tipo_supernova_seleccionado):
         
         resultados.append(resumen)
 
-    return pd.DataFrame(resultados)
-
-# Seleccionar supernova
-#tipo_supernova_seleccionado = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-#min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
-
-# Filtrar supernovas por tipo y número mínimo de observaciones
-df_supernovas_filtradas = df_curvas_luz[df_curvas_luz['parsnip_pred'] == tipo_supernova]
-df_supernovas_filtradas = df_supernovas_filtradas.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
-
-# Crear y mostrar el DataFrame con los parámetros
-df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova)
-st.write(df_parametros)
-
-
-
-################### CLUSTERING 
-
-
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
-from scipy.spatial.distance import pdist
-from scipy.cluster.hierarchy import linkage
-import plotly.graph_objects as go
-import plotly.express as px
 from scipy.stats import gaussian_kde
+import plotly.express as px
 
 # Eliminar filas con valores NaN
 df_supernovas_clustering = df_parametros.dropna()
@@ -434,14 +412,8 @@ columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
 scaler = StandardScaler()
 columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
-# Calcular la matriz de distancias
-dist_matrix = pdist(columnas_numericas_scaled, metric='euclidean')
-
-# Definir el número de clusters
-num_clusters = 5  # Ajusta según tus necesidades
-
 # Clustering jerárquico
-Z = linkage(dist_matrix, method='ward')
+num_clusters = 5
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
 df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
@@ -455,15 +427,19 @@ df_pca['cluster'] = df_supernovas_clustering['cluster']
 fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualizados con PCA')
 st.plotly_chart(fig_pca)
 
-# Ajustar perplexity para t-SNE basado en el número de muestras
+# Ajustar perplexity para t-SNE
 n_samples = len(df_supernovas_clustering)
-perplexity_value = min(30, n_samples // 3)  # Ajustar perplexity al número de muestras
+perplexity_value = min(30, n_samples // 3)
 
 # Aplicar t-SNE
 tsne = TSNE(n_components=2, perplexity=perplexity_value, early_exaggeration=10, learning_rate=5)
 tsne_data = tsne.fit_transform(pca_data)
 df_tsne = pd.DataFrame(tsne_data, columns=['t-SNE1', 't-SNE2'])
 df_tsne['cluster'] = df_supernovas_clustering['cluster']
+
+# Resetear los índices para asegurar que estén alineados
+df_supernovas_clustering = df_supernovas_clustering.reset_index(drop=True)
+df_tsne = df_tsne.reset_index(drop=True)
 
 # Visualización de clusters con t-SNE y curvas de densidad de kernel
 fig_tsne = go.Figure()
@@ -497,7 +473,7 @@ for cluster_id in np.unique(df_tsne['cluster']):
         x=tsne_data[indices, 0].flatten(),
         y=tsne_data[indices, 1].flatten(),
         mode='markers',
-        text=df_supernovas_clustering.loc[df_tsne['cluster'] == cluster_id, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        text=df_supernovas_clustering.loc[indices[0], ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
         hovertemplate="%{text}",
         marker=dict(size=7, line=dict(width=0.5, color='black')),
         name=f'Cluster {cluster_id}'
@@ -519,4 +495,5 @@ st.plotly_chart(fig_tsne)
 
 # Mostrar el DataFrame final con el cluster asignado
 st.write(df_supernovas_clustering)
+
 
