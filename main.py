@@ -491,7 +491,7 @@ def graficar_curva_de_luz(df_supernova):
         ))
 
     # Extraer la información relevante para el título
-    snid = df_supernova['snid'].iloc[0]
+    snid = df_supernova['SNID'].iloc[0]
     tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
     ra = df_supernova['ra'].iloc[0]
     decl = df_supernova['decl'].iloc[0]
@@ -518,7 +518,7 @@ for cluster_id in range(num_clusters):
 
     # Filtrar las supernovas por cluster
     df_supernovas_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]
-    supernovas_filtradas_por_snid = df_supernovas_cluster['snid'].unique()
+    supernovas_filtradas_por_snid = df_supernovas_cluster['SNID'].unique()
 
     if len(supernovas_filtradas_por_snid) > 0:
         st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas en el Cluster {cluster_id}.")
@@ -529,7 +529,7 @@ for cluster_id in range(num_clusters):
         snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
         
         # Filtrar la supernova seleccionada
-        df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['snid'] == snid_seleccionado]
+        df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['SNID'] == snid_seleccionado]
         
         # Graficar la curva de luz de la supernova seleccionada
         st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
