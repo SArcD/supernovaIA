@@ -421,7 +421,7 @@ scaler = StandardScaler()
 columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
 
 # Clustering jerárquico
-num_clusters = 3
+num_clusters = 2
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
 df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
 
