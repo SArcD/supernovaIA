@@ -478,7 +478,7 @@ for cluster_id in range(num_clusters):
 
     # Filtrar las supernovas por cluster
     df_supernovas_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]
-    supernovas_filtradas_por_snid = df_supernovas_cluster['snid'].unique()
+    supernovas_filtradas_por_snid = df_supernovas_cluster['SNID'].unique()  # Cambiado a 'SNID'
 
     if len(supernovas_filtradas_por_snid) > 0:
         st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas en el Cluster {cluster_id}.")
@@ -489,7 +489,7 @@ for cluster_id in range(num_clusters):
         snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
         
         # Filtrar la supernova seleccionada
-        df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['snid'] == snid_seleccionado]
+        df_supernova_seleccionada = df_supernovas_cluster[df_supernovas_cluster['SNID'] == snid_seleccionado]  # Cambiado a 'SNID'
         
         # Verificar que las columnas necesarias existen antes de graficar
         columnas_necesarias = ['filtro', 'mjd', 'mag']
@@ -501,6 +501,7 @@ for cluster_id in range(num_clusters):
             st.write(f"Las columnas necesarias para graficar no están presentes en los datos: {columnas_necesarias}")
     else:
         st.write(f"No se encontraron supernovas en el Cluster {cluster_id}.")
+
 
 
 ##########3
