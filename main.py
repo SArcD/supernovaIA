@@ -169,51 +169,51 @@ elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
 
 ##cronologia
 
-import pandas as pd
-import plotly.express as px
-import streamlit as st
+#import pandas as pd
+#import plotly.express as px
+#import streamlit as st
 
 # Cargar el archivo CSV que contiene las coordenadas RA, Dec, y otros datos
-df_curvas_luz = pd.read_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv')
+#df_curvas_luz = pd.read_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv')
 
 # Obtener el rango de MJD en el dataset para configurar el deslizador
-min_mjd = df_curvas_luz['mjd'].min()
-max_mjd = df_curvas_luz['mjd'].max()
+#min_mjd = df_curvas_luz['mjd'].min()
+#max_mjd = df_curvas_luz['mjd'].max()
 
 # Crear el gráfico de posiciones con un deslizador de MJD
-def crear_grafico_posiciones_rectangulares_con_deslizador():
-    fig = px.scatter(df_curvas_luz,
-                     x='ra',
-                     y='decl',
-                     animation_frame='mjd',  # Crear la animación basada en MJD
-                     animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
-                     size_max=10,
-                     range_x=[df_curvas_luz['ra'].min() - 10, df_curvas_luz['ra'].max() + 10],
-                     range_y=[df_curvas_luz['decl'].min() - 10, df_curvas_luz['decl'].max() + 10],
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
-                     title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
-                     )
+#def crear_grafico_posiciones_rectangulares_con_deslizador():
+#    fig = px.scatter(df_curvas_luz,
+#                     x='ra',
+#                     y='decl',
+#                     animation_frame='mjd',  # Crear la animación basada en MJD
+#                     animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
+#                     size_max=10,
+#                     range_x=[df_curvas_luz['ra'].min() - 10, df_curvas_luz['ra'].max() + 10],
+#                     range_y=[df_curvas_luz['decl'].min() - 10, df_curvas_luz['decl'].max() + 10],
+#                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
+#                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
+#                     title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
+#                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
+#                     )
 
-    # Configurar el deslizador de MJD
-    fig.update_layout(
-        sliders=[{
-            "currentvalue": {"prefix": "MJD: "},
-            "pad": {"b": 10},
-            "steps": [{"args": [[f"{frame}"], {"frame": {"duration": 500, "redraw": True},
-                                               "mode": "immediate", "fromcurrent": True}],
-                       "label": f"{frame}", "method": "animate"}
-                      for frame in range(int(min_mjd), int(max_mjd) + 1)]
-        }],
-        xaxis_title="Ascensión Recta (RA)",
-        yaxis_title="Declinación (Dec)"
-    )
+#    # Configurar el deslizador de MJD
+#    fig.update_layout(
+#        sliders=[{
+#            "currentvalue": {"prefix": "MJD: "},
+#            "pad": {"b": 10},
+#            "steps": [{"args": [[f"{frame}"], {"frame": {"duration": 500, "redraw": True},
+#                                               "mode": "immediate", "fromcurrent": True}],
+#                       "label": f"{frame}", "method": "animate"}
+#                      for frame in range(int(min_mjd), int(max_mjd) + 1)]
+#        }],
+#        xaxis_title="Ascensión Recta (RA)",
+#        yaxis_title="Declinación (Dec)"
+#    )
 
-    return fig
+#    return fig
 
 # Mostrar el gráfico de posiciones en Streamlit con el deslizador
-st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
+#st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
 
 
 # Función para graficar la curva de luz de una supernova específica con información en el título
