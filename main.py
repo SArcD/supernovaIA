@@ -634,15 +634,12 @@ else:
 
 import pandas as pd
 import numpy as np
-import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from sklearn.cluster import AgglomerativeClustering
 
-# Primero, seleccionamos un cluster específico para el análisis de subclusters
+# Seleccionar el cluster
 cluster_seleccionado = st.selectbox(
     "Selecciona el cluster para analizar subclusters:",
     df_supernovas_clustering['cluster'].unique()
@@ -667,12 +664,12 @@ df_cluster_filtrado['subcluster'] = clustering_subclusters.fit_predict(columnas_
 
 # --- Aplicar PCA y luego t-SNE ---
 
-# Aplicar PCA primero para reducir a más de 2 componentes (por ejemplo, 20 componentes)
-pca = PCA(n_components=2)
+# Aplicar PCA para reducir la dimensionalidad a 50 componentes, por ejemplo
+pca = PCA(n_components=50)  # Aumentar el número de componentes de PCA para mantener más información
 pca_data_cluster = pca.fit_transform(columnas_numericas_scaled_filtrado)
 
-# Ahora aplicar t-SNE sobre el resultado de PCA
-tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=200, random_state=42)
+# Ahora aplicar t-SNE sobre el resultado de PCA con ajustes en los hiperparámetros
+tsne = TSNE(n_components=2, perplexity=30, early_exaggeration=12, learning_rate=150, random_state=42)
 tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 
 # Crear un DataFrame con los resultados de t-SNE y los subclusters
@@ -689,8 +686,6 @@ for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
         x=df_tsne_cluster.loc[indices, 't-SNE1'],
         y=df_tsne_cluster.loc[indices, 't-SNE2'],
         mode='markers',
-        #text=df_cluster_filtrado.loc[indices, ['SNID', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
-        #hovertemplate="%{text}",
         marker=dict(size=7, line=dict(width=0.5, color='black')),
         name=f'Subcluster {subcluster_id}'
     )
