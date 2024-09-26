@@ -570,7 +570,7 @@ fig.update_layout(
 )
 
 # Show the t-SNE plot in Streamlit
-#st.plotly_chart(fig)
+st.plotly_chart(fig)
 
 ###########
 
@@ -686,7 +686,7 @@ fig_tsne_subcluster.update_layout(
 )
 
 # Show the t-SNE plot in Streamlit
-st.plotly_chart(fig_tsne_subcluster)
+#st.plotly_chart(fig_tsne_subcluster)
 
 
 # Create box plots to compare variables between subclusters within the selected cluster
