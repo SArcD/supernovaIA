@@ -669,7 +669,7 @@ pca = PCA(n_components=2)  # Aumentar el número de componentes de PCA para mant
 pca_data_cluster = pca.fit_transform(columnas_numericas_scaled_filtrado)
 
 # Ahora aplicar t-SNE sobre el resultado de PCA con ajustes en los hiperparámetros
-tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
+tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=5)
 tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 
 # Crear un DataFrame con los resultados de t-SNE y los subclusters
