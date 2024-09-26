@@ -124,6 +124,42 @@ st.write("Data saved in 'light_curves_with_parsnip_and_ra_decl_redshift_snid.csv
 
 #########3
 
+import streamlit as st
+
+import streamlit as st
+
+# Title
+st.title("Young Supernova Experiment (YSE) Database")
+
+# Justified text using unsafe_allow_html
+st.write("""
+    <div style='text-align: justify;'>
+    The <strong>Young Supernova Experiment (YSE)</strong> focuses on discovering and studying supernovae in their early stages. This allows scientists to understand the explosions of massive stars and other transient phenomena.
+    
+    <h3>Key Features:</h3>
+    <ul>
+    <li><strong>Early Detection</strong>: Captures supernovae within days or hours of explosion.</li>
+    <li><strong>Light Curves</strong>: Provides detailed light curves across multiple wavelengths, helping track the evolution of each supernova.</li>
+    <li><strong>Multi-band Photometry</strong>: Includes data in different filters (g, r, i, z) for comprehensive spectral analysis.</li>
+    <li><strong>Classification</strong>: Supernovae are categorized by type, including Type Ia (thermonuclear), Type II, and Type Ibc (collapsing massive stars).</li>
+    <li><strong>Redshift & Astrometry</strong>: Contains redshift info to estimate distances and precise coordinates (RA, Dec).</li>
+    <li><strong>Milky Way Extinction</strong>: Accounts for interstellar dust that affects the observed brightness.</li>
+    <li><strong>Spectroscopy</strong>: Select supernovae also include spectroscopic data for detailed chemical composition analysis.</li>
+    </ul>
+
+    <h3>Applications:</h3>
+    <ul>
+    <li><strong>Cosmology</strong>: Type Ia supernovae are vital for measuring cosmic distances and studying the universe’s expansion.</li>
+    <li><strong>Stellar Evolution</strong>: Helps refine models of how stars end their lives.</li>
+    <li><strong>Transient Events</strong>: Aids in understanding short-lived cosmic phenomena beyond supernovae.</li>
+    </ul>
+
+    This database is publicly available and supports cutting-edge research on the life cycle of stars and cosmic structures.
+    </div>
+    """, unsafe_allow_html=True)
+
+
+
 # Function to create a scatter plot for supernova positions
 def create_position_plot():
     fig = px.scatter_polar(df_light_curves, r='redshift', theta='ra', color='parsnip_pred', 
