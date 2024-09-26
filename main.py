@@ -665,7 +665,7 @@ df_cluster_filtrado['subcluster'] = clustering_subclusters.fit_predict(columnas_
 # --- Aplicar PCA y luego t-SNE ---
 
 # Aplicar PCA para reducir la dimensionalidad a 50 componentes, por ejemplo
-pca = PCA(n_components=50)  # Aumentar el número de componentes de PCA para mantener más información
+pca = PCA(n_components=4)  # Aumentar el número de componentes de PCA para mantener más información
 pca_data_cluster = pca.fit_transform(columnas_numericas_scaled_filtrado)
 
 # Ahora aplicar t-SNE sobre el resultado de PCA con ajustes en los hiperparámetros
