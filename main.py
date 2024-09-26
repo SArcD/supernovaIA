@@ -570,7 +570,7 @@ fig.update_layout(
 )
 
 # Show the t-SNE plot in Streamlit
-st.plotly_chart(fig)
+#st.plotly_chart(fig)
 
 ###########
 
