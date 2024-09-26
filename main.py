@@ -6,81 +6,81 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-# Función para obtener la lista de archivos de un repositorio en GitHub usando la API
+# Function to obtain the list of files from a GitHub repository using the API
 @st.cache_data
-def obtener_lista_archivos_github(repo_url, subdirectorio=""):
-    api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectorio}"
+def get_github_file_list(repo_url, subdirectory=""):
+    api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectory}"
     response = requests.get(api_url)
     if response.status_code == 200:
-        archivos = [archivo['download_url'] for archivo in response.json() if archivo['name'].endswith(".snana.dat")]
-        return archivos
+        files = [file['download_url'] for file in response.json() if file['name'].endswith(".snana.dat")]
+        return files
     else:
         return []
 
-# Función para descargar y leer el contenido de un archivo desde GitHub
+# Function to download and read the content of a file from GitHub
 @st.cache_data
-def descargar_archivo_desde_github(url):
+def download_file_from_github(url):
     response = requests.get(url)
     if response.status_code == 200:
         return response.text
     else:
         return None
 
-# Función para intentar convertir un valor a float de forma segura
-def convertir_a_float(valor, valor_default=None):
+# Function to safely convert a value to float
+def convert_to_float(value, default_value=None):
     try:
-        return float(valor)
+        return float(value)
     except ValueError:
-        return valor_default
+        return default_value
 
-# Función para leer el archivo descargado y extraer los datos relevantes
-def leer_archivo_supernova_contenido(contenido):
-    # Variables y listas para almacenar los datos
-    mjd, mag, magerr, flx, flxerr, filtros = [], [], [], [], [], []
+# Function to read the downloaded supernova file and extract relevant data
+def read_supernova_file_content(content):
+    # Variables and lists to store data
+    mjd, mag, magerr, flx, flxerr, filters = [], [], [], [], [], []
     snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = None, None, None, None, None, None, None
-    observaciones_antes_pico, observaciones_pico, observaciones_despues_pico = None, None, None
+    observations_before_peak, peak_observations, observations_after_peak = None, None, None
 
-    # Procesar línea por línea el contenido del archivo
-    for linea in contenido.splitlines():
-        if linea.startswith("SNID:"):
-            snid = linea.split()[1]
-        elif linea.startswith("RA:"):
-            ra = convertir_a_float(linea.split()[1])
-        elif linea.startswith("DECL:"):
-            decl = convertir_a_float(linea.split()[1])
-        elif linea.startswith("REDSHIFT_FINAL:"):
-            redshift = convertir_a_float(linea.split()[1])
-        elif linea.startswith("MWEBV:"):
-            mwebv = convertir_a_float(linea.split()[1])
-        elif linea.startswith("NOBS_BEFORE_PEAK:"):
-            observaciones_antes_pico = convertir_a_float(linea.split()[1])
-        elif linea.startswith("NOBS_TO_PEAK:"):
-            observaciones_pico = convertir_a_float(linea.split()[1])
-        elif linea.startswith("NOBS_AFTER_PEAK:"):
-            observaciones_despues_pico = convertir_a_float(linea.split()[1])
-        elif linea.startswith("PARSNIP_PRED:"):
-            parsnip_pred = ' '.join(linea.split()[1:])
-        elif linea.startswith("SUPERRAENN_PRED:"):
-            superraenn_pred = ' '.join(linea.split()[1:])
-        elif linea.startswith("OBS:"):  # Extraer observaciones
-            datos = linea.split()
-            mjd.append(convertir_a_float(datos[1]))  # MJD (Modified Julian Date)
-            filtros.append(datos[2])     # Filtro (g, r, i, z, etc.)
-            flx.append(convertir_a_float(datos[4]))  # Flujo (FLUXCAL)
-            flxerr.append(convertir_a_float(datos[5]))  # Error en el flujo (FLUXCALERR)
-            mag.append(convertir_a_float(datos[6]))  # Magnitud (MAG)
-            magerr.append(convertir_a_float(datos[7]))  # Error en la magnitud (MAGERR)
+    # Process the file line by line
+    for line in content.splitlines():
+        if line.startswith("SNID:"):
+            snid = line.split()[1]
+        elif line.startswith("RA:"):
+            ra = convert_to_float(line.split()[1])
+        elif line.startswith("DECL:"):
+            decl = convert_to_float(line.split()[1])
+        elif line.startswith("REDSHIFT_FINAL:"):
+            redshift = convert_to_float(line.split()[1])
+        elif line.startswith("MWEBV:"):
+            mwebv = convert_to_float(line.split()[1])
+        elif line.startswith("NOBS_BEFORE_PEAK:"):
+            observations_before_peak = convert_to_float(line.split()[1])
+        elif line.startswith("NOBS_TO_PEAK:"):
+            peak_observations = convert_to_float(line.split()[1])
+        elif line.startswith("NOBS_AFTER_PEAK:"):
+            observations_after_peak = convert_to_float(line.split()[1])
+        elif line.startswith("PARSNIP_PRED:"):
+            parsnip_pred = ' '.join(line.split()[1:])
+        elif line.startswith("SUPERRAENN_PRED:"):
+            superraenn_pred = ' '.join(line.split()[1:])
+        elif line.startswith("OBS:"):  # Extract observations
+            data = line.split()
+            mjd.append(convert_to_float(data[1]))  # MJD (Modified Julian Date)
+            filters.append(data[2])     # Filter (g, r, i, z, etc.)
+            flx.append(convert_to_float(data[4]))  # Flux (FLUXCAL)
+            flxerr.append(convert_to_float(data[5]))  # Flux error (FLUXCALERR)
+            mag.append(convert_to_float(data[6]))  # Magnitude (MAG)
+            magerr.append(convert_to_float(data[7]))  # Magnitude error (MAGERR)
 
-    return mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico
+    return mjd, mag, magerr, flx, flxerr, filters, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observations_before_peak, peak_observations, observations_after_peak
 
-# Función para guardar las curvas de luz como un DataFrame
-def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico):
+# Function to store light curves as a DataFrame
+def save_light_curves_as_vectors(vector_list, file_name, mjd, mag, magerr, flx, flxerr, filters, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observations_before_peak, peak_observations, observations_after_peak):
     for i in range(len(mjd)):
-        curva_vector = {
-            'nombre_archivo': nombre_archivo,
+        curve_vector = {
+            'file_name': file_name,
             'snid': snid,
             'mjd': mjd[i],
-            'filtro': filtros[i],
+            'filter': filters[i],
             'mag': mag[i],
             'magerr': magerr[i],
             'flx': flx[i],
@@ -91,308 +91,300 @@ def guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, mager
             'decl': decl,
             'redshift': redshift,
             'mwebv': mwebv,
-            'observaciones_antes_pico': observaciones_antes_pico,
-            'observaciones_pico': observaciones_pico,
-            'observaciones_despues_pico': observaciones_despues_pico
+            'observations_before_peak': observations_before_peak,
+            'peak_observations': peak_observations,
+            'observations_after_peak': observations_after_peak
         }
-        lista_vectores.append(curva_vector)
+        vector_list.append(curve_vector)
 
-# Descargar y procesar los archivos de supernovas desde GitHub
+# Download and process supernova files from GitHub
 @st.cache_data
-def descargar_y_procesar_supernovas(repo_url, subdirectorio=""):
-    lista_archivos = obtener_lista_archivos_github(repo_url, subdirectorio)
-    lista_vectores = []
+def download_and_process_supernovas(repo_url, subdirectory=""):
+    file_list = get_github_file_list(repo_url, subdirectory)
+    vector_list = []
 
-    for archivo_url in lista_archivos:
-        nombre_archivo = archivo_url.split("/")[-1]
-        contenido = descargar_archivo_desde_github(archivo_url)
+    for file_url in file_list:
+        file_name = file_url.split("/")[-1]
+        content = download_file_from_github(file_url)
 
-        if contenido:
-            mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico = leer_archivo_supernova_contenido(contenido)
-            guardar_curvas_como_vectores(lista_vectores, nombre_archivo, mjd, mag, magerr, flx, flxerr, filtros, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observaciones_antes_pico, observaciones_pico, observaciones_despues_pico)
+        if content:
+            mjd, mag, magerr, flx, flxerr, filters, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observations_before_peak, peak_observations, observations_after_peak = read_supernova_file_content(content)
+            save_light_curves_as_vectors(vector_list, file_name, mjd, mag, magerr, flx, flxerr, filters, snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv, observations_before_peak, peak_observations, observations_after_peak)
 
-    return pd.DataFrame(lista_vectores)
+    return pd.DataFrame(vector_list)
 
-# Cargar los datos de supernovas desde GitHub
-st.write("Descargando y procesando archivos de supernovas...")
+# Load supernova data from GitHub
+st.write("Downloading and processing supernova files...")
 repo_url = "https://github.com/SArcD/supernovaIA"
-df_curvas_luz = descargar_y_procesar_supernovas(repo_url)
+df_light_curves = download_and_process_supernovas(repo_url)
 
-# Guardar los datos en un archivo CSV
-df_curvas_luz.to_csv('curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv', index=False)
-st.write("Datos guardados en 'curvas_de_luz_con_parsnip_y_ra_decl_redshift_snid.csv'.")
-
+# Save data to a CSV file
+df_light_curves.to_csv('light_curves_with_parsnip_and_ra_decl_redshift_snid.csv', index=False)
+st.write("Data saved in 'light_curves_with_parsnip_and_ra_decl_redshift_snid.csv'.")
 
 #########3
 
-# Crear el gráfico de posiciones de supernovas
-def crear_grafico_posiciones():
-    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='ra', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas')
+# Function to create a scatter plot for supernova positions
+def create_position_plot():
+    fig = px.scatter_polar(df_light_curves, r='redshift', theta='ra', color='parsnip_pred', 
+                           hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae')
     return fig
 
-# Mostrar el gráfico de posiciones en Streamlit
-#st.plotly_chart(crear_grafico_posiciones())
+# Show the position plot in Streamlit
+#st.plotly_chart(create_position_plot())
 
-def crear_grafico_posiciones_rectangulares():
-    fig = px.scatter(df_curvas_luz,
+def create_rectangular_position_plot():
+    fig = px.scatter(df_light_curves,
                      x='ra',
                      y='decl',
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, redshift y SUPERRAENN al pasar el cursor
-                     title='Posición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
-                     #color_discrete_sequence=px.colors.sequential.Viridis  # Usar la paleta de colores Viridis
+                     color='parsnip_pred',  # Color by PARSNIP_PRED
+                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Show SNID, redshift, and SUPERRAENN on hover
+                     title='Position of Supernovae in the Sky (RA vs Dec)',
+                     labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
+                     #color_discrete_sequence=px.colors.sequential.Viridis  # Use the Viridis color palette
                      )
     return fig
 
-# Crear el gráfico de posiciones Declinación vs Redshift
-def crear_grafico_decl_vs_redshift():
-    fig = px.scatter_polar(df_curvas_luz, r='redshift', theta='decl', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Posiciones Polares de Supernovas (Dec) vs Redshift')
+# Create a Declination vs Redshift plot
+def create_decl_vs_redshift_plot():
+    fig = px.scatter_polar(df_light_curves, r='redshift', theta='decl', color='parsnip_pred', 
+                           hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae (Dec) vs Redshift')
     return fig
 
+# Let the user select the type of plot to display
+plot_option = st.selectbox("Select the type of plot to display:", ["Right Ascension vs Redshift", "Declination vs Redshift", "Declination vs Right Ascension"])
 
-
-
-# Mostrar un selector para que el usuario elija el tipo de gráfico
-opcion_grafico = st.selectbox("Selecciona el tipo de gráfico para mostrar:", ["Ascensión Recta vs Corrimiento al Rojo", "Declinación vs Corrimiento al Rojo", "Declinación vs Ascensión Recta"])
-
-# Mostrar el gráfico según la opción seleccionada
-if opcion_grafico == "Ascensión Recta vs Corrimiento al Rojo":
-    st.plotly_chart(crear_grafico_posiciones())
-elif opcion_grafico == "Declinación vs Ascensión Recta" :
-    st.plotly_chart(crear_grafico_posiciones_rectangulares())
-elif opcion_grafico == "Declinación vs Corrimiento al Rojo" :
-    st.plotly_chart(crear_grafico_decl_vs_redshift())
-
-
+# Show the plot based on the selected option
+if plot_option == "Right Ascension vs Redshift":
+    st.plotly_chart(create_position_plot())
+elif plot_option == "Declination vs Right Ascension" :
+    st.plotly_chart(create_rectangular_position_plot())
+elif plot_option == "Declination vs Redshift" :
+    st.plotly_chart(create_decl_vs_redshift_plot())
 
 #######
 
-
-# Función para calcular días relativos al pico de luminosidad
-def calcular_dias_relativos(df_supernova):
-    # Calcular el MJD del pico de luminosidad (mínima magnitud)
-    mjd_pico = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']
-    df_supernova['dias_relativos'] = df_supernova['mjd'] - mjd_pico
+# Function to calculate days relative to the luminosity peak
+def calculate_days_relative_to_peak(df_supernova):
+    # Calculate the MJD of the luminosity peak (minimum magnitude)
+    mjd_peak = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']
+    df_supernova['days_relative'] = df_supernova['mjd'] - mjd_peak
     return df_supernova
 
-# Función para graficar la curva de luz de una supernova específica con información en el título
-def graficar_curva_de_luz(df_supernova):
+# Function to plot the light curve of a specific supernova with relevant information in the title
+def plot_light_curve(df_supernova):
     fig = go.Figure()
 
-    # Calcular días relativos al pico de luminosidad
-    df_supernova = calcular_dias_relativos(df_supernova)
+    # Calculate days relative to the luminosity peak
+    df_supernova = calculate_days_relative_to_peak(df_supernova)
 
-    for filtro in df_supernova['filtro'].unique():
-        df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+    for filter in df_supernova['filter'].unique():
+        df_filter = df_supernova[df_supernova['filter'] == filter]
         fig.add_trace(go.Scatter(
-            x=df_filtro['dias_relativos'],  # Usar días relativos al pico como eje X
-            y=df_filtro['mag'],
+            x=df_filter['days_relative'],  # Use days relative to the peak as the X axis
+            y=df_filter['mag'],
             mode='lines+markers',
-            name=filtro
+            name=filter
         ))
 
-    # Extraer la información relevante para el título
+    # Extract relevant information for the title
     snid = df_supernova['snid'].iloc[0]
-    tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
+    supernova_type = df_supernova['parsnip_pred'].iloc[0]
     ra = df_supernova['ra'].iloc[0]
     decl = df_supernova['decl'].iloc[0]
     redshift = df_supernova['redshift'].iloc[0]
 
-    # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
+    # Invert the Y axis since lower magnitudes are brighter and add the information to the title
     fig.update_layout(
         title=(
-            f'Curva de luz de {snid} ({tipo_supernova})\n'
+            f'Light Curve of {snid} ({supernova_type})\n'
             f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
         ),
-        xaxis_title='Días relativos al pico de luminosidad',
-        yaxis_title='Magnitud',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+        xaxis_title='Days Relative to Luminosity Peak',
+        yaxis_title='Magnitude',
+        yaxis=dict(autorange='reversed'),  # Invert the Y axis
         showlegend=True
     )
 
     return fig
 
-# Seleccionar el tipo de supernova y el número mínimo de observaciones con un deslizador
-tipo_supernova = st.text_input("Ingresa el tipo de supernova (ej. 'SN Ia', 'SN Ib', 'SN II'):")
-min_observaciones = st.number_input("Especifica el número mínimo de observaciones:", min_value=1, value=5)
+# Select the supernova type and minimum number of observations with a slider
+supernova_type = st.text_input("Enter the supernova type (e.g., 'SN Ia', 'SN Ib', 'SN II'):")
+min_observations = st.number_input("Specify the minimum number of observations:", min_value=1, value=5)
 
-# Función para filtrar supernovas por tipo y número mínimo de observaciones
-def filtrar_supernovas_por_tipo(df, tipo_supernova, min_observaciones):
-    # Filtrar por tipo de supernova (PARSNIP_PRED)
-    df_filtrado = df[df['parsnip_pred'] == tipo_supernova]
+# Function to filter supernovae by type and minimum number of observations
+def filter_supernovae_by_type(df, supernova_type, min_observations):
+    # Filter by supernova type (PARSNIP_PRED)
+    filtered_df = df[df['parsnip_pred'] == supernova_type]
 
-    # Agrupar por SNID y contar el número de observaciones por supernova
-    supernovas_con_observaciones = df_filtrado.groupby('snid').filter(lambda x: len(x) >= min_observaciones)
+    # Group by SNID and count the number of observations per supernova
+    supernovae_with_observations = filtered_df.groupby('snid').filter(lambda x: len(x) >= min_observations)
     
-    return supernovas_con_observaciones
+    return supernovae_with_observations
 
-# Filtrar las supernovas por el tipo y número mínimo de observaciones
-df_supernovas_filtradas = filtrar_supernovas_por_tipo(df_curvas_luz, tipo_supernova, min_observaciones)
+# Filter supernovae by type and minimum number of observations
+df_filtered_supernovae = filter_supernovae_by_type(df_light_curves, supernova_type, min_observations)
 
-# Mostrar los resultados si hay supernovas que cumplan con los criterios
-if not df_supernovas_filtradas.empty:
-    supernovas_filtradas_por_snid = df_supernovas_filtradas['snid'].unique()
-    st.write(f"Se encontraron {len(supernovas_filtradas_por_snid)} supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
+# Display the results if there are supernovae that meet the criteria
+if not df_filtered_supernovae.empty:
+    filtered_supernovae_by_snid = df_filtered_supernovae['snid'].unique()
+    st.write(f"Found {len(filtered_supernovae_by_snid)} supernovae of type '{supernova_type}' with at least {min_observations} observations.")
     
-    # Deslizador horizontal para seleccionar una supernova y mostrar su curva de luz
-    index_seleccionado = st.slider('Selecciona la supernova para ver su curva de luz:', 
-                                   min_value=0, max_value=len(supernovas_filtradas_por_snid)-1, step=1)
-    snid_seleccionado = supernovas_filtradas_por_snid[index_seleccionado]
-    df_supernova_seleccionada = df_supernovas_filtradas[df_supernovas_filtradas['snid'] == snid_seleccionado]
-    st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+    # Horizontal slider to select a supernova and display its light curve
+    selected_index = st.slider('Select a supernova to view its light curve:', 
+                               min_value=0, max_value=len(filtered_supernovae_by_snid)-1, step=1)
+    selected_snid = filtered_supernovae_by_snid[selected_index]
+    df_selected_supernova = df_filtered_supernovae[df_filtered_supernovae['snid'] == selected_snid]
+    st.plotly_chart(plot_light_curve(df_selected_supernova))
 
 else:
-    st.write(f"No se encontraron supernovas del tipo '{tipo_supernova}' con al menos {min_observaciones} observaciones.")
+    st.write(f"No supernovae of type '{supernova_type}' found with at least {min_observations} observations.")
 
-# --- Mostrar DataFrame con detalles de las supernovas filtradas ---
+# --- Show DataFrame with filtered supernova details ---
 
-# Función para calcular Δm15 para supernovas tipo Ia con la opción de filtro alternativo
-def calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i'):
-    df_filtro = df_supernova[df_supernova['filtro'] == filtro_preferido]
+# Function to calculate Δm15 for supernovae of type Ia with an option for an alternative filter
+def calculate_delta_m15(df_supernova, preferred_filter='g', alternative_filter='i'):
+    df_filter = df_supernova[df_supernova['filter'] == preferred_filter]
     
-    # Si no hay datos en el filtro preferido, usar el filtro alternativo
-    if df_filtro.empty and filtro_alternativo:
-        df_filtro = df_supernova[df_supernova['filtro'] == filtro_alternativo]
+    # If there is no data in the preferred filter, use the alternative filter
+    if df_filter.empty and alternative_filter:
+        df_filter = df_supernova[df_supernova['filter'] == alternative_filter]
     
-    # Si aún no hay datos, devolver NA
-    if df_filtro.empty:
-        return 'NA'  # No hay datos ni en el filtro preferido ni en el alternativo
+    # If still no data, return NA
+    if df_filter.empty:
+        return 'NA'  # No data in the preferred or alternative filter
     
-    # Obtener el MJD del pico de luminosidad
-    mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
+    # Get the MJD of the luminosity peak
+    mjd_peak = df_filter.loc[df_filter['mag'].idxmin(), 'mjd']
     
-    # Filtrar observaciones de 15 días después del pico
-    df_15_dias_despues = df_filtro[(df_filtro['mjd'] > mjd_pico) & (df_filtro['mjd'] <= mjd_pico + 15)]
+    # Filter observations 15 days after the peak
+    df_15_days_after = df_filter[(df_filter['mjd'] > mjd_peak) & (df_filter['mjd'] <= mjd_peak + 15)]
     
-    if not df_15_dias_despues.empty:
-        mag_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mag']
-        mag_15_dias_despues = df_15_dias_despues['mag'].mean()
-        delta_m15 = mag_15_dias_despues - mag_pico
+    if not df_15_days_after.empty:
+        mag_peak = df_filter.loc[df_filter['mag'].idxmin(), 'mag']
+        mag_15_days_after = df_15_days_after['mag'].mean()
+        delta_m15 = mag_15_days_after - mag_peak
         return delta_m15
     else:
         return 'NA'
 
-# Función para calcular la duración de la meseta para supernovas tipo II o Ibc
-def calcular_duracion_meseta(df_supernova, filtro='r'):
-    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+# Function to calculate the plateau duration for type II or Ibc supernovae
+def calculate_plateau_duration(df_supernova, filter='r'):
+    df_filter = df_supernova[df_supernova['filter'] == filter]
     
-    if df_filtro.empty:
-        return 'NA'  # No hay datos en este filtro
+    if df_filter.empty:
+        return 'NA'  # No data in this filter
     
-    # Encontrar el MJD del pico
-    mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
+    # Find the MJD of the peak
+    mjd_peak = df_filter.loc[df_filter['mag'].idxmin(), 'mjd']
     
-    # Definir la meseta como el tiempo entre el pico y cuando la magnitud cae en 1 o más (adaptación de la meseta)
-    df_meseta = df_filtro[df_filtro['mag'] <= (df_filtro['mag'].min() + 1)]
+    # Define the plateau as the time between the peak and when the magnitude drops by 1 or more
+    df_plateau = df_filter[df_filter['mag'] <= (df_filter['mag'].min() + 1)]
     
-    if not df_meseta.empty:
-        duracion_meseta = df_meseta['mjd'].max() - mjd_pico
-        return duracion_meseta
+    if not df_plateau.empty:
+        plateau_duration = df_plateau['mjd'].max() - mjd_peak
+        return plateau_duration
     else:
         return 'NA'
 
-
-# Función para calcular la velocidad de caída de la luminosidad después de la meseta
-def calcular_velocidad_caida(df_supernova, filtro='r'):
-    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+# Function to calculate the luminosity drop rate after the plateau
+def calculate_fall_rate(df_supernova, filter='r'):
+    df_filter = df_supernova[df_supernova['filter'] == filter]
     
-    if df_filtro.empty:
+    if df_filter.empty:
         return 'NA'
     
-    # Encontrar el MJD del final de la meseta (pico)
-    mjd_pico = df_filtro.loc[df_filtro['mag'].idxmin(), 'mjd']
+    # Find the MJD of the end of the plateau (peak)
+    mjd_peak = df_filter.loc[df_filter['mag'].idxmin(), 'mjd']
     
-    # Encontrar la última observación de la supernova
-    mjd_final = df_filtro['mjd'].max()
-    mag_final = df_filtro.loc[df_filtro['mjd'] == mjd_final, 'mag'].values[0]
+    # Find the last observation of the supernova
+    mjd_end = df_filter['mjd'].max()
+    mag_end = df_filter.loc[df_filter['mjd'] == mjd_end, 'mag'].values[0]
     
-    # Magnitud al final de la meseta
-    mag_pico = df_filtro['mag'].min()
+    # Magnitude at the end of the plateau
+    mag_peak = df_filter['mag'].min()
     
-    # Calcular la velocidad de caída de la luminosidad
-    velocidad_caida = (mag_final - mag_pico) / (mjd_final - mjd_pico)
+    # Calculate the luminosity drop rate
+    fall_rate = (mag_end - mag_peak) / (mjd_end - mjd_peak)
     
-    return velocidad_caida
+    return fall_rate
 
-# Función para calcular la magnitud promedio durante la meseta
-def calcular_magnitud_meseta(df_supernova, filtro='r'):
-    df_filtro = df_supernova[df_supernova['filtro'] == filtro]
+# Function to calculate the average magnitude during the plateau
+def calculate_plateau_average_magnitude(df_supernova, filter='r'):
+    df_filter = df_supernova[df_supernova['filter'] == filter]
     
-    if df_filtro.empty:
+    if df_filter.empty:
         return 'NA'
     
-    # Magnitudes durante la meseta (magnitud <= min(magnitud) + 1)
-    df_meseta = df_filtro[df_filtro['mag'] <= df_filtro['mag'].min() + 1]
+    # Magnitudes during the plateau (magnitude <= min(magnitude) + 1)
+    df_plateau = df_filter[df_filter['mag'] <= df_filter['mag'].min() + 1]
     
-    if df_meseta.empty:
+    if df_plateau.empty:
         return 'NA'
     
-    # Promediar las magnitudes durante la meseta
-    mag_promedio = df_meseta['mag'].mean()
+    # Average the magnitudes during the plateau
+    avg_magnitude = df_plateau['mag'].mean()
     
-    return mag_promedio
+    return avg_magnitude
 
-# Modificación en el resumen de supernovas para incluir SN II
-def crear_dataframe_parametros(df_supernovas, tipo_supernova):
-    resultados = []
+# Modification in the supernova summary to include SN II
+def create_summary_dataframe(df_supernovae, supernova_type):
+    results = []
     
-    for snid in df_supernovas['snid'].unique():
-        df_supernova = df_supernovas[df_supernovas['snid'] == snid]
-        tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
+    for snid in df_supernovae['snid'].unique():
+        df_supernova = df_supernovae[df_supernovae['snid'] == snid]
+        supernova_type = df_supernova['parsnip_pred'].iloc[0]
         ra = df_supernova['ra'].iloc[0]
         decl = df_supernova['decl'].iloc[0]
         redshift = df_supernova['redshift'].iloc[0]
         
-        # Calcular la magnitud del pico para cada filtro disponible
-        magnitudes_pico = {}
-        for filtro in df_supernova['filtro'].unique():
-            grupo_filtro = df_supernova[df_supernova['filtro'] == filtro]
-            magnitud_pico_filtro = grupo_filtro['mag'].min() if not grupo_filtro['mag'].isnull().all() else 'NA'
-            magnitudes_pico[f'magnitud_pico_{filtro}'] = magnitud_pico_filtro
+        # Calculate the peak magnitude for each available filter
+        peak_magnitudes = {}
+        for filter in df_supernova['filter'].unique():
+            filter_group = df_supernova[df_supernova['filter'] == filter]
+            peak_magnitude_filter = filter_group['mag'].min() if not filter_group['mag'].isnull().all() else 'NA'
+            peak_magnitudes[f'peak_magnitude_{filter}'] = peak_magnitude_filter
         
-        # Calcular la duración del evento
-        mjd_pico = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']
-        duracion_evento = df_supernova['mjd'].max() - mjd_pico
+        # Calculate event duration
+        mjd_peak = df_supernova.loc[df_supernova['mag'].idxmin(), 'mjd']
+        event_duration = df_supernova['mjd'].max() - mjd_peak
         
-        # Calcular parámetros específicos para SN Ia, SN II y SN Ibc
+        # Calculate specific parameters for SN Ia, SN II, and SN Ibc
         delta_m15 = 'NA'
-        duracion_meseta = 'NA'
-        velocidad_caida = 'NA'
-        mag_promedio_meseta = 'NA'
+        plateau_duration = 'NA'
+        fall_rate = 'NA'
+        avg_plateau_magnitude = 'NA'
         
-        if tipo_supernova == 'SN Ia':
-            delta_m15 = calcular_delta_m15(df_supernova, filtro_preferido='g', filtro_alternativo='i')
-        elif tipo_supernova in ['SN II', 'SN Ibc']:
-            duracion_meseta = calcular_duracion_meseta(df_supernova, filtro='r')
-            velocidad_caida = calcular_velocidad_caida(df_supernova, filtro='r')
-            mag_promedio_meseta = calcular_magnitud_meseta(df_supernova, filtro='r')
+        if supernova_type == 'SN Ia':
+            delta_m15 = calculate_delta_m15(df_supernova, preferred_filter='g', alternative_filter='i')
+        elif supernova_type in ['SN II', 'SN Ibc']:
+            plateau_duration = calculate_plateau_duration(df_supernova, filter='r')
+            fall_rate = calculate_fall_rate(df_supernova, filter='r')
+            avg_plateau_magnitude = calculate_plateau_average_magnitude(df_supernova, filter='r')
         
-        # Agregar los datos al resumen
-        resumen = {
+        # Add the data to the summary
+        summary = {
             'SNID': snid,
-            **magnitudes_pico,  # Añadir magnitudes de pico por filtro
-            'Duración del evento': duracion_evento,
+            **peak_magnitudes,  # Add peak magnitudes by filter
+            'Event Duration': event_duration,
             'RA': ra,
             'Dec': decl,
             'Redshift': redshift
         }
         
-        # Agregar Δm15 solo si el tipo de supernova es Ia
-        if tipo_supernova == 'SN Ia':
-            resumen['Δm15 (g/i)'] = delta_m15
+        # Add Δm15 only if the supernova type is Ia
+        if supernova_type == 'SN Ia':
+            summary['Δm15 (g/i)'] = delta_m15
         
-        # Agregar parámetros solo si el tipo de supernova es SN II o Ibc
-        if tipo_supernova in ['SN II', 'SN Ibc']:
-            resumen['Duración Meseta (r)'] = duracion_meseta
-            resumen['Velocidad Caída (r)'] = velocidad_caida
-            resumen['Magnitud Promedio Meseta (r)'] = mag_promedio_meseta
+        # Add parameters only if the supernova type is SN II or Ibc
+        if supernova_type in ['SN II', 'SN Ibc']:
+            summary['Plateau Duration (r)'] = plateau_duration
+            summary['Fall Rate (r)'] = fall_rate
+            summary['Average Plateau Magnitude (r)'] = avg_plateau_magnitude
         
-        resultados.append(resumen)
+        results.append(summary)
 
-    return pd.DataFrame(resultados)
+    return pd.DataFrame(results)
     
 import pandas as pd
 import numpy as np
@@ -404,8 +396,6 @@ from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 import plotly.express as px
 
-
-
 ########
 
 import pandas as pd
@@ -415,157 +405,151 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import AgglomerativeClustering
 import streamlit as st
 
-# Suponemos que df_supernovas_clustering ya está generado tras el clustering
-df_parametros = crear_dataframe_parametros(df_supernovas_filtradas, tipo_supernova)
+# We assume that df_supernova_clustering has already been generated after clustering
+df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
 
-# Mostrar el DataFrame para verificar que tiene datos
-st.write("Verificando contenido de df_parametros:")
-st.write(df_parametros)
+# Show the DataFrame to verify it has data
+st.write("Verifying df_parameters content:")
+st.write(df_parameters)
 
-# Eliminar filas con valores NaN
-df_supernovas_clustering = df_parametros.dropna()
+# Remove rows with NaN values
+df_supernova_clustering = df_parameters.dropna()
 
-# Seleccionar las columnas numéricas para el clustering
-columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number'])
+# Select numerical columns for clustering
+numerical_columns = df_supernova_clustering.select_dtypes(include=['number'])
 
-# Normalizar los datos
+# Normalize the data
 scaler = StandardScaler()
-columnas_numericas_scaled = scaler.fit_transform(columnas_numericas)
+numerical_columns_scaled = scaler.fit_transform(numerical_columns)
 
-# Clustering jerárquico
-num_clusters = st.number_input('Selecciona el número de clusters', min_value=2, max_value=10, value=5, step=1)
+# Hierarchical clustering
+num_clusters = st.number_input('Select the number of clusters', min_value=2, max_value=10, value=5, step=1)
 clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
-df_supernovas_clustering['cluster'] = clustering.fit_predict(columnas_numericas_scaled)
+df_supernova_clustering['cluster'] = clustering.fit_predict(numerical_columns_scaled)
 
-# Recolectar nombres de supernovas en cada cluster y almacenarlos
-nombres_supernovas_clusters = {}
+# Collect the names of supernovae in each cluster and store them
+supernova_names_clusters = {}
 
 for cluster_id in range(num_clusters):
-    # Filtrar las supernovas por cluster
-    supernovas_en_cluster = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_id]['SNID'].tolist()
+    # Filter the supernovae by cluster
+    supernovae_in_cluster = df_supernova_clustering[df_supernova_clustering['cluster'] == cluster_id]['SNID'].tolist()
     
-    # Almacenar en el diccionario con el nombre 'cluster_X'
-    nombres_supernovas_clusters[f'cluster_{cluster_id}'] = supernovas_en_cluster
+    # Store in the dictionary with the name 'cluster_X'
+    supernova_names_clusters[f'cluster_{cluster_id}'] = supernovae_in_cluster
 
-# Mostrar los nombres de las supernovas en cada cluster
-for cluster_id, supernovas in nombres_supernovas_clusters.items():
-    st.write(f"Supernovas en {cluster_id}:")
-    st.write(supernovas)
+# Show the names of the supernovae in each cluster
+for cluster_id, supernovae in supernova_names_clusters.items():
+    st.write(f"Supernovae in {cluster_id}:")
+    st.write(supernovae)
+
 ##############
 
-# Mostrar un menú desplegable para que el usuario elija el cluster
-cluster_seleccionado = st.selectbox(
-    "Selecciona el cluster para ver las supernovas:",
-    list(nombres_supernovas_clusters.keys())  # Mostrar los clusters disponibles
+# Show a dropdown menu for the user to choose the cluster
+selected_cluster = st.selectbox(
+    "Select the cluster to view supernovae:",
+    list(supernova_names_clusters.keys())  # Show available clusters
 )
 
-# Obtener las supernovas del cluster seleccionado
-supernovas_en_cluster = nombres_supernovas_clusters[cluster_seleccionado]
+# Get the supernovae in the selected cluster
+supernovae_in_cluster = supernova_names_clusters[selected_cluster]
 
-if len(supernovas_en_cluster) > 0:
-    # Mostrar la cantidad de supernovas en el cluster
-    st.write(f"Se encontraron {len(supernovas_en_cluster)} supernovas en {cluster_seleccionado}.")
+if len(supernovae_in_cluster) > 0:
+    # Show the number of supernovae in the cluster
+    st.write(f"Found {len(supernovae_in_cluster)} supernovae in {selected_cluster}.")
     
-    # Deslizador horizontal para seleccionar una supernova específica en el cluster
-    index_seleccionado = st.slider('Selecciona una supernova para ver su curva de luz:',
-                                   min_value=0, max_value=len(supernovas_en_cluster)-1, step=1)
+    # Horizontal slider to select a specific supernova in the cluster
+    selected_index = st.slider('Select a supernova to view its light curve:',
+                               min_value=0, max_value=len(supernovae_in_cluster)-1, step=1)
     
-    # Obtener el SNID de la supernova seleccionada
-    snid_seleccionado = supernovas_en_cluster[index_seleccionado]
+    # Get the SNID of the selected supernova
+    selected_snid = supernovae_in_cluster[selected_index]
     
-    # Filtrar el DataFrame de curvas de luz (df_curvas_luz) por el SNID seleccionado
-    df_supernova_seleccionada = df_curvas_luz[df_curvas_luz['snid'] == snid_seleccionado]
+    # Filter the light curve DataFrame (df_light_curves) by the selected SNID
+    df_selected_supernova = df_light_curves[df_light_curves['snid'] == selected_snid]
     
-    # Verificar que la supernova tenga datos para graficar
-    if not df_supernova_seleccionada.empty:
-        # Graficar la curva de luz de la supernova seleccionada
-        st.plotly_chart(graficar_curva_de_luz(df_supernova_seleccionada))
+    # Verify that the supernova has data to plot
+    if not df_selected_supernova.empty:
+        # Plot the light curve of the selected supernova
+        st.plotly_chart(plot_light_curve(df_selected_supernova))
     else:
-        st.write(f"No se encontraron datos de curvas de luz para la supernova {snid_seleccionado}.")
+        st.write(f"No light curve data found for supernova {selected_snid}.")
 else:
-    st.write(f"No hay supernovas en {cluster_seleccionado}.")
+    st.write(f"No supernovae in {selected_cluster}.") 
 
-
-#######3
-
-
+#######
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Obtener los nombres de las columnas numéricas, excluyendo la columna de clusters 'cluster'
-columnas_numericas = df_supernovas_clustering.select_dtypes(include='number').drop(columns=['cluster']).columns
+# Get the names of the numerical columns, excluding the 'cluster' column
+numerical_columns = df_supernova_clustering.select_dtypes(include='number').drop(columns=['cluster']).columns
 
-# Calcular el número de filas y columnas del panel (una columna por parámetro)
-num_rows = len(columnas_numericas)
-num_cols = 1  # Una columna para cada parámetro
+# Calculate the number of rows and columns in the panel (one column per parameter)
+num_rows = len(numerical_columns)
+num_cols = 1  # One column for each parameter
 
-# Ajustar el espacio vertical y la altura de los subplots
-subplot_height = 400  # Ajusta la altura según tu preferencia
-vertical_spacing = 0.01  # Ajusta el espacio vertical según tu preferencia
+# Adjust vertical spacing and the height of the subplots
+subplot_height = 400  # Adjust the height as preferred
+vertical_spacing = 0.01  # Adjust the vertical spacing as preferred
 
-# Crear subplots para cada parámetro
-fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=columnas_numericas, vertical_spacing=vertical_spacing)
+# Create subplots for each parameter
+fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=numerical_columns, vertical_spacing=vertical_spacing)
 
-# Crear un gráfico de caja para cada parámetro y comparar los clusters
-for i, column in enumerate(columnas_numericas):
-    # Obtener los datos de cada cluster para el parámetro actual
-    cluster_data = [df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
+# Create a box plot for each parameter and compare clusters
+for i, column in enumerate(numerical_columns):
+    # Get the data for each cluster for the current parameter
+    cluster_data = [df_supernova_clustering[df_supernova_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
 
-    # Agregar el gráfico de caja al subplot correspondiente
+    # Add the box plot to the corresponding subplot
     for j in range(num_clusters):
         box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
-        box.hovertemplate = 'id: %{text}'  # Agregar el valor de la columna 'SNID' al hovertemplate
-        box.text = df_supernovas_clustering[df_supernovas_clustering['cluster'] == j]['SNID']  # Asignar los valores de 'SNID' al texto
+        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
+        box.text = df_supernova_clustering[df_supernova_clustering['cluster'] == j]['SNID']  # Assign 'SNID' values to the text
         fig.add_trace(box, row=i+1, col=1)
 
-# Actualizar el diseño y mostrar el panel de gráficos
+# Update the layout and show the panel of box plots
 fig.update_layout(showlegend=False, height=subplot_height*num_rows, width=800,
-                  title_text='Comparación de Clusters - Gráfico de Caja',
-                  margin=dict(t=100, b=100, l=50, r=50))  # Ajustar los márgenes del layout
+                  title_text='Cluster Comparison - Box Plot',
+                  margin=dict(t=100, b=100, l=50, r=50))  # Adjust the margins of the layout
 
-# Mostrar la gráfica de caja en Streamlit
+# Show the box plot in Streamlit
 st.plotly_chart(fig)
 
 #########################3
 
-
-
 ##########3
 
-# Aplicar PCA
+# Apply PCA
 pca = PCA(n_components=2)
-pca_data = pca.fit_transform(columnas_numericas_scaled)
+pca_data = pca.fit_transform(numerical_columns_scaled)
 df_pca = pd.DataFrame(pca_data, columns=['PC1', 'PC2'])
-df_pca['cluster'] = df_supernovas_clustering['cluster']
+df_pca['cluster'] = df_supernova_clustering['cluster']
 
-# Visualización de clusters con PCA
-#fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualizados con PCA')
+# Cluster visualization using PCA
+#fig_pca = px.scatter(df_pca, x='PC1', y='PC2', color='cluster', title='Clusters visualized with PCA')
 #st.plotly_chart(fig_pca)
-
-
 
 import numpy as np
 import plotly.graph_objects as go
 from sklearn.manifold import TSNE
 
-# Crear una instancia de t-SNE con los hiperparámetros deseados
+# Create a t-SNE instance with the desired hyperparameters
 tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
 
-# Ajustar t-SNE a los datos de PCA (supone que pca_data ya ha sido calculado)
+# Fit t-SNE to the PCA data (assuming pca_data has already been calculated)
 tsne_data = tsne.fit_transform(pca_data)
 
-# Crear una figura de Plotly
+# Create a Plotly figure
 fig = go.Figure()
 
-for cluster_id in np.unique(df_supernovas_clustering['cluster']):
-    indices = df_supernovas_clustering['cluster'] == cluster_id
+for cluster_id in np.unique(df_supernova_clustering['cluster']):
+    indices = df_supernova_clustering['cluster'] == cluster_id
 
     scatter_trace = go.Scatter(
         x=tsne_data[indices, 0],
         y=tsne_data[indices, 1],
         mode='markers',
-        text=df_supernovas_clustering.loc[indices, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
+        text=df_supernova_clustering.loc[indices, ['SNID', 'RA', 'Dec', 'Redshift']].apply(lambda x: '<br>'.join(x.astype(str)), axis=1),
         hovertemplate="%{text}",
         marker=dict(
             size=7,
@@ -575,17 +559,17 @@ for cluster_id in np.unique(df_supernovas_clustering['cluster']):
     )
     fig.add_trace(scatter_trace)
 
-# Configurar el diseño del gráfico
+# Configure the plot layout
 fig.update_layout(
-    title='Gráfico de Dispersión de t-SNE',
-    xaxis_title='Dimensión 1',
-    yaxis_title='Dimensión 2',
+    title='t-SNE Scatter Plot',
+    xaxis_title='Dimension 1',
+    yaxis_title='Dimension 2',
     showlegend=True,
     legend_title='Clusters',
-    width=1084  # Ajustar el ancho del gráfico
+    width=1084  # Adjust the width of the plot
 )
 
-# Mostrar el gráfico de t-SNE en Streamlit
+# Show the t-SNE plot in Streamlit
 st.plotly_chart(fig)
 
 ###########
@@ -595,41 +579,41 @@ from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn.model_selection import train_test_split
 import streamlit as st
 
-# Seleccionar las columnas numéricas, excluyendo 'RA' y 'Dec'
-columnas_numericas = df_supernovas_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
+# Select numerical columns, excluding 'RA' and 'Dec'
+numerical_columns = df_supernova_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
 
-# Mostrar un menú desplegable para que el usuario seleccione las variables a utilizar
-variables_seleccionadas = st.multiselect(
-    'Selecciona las variables que deseas utilizar para el árbol de decisión:',
-    columnas_numericas.columns.tolist(),
-    default=columnas_numericas.columns.tolist()  # Por defecto, seleccionamos todas
+# Show a dropdown menu for the user to select the variables to use
+selected_variables = st.multiselect(
+    'Select the variables you want to use for the decision tree:',
+    numerical_columns.columns.tolist(),
+    default=numerical_columns.columns.tolist()  # By default, select all
 )
 
-# Asegurarse de que haya al menos una variable seleccionada
-if len(variables_seleccionadas) > 0:
-    # Filtrar las columnas seleccionadas
-    X = columnas_numericas[variables_seleccionadas]
+# Ensure that at least one variable is selected
+if len(selected_variables) > 0:
+    # Filter the selected columns
+    X = numerical_columns[selected_variables]
     
-    # Seleccionar la columna de clusters como la variable objetivo
-    y = df_supernovas_clustering['cluster']
+    # Select the cluster column as the target variable
+    y = df_supernova_clustering['cluster']
     
-    # Dividir el conjunto de datos en conjunto de entrenamiento y prueba
+    # Split the dataset into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
-    # Entrenar un árbol de decisión ajustando los hiperparámetros
+    # Train a decision tree adjusting hyperparameters
     clf = DecisionTreeClassifier(random_state=42, max_depth=5, min_samples_split=5, min_samples_leaf=2)
     clf.fit(X_train, y_train)
     
-    # Mostrar las reglas de decisión aprendidas por el árbol
-    tree_rules = export_text(clf, feature_names=variables_seleccionadas)
-    st.text("Reglas de decisión del árbol:")
+    # Show the decision rules learned by the tree
+    tree_rules = export_text(clf, feature_names=selected_variables)
+    st.text("Decision Tree Rules:")
     st.text(tree_rules)
     
-    # Evaluar el modelo
+    # Evaluate the model
     score = clf.score(X_test, y_test)
-    st.write(f"Precisión del modelo en el conjunto de prueba: {score:.2f}")
+    st.write(f"Model accuracy on test set: {score:.2f}")
 else:
-    st.write("Por favor, selecciona al menos una variable para entrenar el modelo.")
+    st.write("Please select at least one variable to train the model.")
 
 
 import pandas as pd
@@ -639,44 +623,44 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
-# Seleccionar el cluster
-cluster_seleccionado = st.selectbox(
-    "Selecciona el cluster para analizar subclusters:",
-    df_supernovas_clustering['cluster'].unique()
+# Select the cluster
+selected_cluster = st.selectbox(
+    "Select the cluster to analyze subclusters:",
+    df_supernova_clustering['cluster'].unique()
 )
 
-# Filtrar las supernovas del cluster seleccionado
-df_cluster_filtrado = df_supernovas_clustering[df_supernovas_clustering['cluster'] == cluster_seleccionado]
+# Filter the supernovae from the selected cluster
+df_filtered_cluster = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
-# Seleccionar las columnas numéricas excluyendo RA, Dec y cluster
-columnas_numericas_filtrado = df_cluster_filtrado.select_dtypes(include=['number']).drop(columns=['RA', 'Dec', 'cluster'])
+# Select numerical columns excluding RA, Dec, and cluster
+filtered_numerical_columns = df_filtered_cluster.select_dtypes(include=['number']).drop(columns=['RA', 'Dec', 'cluster'])
 
-# Normalizar los datos
+# Normalize the data
 scaler = StandardScaler()
-columnas_numericas_scaled_filtrado = scaler.fit_transform(columnas_numericas_filtrado)
+scaled_filtered_numerical_columns = scaler.fit_transform(filtered_numerical_columns)
 
-# Seleccionar el número de subclusters
-num_subclusters = st.number_input('Selecciona el número de subclusters dentro del cluster seleccionado:', min_value=2, max_value=10, value=3, step=1)
+# Select the number of subclusters
+num_subclusters = st.number_input('Select the number of subclusters within the selected cluster:', min_value=2, max_value=10, value=3, step=1)
 
-# Aplicar clustering aglomerativo dentro del cluster seleccionado
+# Apply agglomerative clustering within the selected cluster
 clustering_subclusters = AgglomerativeClustering(n_clusters=num_subclusters, linkage='ward')
-df_cluster_filtrado['subcluster'] = clustering_subclusters.fit_predict(columnas_numericas_scaled_filtrado)
+df_filtered_cluster['subcluster'] = clustering_subclusters.fit_predict(scaled_filtered_numerical_columns)
 
-# --- Aplicar PCA y luego t-SNE ---
+# --- Apply PCA and then t-SNE ---
 
-# Aplicar PCA para reducir la dimensionalidad a 50 componentes, por ejemplo
-pca = PCA(n_components=2)  # Aumentar el número de componentes de PCA para mantener más información
-pca_data_cluster = pca.fit_transform(columnas_numericas_scaled_filtrado)
+# Apply PCA to reduce dimensionality to 50 components, for example
+pca = PCA(n_components=2)  # Increase the number of PCA components to retain more information
+pca_data_cluster = pca.fit_transform(scaled_filtered_numerical_columns)
 
-# Ahora aplicar t-SNE sobre el resultado de PCA con ajustes en los hiperparámetros
+# Now apply t-SNE over the result of PCA with adjustments in the hyperparameters
 tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=5)
 tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 
-# Crear un DataFrame con los resultados de t-SNE y los subclusters
+# Create a DataFrame with the t-SNE results and the subclusters
 df_tsne_cluster = pd.DataFrame(tsne_data_cluster, columns=['t-SNE1', 't-SNE2'])
-df_tsne_cluster['subcluster'] = df_cluster_filtrado['subcluster']
+df_tsne_cluster['subcluster'] = df_filtered_cluster['subcluster']
 
-# Visualización de los subclusters dentro del cluster seleccionado usando t-SNE
+# Visualize the subclusters within the selected cluster using t-SNE
 fig_tsne_subcluster = go.Figure()
 
 for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
@@ -691,49 +675,48 @@ for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
     )
     fig_tsne_subcluster.add_trace(scatter_trace)
 
-# Configurar el diseño del gráfico de t-SNE
+# Configure the layout of the t-SNE plot
 fig_tsne_subcluster.update_layout(
-    title=f'Subclusters dentro del Cluster {cluster_seleccionado} usando t-SNE después de PCA',
+    title=f'Subclusters within Cluster {selected_cluster} using t-SNE after PCA',
     xaxis_title='t-SNE1',
     yaxis_title='t-SNE2',
     showlegend=True,
     legend_title='Subclusters',
-    width=1084  # Ajustar el ancho del gráfico
+    width=1084  # Adjust the width of the plot
 )
 
-# Mostrar el gráfico de t-SNE en Streamlit
+# Show the t-SNE plot in Streamlit
 st.plotly_chart(fig_tsne_subcluster)
 
 
-# Crear gráficos de caja para comparar las variables entre subclusters dentro del cluster seleccionado
+# Create box plots to compare variables between subclusters within the selected cluster
 
-# Obtener los nombres de las columnas numéricas
-columnas_numericas_filtrado = df_cluster_filtrado.select_dtypes(include=['number']).drop(columns=['subcluster']).columns
+# Get the names of the numerical columns
+filtered_numerical_columns = df_filtered_cluster.select_dtypes(include=['number']).drop(columns=['subcluster']).columns
 
-# Calcular el número de filas para el subplot
-num_rows = len(columnas_numericas_filtrado)
+# Calculate the number of rows for the subplot
+num_rows = len(filtered_numerical_columns)
 
-# Crear subplots para cada parámetro numérico, similar a la primera rutina de clustering
-fig_box = make_subplots(rows=num_rows, cols=1, subplot_titles=columnas_numericas_filtrado)
+# Create subplots for each numerical parameter, similar to the first clustering routine
+fig_box = make_subplots(rows=num_rows, cols=1, subplot_titles=filtered_numerical_columns)
 
-# Agregar gráficos de caja para cada columna numérica, comparando los subclusters dentro del cluster seleccionado
-for i, column in enumerate(columnas_numericas_filtrado):
+# Add box plots for each numerical column, comparing subclusters within the selected cluster
+for i, column in enumerate(filtered_numerical_columns):
     for subcluster in range(num_subclusters):
-        cluster_data = df_cluster_filtrado[df_cluster_filtrado['subcluster'] == subcluster][column]
+        cluster_data = df_filtered_cluster[df_filtered_cluster['subcluster'] == subcluster][column]
         box = go.Box(y=cluster_data, boxpoints='all', notched=True, name=f'Subcluster {subcluster}')
-        box.hovertemplate = 'id: %{text}'  # Agregar el valor de la columna 'SNID' al hovertemplate
-        box.text = df_cluster_filtrado[df_cluster_filtrado['subcluster'] == subcluster]['SNID']  # Asignar los valores de 'SNID' al texto
+        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
+        box.text = df_filtered_cluster[df_filtered_cluster['subcluster'] == subcluster]['SNID']  # Assign 'SNID' values to the text
         fig_box.add_trace(box, row=i+1, col=1)
 
-# Ajustar el layout para que sea similar al gráfico original
+# Adjust the layout to make it similar to the original plot
 fig_box.update_layout(showlegend=False, height=400*num_rows, width=800,
-                      title_text=f'Comparación de Variables entre Subclusters dentro del Cluster {cluster_seleccionado}',
+                      title_text=f'Comparison of Variables between Subclusters within Cluster {selected_cluster}',
                       margin=dict(t=100, b=100, l=50, r=50))
 
-# Mostrar los gráficos de caja
+# Show the box plots
 st.plotly_chart(fig_box)
-# Mostrar el DataFrame con los subclusters asignados dentro del cluster seleccionado
-st.write(f"DataFrame con subclusters asignados dentro del Cluster {cluster_seleccionado}:")
-st.write(df_cluster_filtrado[['SNID', 'subcluster']])
 
-
+# Show the DataFrame with subclusters assigned within the selected cluster
+st.write(f"DataFrame with subclusters assigned within Cluster {selected_cluster}:")
+st.write(df_filtered_cluster[['SNID', 'subcluster']])
