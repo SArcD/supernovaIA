@@ -244,48 +244,6 @@ def calculate_days_relative_to_peak(df_supernova):
 
 #    return fig
 
-import numpy as np
-
-# Constantes de extinción para diferentes filtros
-extincion_filtros = {
-    'g': 3.303,
-    'r': 2.285,
-    'i': 1.698,
-    'z': 1.263
-}
-
-def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
-    """
-    Corrige la magnitud aparente por la extinción debido al polvo galáctico.
-    
-    :param m: Magnitud aparente sin corregir.
-    :param MWEBV: Valor de extinción por polvo galáctico (MWEBV).
-    :param filtro: Filtro utilizado (g, r, i, z).
-    :return: Magnitud corregida por extinción.
-    """
-    if filtro in extincion_filtros:
-        A_lambda = extincion_filtros[filtro] * MWEBV
-        m_corregida = m - A_lambda
-    else:
-        raise ValueError("Filtro no válido. Usa 'g', 'r', 'i' o 'z'.")
-    
-    return m_corregida
-
-def corregir_magnitud_redshift(m_corregida, z):
-    """
-    Corrige la magnitud aparente por el efecto del redshift (corrimiento al rojo).
-    
-    :param m_corregida: Magnitud corregida por extinción.
-    :param z: Redshift de la supernova.
-    :return: Magnitud corregida por redshift.
-    """
-    # La corrección por redshift es básicamente una corrección de distancia.
-    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
-    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
-    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
-    
-    return m_redshift_corregida
-
 # Modificar la función plot_light_curve
 def plot_light_curve(df_supernova):
     fig = go.Figure()
@@ -297,7 +255,14 @@ def plot_light_curve(df_supernova):
     MWEBV = df_supernova['mwebv'].iloc[0]  # Extinción por polvo
     redshift = df_supernova['redshift'].iloc[0]  # Redshift de la supernova
 
+    # Filtros permitidos
+    filtros_permitidos = extincion_filtros.keys()
+
     for filtro in df_supernova['filter'].unique():
+        if filtro not in filtros_permitidos:
+            st.write(f"Filtro '{filtro}' no es válido. Solo se permiten: {filtros_permitidos}.")
+            continue  # Saltar filtros no válidos
+
         df_filtro = df_supernova[df_supernova['filter'] == filtro]
         
         # Corregir la magnitud por extinción y redshift
@@ -331,8 +296,6 @@ def plot_light_curve(df_supernova):
     )
 
     return fig
-
-
 
 
 
