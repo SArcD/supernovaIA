@@ -244,6 +244,23 @@ def calculate_days_relative_to_peak(df_supernova):
 
 #    return fig
 
+def corregir_magnitud_redshift(m_corregida, z):
+    """
+    Corrige la magnitud aparente por el efecto del redshift (corrimiento al rojo).
+    
+    :param m_corregida: Magnitud corregida por extinción.
+    :param z: Redshift de la supernova.
+    :return: Magnitud corregida por redshift.
+    """
+    # La corrección por redshift es básicamente una corrección de distancia.
+    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
+    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
+    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+    
+    return m_redshift_corregida
+
+
+
 def plot_light_curve(df_supernova):
     fig = go.Figure()
 
