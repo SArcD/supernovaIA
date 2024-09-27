@@ -731,7 +731,31 @@ df_light_curves = corregir_magnitudes(df_light_curves)
 # Ahora usa la columna 'mag_corregida' en lugar de 'mag' en los diagramas de caja
 
 # Crear los diagramas de caja para comparar las magnitudes corregidas entre clusters
+#def create_box_plots(df):
+    # Crear las subtramas para cada filtro
+#    fig = make_subplots(rows=len(df['filter'].unique()), cols=1, subplot_titles=df['filter'].unique())
+
+#    for i, filtro in enumerate(df['filter'].unique()):
+#        df_filtro = df[df['filter'] == filtro]
+        
+#        for cluster in df['cluster'].unique():
+#            cluster_data = df_filtro[df_filtro['cluster'] == cluster]['mag_corregida']
+#            fig.add_trace(go.Box(y=cluster_data, name=f'Cluster {cluster}', boxpoints='all', notched=True),
+#                          row=i+1, col=1)
+
+#    fig.update_layout(showlegend=False, title_text='Comparación de Magnitudes Corregidas por Cluster')
+    
+#    return fig
+
+# Generar y mostrar los diagramas de caja con las magnitudes corregidas
+#st.plotly_chart(create_box_plots(df_light_curves))
+
+# Verificar si la columna 'cluster' existe en el DataFrame
 def create_box_plots(df):
+    if 'cluster' not in df.columns:
+        st.write("Error: La columna 'cluster' no existe en el DataFrame.")
+        return None
+
     # Crear las subtramas para cada filtro
     fig = make_subplots(rows=len(df['filter'].unique()), cols=1, subplot_titles=df['filter'].unique())
 
@@ -747,9 +771,8 @@ def create_box_plots(df):
     
     return fig
 
-# Generar y mostrar los diagramas de caja con las magnitudes corregidas
-st.plotly_chart(create_box_plots(df_light_curves))
-
+# Generar y mostrar los diagramas de caja utilizando df_supernova_clustering
+st.plotly_chart(create_box_plots(df_supernova_clustering))
 
 #########################3
 
