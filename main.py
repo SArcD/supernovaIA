@@ -657,50 +657,82 @@ st.write(df_supernova_clustering.columns)
 
 ########
 
-# 1. Identificar las magnitudes del pico en df_light_curves para cada filtro y SNID
-def obtener_pico_magnitudes(df_light_curves):
-    peak_mags = df_light_curves.groupby(['snid', 'filter']).apply(
-        lambda group: group.loc[group['mag'].idxmin(), ['mag', 'mwebv', 'redshift']]
-    ).reset_index()
+# Supongamos que df_peaks es el DataFrame con las magnitudes de pico de las supernovas
+# Primero, renombramos la columna 'snid' en df_peaks a 'SNID' para que coincida con df_supernova_clustering
+df_peaks = df_peaks.rename(columns={'snid': 'SNID'})
 
-    peak_mags = peak_mags.pivot(index='snid', columns='filter', values='mag')
-    peak_mags.columns = [f'peak_magnitude_{col}' for col in peak_mags.columns]
-
-    # También obtenemos los valores de mwebv y redshift
-    mwebv_redshift = df_light_curves[['snid', 'mwebv', 'redshift']].drop_duplicates()
-    
-    # Combinamos los picos con mwebv y redshift
-    df_peaks = pd.merge(peak_mags, mwebv_redshift, on='snid', how='left')
-
-    return df_peaks
-
-# 2. Agregar las magnitudes del pico al df_supernova_clustering
+# Función para combinar los picos con el DataFrame de clustering
 def combinar_picos_con_clustering(df_supernova_clustering, df_peaks):
-    # Combinar los datos de pico con el DataFrame de clustering
-    df_supernova_clustering = pd.merge(df_supernova_clustering, df_peaks, on='snid', how='left')
+    # Realizar el merge con la columna 'SNID'
+    df_supernova_clustering = pd.merge(df_supernova_clustering, df_peaks, on='SNID', how='left')
     return df_supernova_clustering
 
-# 3. Corregir las magnitudes absolutas
+# Aplicar la corrección de magnitudes absolutas
 def corregir_magnitudes_abs(df, extincion_filtros):
-    for filtro in ['g', 'r', 'i', 'z', 'X', 'Y']:  # Incluye los filtros necesarios
+    """
+    Corrige las magnitudes aparentes para convertirlas en magnitudes absolutas.
+    """
+    # Iteramos sobre cada filtro disponible en extincion_filtros
+    for filtro in extincion_filtros.keys():
+        # Columnas correspondientes a la magnitud de pico en el DataFrame
         peak_col = f'peak_magnitude_{filtro}'
+        
+        # Comprobamos si la columna de pico existe
         if peak_col in df.columns:
+            # Corregir magnitudes con extinción y redshift
             df[f'abs_magnitude_{filtro}'] = df.apply(
                 lambda row: corregir_magnitud_redshift(
                     corregir_magnitud_extincion(row[peak_col], row['mwebv'], filtro), row['redshift']
-                ) if not pd.isnull(row[peak_col]) else None, axis=1
-            )
+                ) if not pd.isnull(row[peak_col]) else np.nan, axis=1)
+        else:
+            print(f"Advertencia: La columna {peak_col} no existe en el DataFrame.")
+    
     return df
 
-# Aplicación del flujo
+# Función para corregir magnitud por extinción
+def corregir_magnitud_extincion(m, MWEBV, filtro):
+    extincion_filtros = {
+        'g': 3.303,
+        'r': 2.285,
+        'i': 1.698,
+        'z': 1.263,
+        'X': 2.000,  # Valor ajustado para el filtro 'X'
+        'Y': 1.000   # Valor ajustado para el filtro 'Y'
+    }
+    
+    # Corrección por extinción galáctica
+    if filtro in extincion_filtros:
+        A_lambda = extincion_filtros[filtro] * MWEBV
+        m_corregida = m - A_lambda
+    else:
+        raise ValueError(f"Filtro no válido: {filtro}")
+    
+    return m_corregida
 
-# Obtener los picos de magnitud de df_light_curves
-df_peaks = obtener_pico_magnitudes(df_light_curves)
+# Función para corregir magnitud por redshift
+def corregir_magnitud_redshift(m_corregida, z):
+    # Corrección por redshift (corrimiento al rojo)
+    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
+    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
+    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+    
+    return m_redshift_corregida
 
-# Combinar con df_supernova_clustering
+# Supongamos que df_supernova_clustering y df_peaks ya han sido creados en pasos anteriores
+# Combinamos los picos con el DataFrame de clustering
 df_supernova_clustering = combinar_picos_con_clustering(df_supernova_clustering, df_peaks)
 
-# Corregir las magnitudes absolutas
+# Definimos los valores de extinción para cada filtro
+extincion_filtros = {
+    'g': 3.303,
+    'r': 2.285,
+    'i': 1.698,
+    'z': 1.263,
+    'X': 2.000,  # Valor ajustado para el filtro 'X'
+    'Y': 1.000   # Valor ajustado para el filtro 'Y'
+}
+
+# Aplicamos la corrección de magnitudes absolutas
 df_supernova_clustering = corregir_magnitudes_abs(df_supernova_clustering, extincion_filtros)
 
 
