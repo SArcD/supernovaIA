@@ -615,9 +615,9 @@ for cluster_id in range(num_clusters):
     supernova_names_clusters[f'cluster_{cluster_id}'] = supernovae_in_cluster
 
 # Show the names of the supernovae in each cluster
-for cluster_id, supernovae in supernova_names_clusters.items():
-    st.write(f"Supernovae in {cluster_id}:")
-    st.write(supernovae)
+#for cluster_id, supernovae in supernova_names_clusters.items():
+#    st.write(f"Supernovae in {cluster_id}:")
+#    st.write(supernovae)
 
 ##############
 
