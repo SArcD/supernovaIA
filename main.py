@@ -128,9 +128,7 @@ df_light_curves = download_and_process_supernovas(repo_url)
 df_light_curves.to_csv('light_curves_with_parsnip_and_ra_decl_redshift_snid.csv', index=False)
 st.write("Data saved in 'light_curves_with_parsnip_and_ra_decl_redshift_snid.csv'.")
 
-#########3
-
-import streamlit as st
+#########
 
 import streamlit as st
 
@@ -584,15 +582,6 @@ from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 import plotly.express as px
 
-########
-
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import AgglomerativeClustering
-import streamlit as st
-
 # We assume that df_supernova_clustering has already been generated after clustering
 df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
 
@@ -673,108 +662,38 @@ from plotly.subplots import make_subplots
 numerical_columns = df_supernova_clustering.select_dtypes(include='number').drop(columns=['cluster']).columns
 
 # Calculate the number of rows and columns in the panel (one column per parameter)
-#num_rows = len(numerical_columns)
-#num_cols = 1  # One column for each parameter
+num_rows = len(numerical_columns)
+num_cols = 1  # One column for each parameter
 
 # Adjust vertical spacing and the height of the subplots
-#subplot_height = 400  # Adjust the height as preferred
-#vertical_spacing = 0.01  # Adjust the vertical spacing as preferred
+subplot_height = 400  # Adjust the height as preferred
+vertical_spacing = 0.01  # Adjust the vertical spacing as preferred
 
 # Create subplots for each parameter
-#fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=numerical_columns, vertical_spacing=vertical_spacing)
+fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=numerical_columns, vertical_spacing=vertical_spacing)
 
 # Create a box plot for each parameter and compare clusters
-#for i, column in enumerate(numerical_columns):
+for i, column in enumerate(numerical_columns):
     # Get the data for each cluster for the current parameter
-#    cluster_data = [df_supernova_clustering[df_supernova_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
+    cluster_data = [df_supernova_clustering[df_supernova_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
 
-#    # Add the box plot to the corresponding subplot
-#    for j in range(num_clusters):
-#        box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
-#        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
-#        box.text = df_supernova_clustering[df_supernova_clustering['cluster'] == j]['SNID']  # Assign 'SNID' values to the text
-#        fig.add_trace(box, row=i+1, col=1)
+    # Add the box plot to the corresponding subplot
+    for j in range(num_clusters):
+        box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
+        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
+        box.text = df_supernova_clustering[df_supernova_clustering['cluster'] == j]['SNID']  # Assign 'SNID' values to the text
+        fig.add_trace(box, row=i+1, col=1)
 
 # Update the layout and show the panel of box plots
-#fig.update_layout(showlegend=False, height=subplot_height*num_rows, width=800,
-#                  title_text='Cluster Comparison - Box Plot',
-#                  margin=dict(t=100, b=100, l=50, r=50))  # Adjust the margins of the layout
+fig.update_layout(showlegend=False, height=subplot_height*num_rows, width=800,
+                  title_text='Cluster Comparison - Box Plot',
+                  margin=dict(t=100, b=100, l=50, r=50))  # Adjust the margins of the layout
 
 # Show the box plot in Streamlit
-#st.plotly_chart(fig)
+st.plotly_chart(fig)
 
-# Función para corregir las magnitudes en todo el DataFrame
-def corregir_magnitudes(df):
-    # Recorrer cada supernova en el DataFrame
-    for index, row in df.iterrows():
-        MWEBV = row['mwebv']  # Extinción por polvo
-        redshift = row['redshift']  # Redshift de la supernova
-        mag = row['mag']  # Magnitud aparente
-        filtro = row['filter']  # Filtro utilizado
-        
-        # Aplicar corrección por extinción y redshift
-        if pd.notnull(mag) and pd.notnull(MWEBV) and pd.notnull(redshift):
-            try:
-                mag_corregida = corregir_magnitud_redshift(corregir_magnitud_extincion(mag, MWEBV, filtro), redshift)
-                df.at[index, 'mag_corregida'] = mag_corregida
-            except Exception as e:
-                st.write(f"Error al corregir la magnitud para el filtro {filtro}: {str(e)}")
-                df.at[index, 'mag_corregida'] = np.nan  # En caso de error, asignar NaN
-        else:
-            df.at[index, 'mag_corregida'] = np.nan  # Asignar NaN si faltan datos
-        
-    return df
 
-# Aplicar la corrección de magnitudes al DataFrame original
-df_light_curves = corregir_magnitudes(df_light_curves)
-
-# Ahora usa la columna 'mag_corregida' en lugar de 'mag' en los diagramas de caja
-
-# Crear los diagramas de caja para comparar las magnitudes corregidas entre clusters
-#def create_box_plots(df):
-    # Crear las subtramas para cada filtro
-#    fig = make_subplots(rows=len(df['filter'].unique()), cols=1, subplot_titles=df['filter'].unique())
-
-#    for i, filtro in enumerate(df['filter'].unique()):
-#        df_filtro = df[df['filter'] == filtro]
-        
-#        for cluster in df['cluster'].unique():
-#            cluster_data = df_filtro[df_filtro['cluster'] == cluster]['mag_corregida']
-#            fig.add_trace(go.Box(y=cluster_data, name=f'Cluster {cluster}', boxpoints='all', notched=True),
-#                          row=i+1, col=1)
-
-#    fig.update_layout(showlegend=False, title_text='Comparación de Magnitudes Corregidas por Cluster')
-    
-#    return fig
-
-# Generar y mostrar los diagramas de caja con las magnitudes corregidas
-#st.plotly_chart(create_box_plots(df_light_curves))
-
-# Verificar si la columna 'cluster' existe en el DataFrame
-def create_box_plots(df):
-    if 'cluster' not in df.columns:
-        st.write("Error: La columna 'cluster' no existe en el DataFrame.")
-        return None
-
-    # Crear las subtramas para cada filtro
-    fig = make_subplots(rows=len(df['filter'].unique()), cols=1, subplot_titles=df['filter'].unique())
-
-    for i, filtro in enumerate(df['filter'].unique()):
-        df_filtro = df[df['filter'] == filtro]
-        
-        for cluster in df['cluster'].unique():
-            cluster_data = df_filtro[df_filtro['cluster'] == cluster]['mag_corregida']
-            fig.add_trace(go.Box(y=cluster_data, name=f'Cluster {cluster}', boxpoints='all', notched=True),
-                          row=i+1, col=1)
-
-    fig.update_layout(showlegend=False, title_text='Comparación de Magnitudes Corregidas por Cluster')
-    
-    return fig
-
-# Generar y mostrar los diagramas de caja utilizando df_supernova_clustering
-st.plotly_chart(create_box_plots(df_supernova_clustering))
-
-#########################3
+#########################
 
 ##########3
 
