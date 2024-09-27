@@ -6,6 +6,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+import logging
+
+# Configurar logging para mostrar solo advertencias y errores
+logging.basicConfig(level=logging.WARNING)
+
 
 # Function to obtain the list of files from a GitHub repository using the API
 @st.cache_data
