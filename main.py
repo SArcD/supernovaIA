@@ -653,7 +653,50 @@ if len(supernovae_in_cluster) > 0:
 else:
     st.write(f"No supernovae in {selected_cluster}.") 
 
-#######
+########
+
+import numpy as np
+
+# Función para corregir la magnitud por extinción y redshift
+def corregir_magnitudes_abs(df, extincion_filtros):
+    """
+    Corrige las magnitudes pico en el DataFrame para que sean magnitudes absolutas.
+    
+    :param df: DataFrame que contiene las columnas de magnitudes pico y valores de redshift y extinción.
+    :param extincion_filtros: Diccionario con las constantes de extinción por filtro.
+    :return: DataFrame con las magnitudes corregidas.
+    """
+    for filtro in extincion_filtros.keys():
+        peak_col = f'peak_magnitude_{filtro}'
+        if peak_col in df.columns:
+            # Corregir la magnitud por extinción y redshift
+            df[f'abs_magnitude_{filtro}'] = df.apply(
+                lambda row: corregir_magnitud_redshift(
+                    corregir_magnitud_extincion(row[peak_col], row['mwebv'], filtro), row['redshift']
+                ) if not pd.isnull(row[peak_col]) else np.nan,
+                axis=1
+            )
+    return df
+
+# Constantes de extinción para los diferentes filtros
+extincion_filtros = {
+    'g': 3.303,
+    'r': 2.285,
+    'i': 1.698,
+    'z': 1.263,
+    'X': 2.000,  # Ejemplo ajustado para el filtro 'X'
+    'Y': 1.000   # Ejemplo ajustado para el filtro 'Y'
+}
+
+# Aplicar la corrección a las magnitudes pico para todos los filtros
+df_supernova_clustering = corregir_magnitudes_abs(df_supernova_clustering, extincion_filtros)
+
+# Mostrar el DataFrame con las magnitudes absolutas
+st.write(df_supernova_clustering[['SNID', 'abs_magnitude_g', 'abs_magnitude_r', 'abs_magnitude_i', 'abs_magnitude_z', 'abs_magnitude_X', 'abs_magnitude_Y']])
+
+
+
+########
 st.write(df_supernova_clustering.columns)
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
