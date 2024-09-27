@@ -571,7 +571,12 @@ def create_summary_dataframe(df_supernovae, supernova_type):
         results.append(summary)
 
     return pd.DataFrame(results)
-    
+
+##############3
+st.write(df_light_curves)
+
+#############
+
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
