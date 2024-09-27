@@ -654,7 +654,7 @@ else:
     st.write(f"No supernovae in {selected_cluster}.") 
 
 #######
-
+st.write(df_supernova_clustering.columns)
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
