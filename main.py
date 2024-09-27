@@ -260,29 +260,63 @@ def plot_light_curve(df_supernova):
         'r': 2.285,
         'i': 1.698,
         'z': 1.263,
-        'X': 2.000,  # Corregido para el filtro 'x'
-        'Y': 1.000   # Corregido para el filtro 'Y'
+        'X': 2.000,  # Valor ajustado para el filtro 'x'
+        'Y': 1.000   # Valor ajustado para el filtro 'Y'
     }
     filtros_permitidos = extincion_filtros.keys()
 
+    # Iterar sobre cada filtro único
     for filtro in df_supernova['filter'].unique():
         if filtro not in filtros_permitidos:
             st.write(f"Filtro '{filtro}' no es válido. Solo se permiten: {filtros_permitidos}.")
             continue  # Saltar filtros no válidos
 
         df_filtro = df_supernova[df_supernova['filter'] == filtro]
-        
+
+        # Comprobar si hay suficientes mediciones en el filtro
+        if len(df_filtro) < 1:
+            st.write(f"Advertencia: No hay suficientes mediciones para el filtro {filtro}.")
+            continue
+
+        # Verificar si hay valores nulos en la magnitud o redshift
+        if df_filtro['mag'].isnull().all():
+            st.write(f"Advertencia: Todas las mediciones de magnitud están ausentes para el filtro {filtro}.")
+            continue
+
+        if pd.isnull(MWEBV):
+            st.write(f"Advertencia: valor nulo en 'MWEBV' para el filtro {filtro}")
+            continue
+
+        if pd.isnull(redshift):
+            st.write(f"Advertencia: valor nulo en 'redshift' para el filtro {filtro}")
+            continue
+
+        # Imprimir valores de depuración para asegurarse de que son correctos
+        st.write(f"Corrigiendo magnitudes para el filtro {filtro} con MWEBV={MWEBV}, redshift={redshift}")
+
         # Corregir la magnitud por extinción y redshift
-        df_filtro['mag_corregida'] = df_filtro['mag'].apply(lambda m: corregir_magnitud_redshift(
-            corregir_magnitud_extincion(m, MWEBV, filtro), redshift))
-        
-        # Añadir la curva corregida al gráfico
-        fig.add_trace(go.Scatter(
-            x=df_filtro['days_relative'],
-            y=df_filtro['mag_corregida'],
-            mode='lines+markers',
-            name=filtro
-        ))
+        try:
+            df_filtro['mag_corregida'] = df_filtro['mag'].apply(lambda m: corregir_magnitud_redshift(
+                corregir_magnitud_extincion(m, MWEBV, filtro), redshift))
+        except Exception as e:
+            st.write(f"Error en la corrección de la magnitud para el filtro {filtro}: {str(e)}")
+            continue
+
+        # Añadir la curva corregida al gráfico si hay más de un punto
+        if len(df_filtro['mag_corregida']) > 1:
+            fig.add_trace(go.Scatter(
+                x=df_filtro['days_relative'],
+                y=df_filtro['mag_corregida'],
+                mode='lines+markers',
+                name=filtro
+            ))
+        else:
+            st.write(f"Advertencia: No hay suficientes puntos para graficar en el filtro {filtro}.")
+
+    # Verificar si se ha añadido algún trazo al gráfico
+    if not fig.data:
+        st.write("No se pudo generar una curva de luz: No hay datos suficientes después de aplicar las correcciones.")
+        return None
 
     # Extraer información relevante para el título
     snid = df_supernova['snid'].iloc[0]
@@ -303,7 +337,6 @@ def plot_light_curve(df_supernova):
     )
 
     return fig
-
 
 
 # Select the supernova type and minimum number of observations with a slider
