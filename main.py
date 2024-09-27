@@ -598,41 +598,47 @@ st.write(df_parameters)
 ###############
 ##############
 
-# 1. Calcular picos corregidos en df_light_curves
+
+# Primero, asegúrate de corregir las magnitudes en df_light_curves.
+# Asumiendo que ya tienes la función corregir_magnitud_extincion y corregir_magnitud_redshift definidas.
+
+# Función para calcular las magnitudes corregidas
+def calcular_magnitudes_corregidas(df):
+    # Crear una columna para magnitudes corregidas
+    df['mag_corregida'] = np.nan  # Inicializa la columna
+    for filtro in df['filter'].unique():
+        # Filtra por el filtro actual
+        df_filtro = df[df['filter'] == filtro]
+        MWEBV = df_filtro['mwebv'].iloc[0]  # Suponiendo que MWEBV es constante para el SN
+        redshift = df_filtro['redshift'].iloc[0]  # Suponiendo que redshift es constante para el SN
+        # Aplica las correcciones
+        df.loc[df['filter'] == filtro, 'mag_corregida'] = df_filtro['mag'].apply(
+            lambda m: corregir_magnitud_redshift(corregir_magnitud_extincion(m, MWEBV, filtro), redshift)
+        )
+    return df
+
+# Aplica la función a df_light_curves
+df_light_curves = calcular_magnitudes_corregidas(df_light_curves)
+
+# Ahora define la función para obtener los picos corregidos
 def calcular_picos_corregidos(df_light_curves):
     df_peaks = df_light_curves.groupby(['snid', 'filter']).apply(
         lambda x: x.loc[x['mag_corregida'].idxmin()])  # Selecciona la fila con la menor magnitud corregida
     df_peaks = df_peaks.reset_index(drop=True)
-
+    
     # Pivotear para obtener una columna por filtro con la magnitud de pico corregida
     df_peaks = df_peaks.pivot(index='snid', columns='filter', values='mag_corregida').reset_index()
-
+    
     # Renombrar las columnas para que reflejen los filtros
-    df_peaks.columns = ['snid'] + [f'peak_magnitude_{filtro}' for filtro in df_peaks.columns[1:]]
-
+    df_peaks.columns = ['SNID'] + [f'peak_magnitude_{filtro}' for filtro in df_peaks.columns[1:]]
+    
     return df_peaks
 
 # Calculamos los picos corregidos a partir de df_light_curves
 df_peaks_corregidos = calcular_picos_corregidos(df_light_curves)
 
-# 2. Renombrar la columna 'snid' a 'SNID' para hacer el merge con df_parameters
-df_peaks_corregidos = df_peaks_corregidos.rename(columns={'snid': 'SNID'})
-
-# 3. Combinar picos corregidos con df_parameters
-def combinar_picos_con_clustering(df_parameters, df_peaks):
-    # Realizar el merge con la columna 'SNID'
-    df_parameters = pd.merge(df_parameters, df_peaks, on='SNID', how='left')
-    return df_parameters
-
-# Supongamos que df_parameters ya ha sido creado
-df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
-
-# Combinar los picos corregidos
-df_parameters = combinar_picos_con_clustering(df_parameters, df_peaks_corregidos)
-
-# Mostrar el DataFrame resultante para verificar
-st.write("Verificando df_parameters con picos corregidos:")
-st.write(df_parameters)
+# Ahora, combina los picos corregidos con df_parameters
+df_parameters = pd.merge(df_parameters, df_peaks_corregidos, on='SNID', how='left')
 
 
 ##############
