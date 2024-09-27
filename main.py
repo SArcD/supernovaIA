@@ -244,13 +244,20 @@ def calculate_days_relative_to_peak(df_supernova):
 
 #    return fig
 
+
 # Modificar la función plot_light_curve
 def plot_light_curve(df_supernova):
     fig = go.Figure()
 
     # Calcular días relativos al pico de luminosidad
     df_supernova = calculate_days_relative_to_peak(df_supernova)
-    
+    # Constantes de extinción para diferentes filtros
+    extincion_filtros = {
+    'g': 3.303,
+    'r': 2.285,
+    'i': 1.698,
+    'z': 1.263
+    }
     # Obtener valores generales para la corrección
     MWEBV = df_supernova['mwebv'].iloc[0]  # Extinción por polvo
     redshift = df_supernova['redshift'].iloc[0]  # Redshift de la supernova
