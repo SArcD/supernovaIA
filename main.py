@@ -656,9 +656,29 @@ else:
 st.write(df_supernova_clustering.columns)
 
 ########
+import pandas as pd
+import numpy as np
 
-# Supongamos que df_peaks es el DataFrame con las magnitudes de pico de las supernovas
-# Primero, renombramos la columna 'snid' en df_peaks a 'SNID' para que coincida con df_supernova_clustering
+# Supongamos que df_light_curves ya contiene los datos de las supernovas
+
+# Función para calcular las magnitudes de pico por cada filtro en df_light_curves
+def calcular_picos(df_light_curves):
+    df_peaks = df_light_curves.groupby(['snid', 'filter']).apply(
+        lambda x: x.loc[x['mag'].idxmin()])  # Selecciona la fila con la menor magnitud (pico)
+    df_peaks = df_peaks.reset_index(drop=True)
+    
+    # Pivotear para obtener una columna por filtro con la magnitud de pico
+    df_peaks = df_peaks.pivot(index='snid', columns='filter', values='mag').reset_index()
+    
+    # Renombrar las columnas para que reflejen los filtros
+    df_peaks.columns = ['snid'] + [f'peak_magnitude_{filtro}' for filtro in df_peaks.columns[1:]]
+    
+    return df_peaks
+
+# Calculamos los picos a partir de df_light_curves
+df_peaks = calcular_picos(df_light_curves)
+
+# Ahora renombramos la columna 'snid' a 'SNID' para hacer el merge con df_supernova_clustering
 df_peaks = df_peaks.rename(columns={'snid': 'SNID'})
 
 # Función para combinar los picos con el DataFrame de clustering
@@ -718,7 +738,7 @@ def corregir_magnitud_redshift(m_corregida, z):
     
     return m_redshift_corregida
 
-# Supongamos que df_supernova_clustering y df_peaks ya han sido creados en pasos anteriores
+# Supongamos que df_supernova_clustering ya ha sido creado en pasos anteriores
 # Combinamos los picos con el DataFrame de clustering
 df_supernova_clustering = combinar_picos_con_clustering(df_supernova_clustering, df_peaks)
 
@@ -734,7 +754,6 @@ extincion_filtros = {
 
 # Aplicamos la corrección de magnitudes absolutas
 df_supernova_clustering = corregir_magnitudes_abs(df_supernova_clustering, extincion_filtros)
-
 
 ########
 st.write(df_supernova_clustering.columns)
