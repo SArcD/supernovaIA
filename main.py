@@ -260,7 +260,7 @@ def plot_light_curve(df_supernova):
         'r': 2.285,
         'i': 1.698,
         'z': 1.263,
-        'x': 2.000,  # Corregido para el filtro 'x'
+        'X': 2.000,  # Corregido para el filtro 'x'
         'Y': 1.000   # Corregido para el filtro 'Y'
     }
     filtros_permitidos = extincion_filtros.keys()
