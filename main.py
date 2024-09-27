@@ -589,6 +589,53 @@ df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
 st.write("Verifying df_parameters content:")
 st.write(df_parameters)
 
+###############33
+###############
+##############
+
+# 1. Calcular picos corregidos en df_light_curves
+def calcular_picos_corregidos(df_light_curves):
+    df_peaks = df_light_curves.groupby(['snid', 'filter']).apply(
+        lambda x: x.loc[x['mag_corregida'].idxmin()])  # Selecciona la fila con la menor magnitud corregida
+    df_peaks = df_peaks.reset_index(drop=True)
+
+    # Pivotear para obtener una columna por filtro con la magnitud de pico corregida
+    df_peaks = df_peaks.pivot(index='snid', columns='filter', values='mag_corregida').reset_index()
+
+    # Renombrar las columnas para que reflejen los filtros
+    df_peaks.columns = ['snid'] + [f'peak_magnitude_{filtro}' for filtro in df_peaks.columns[1:]]
+
+    return df_peaks
+
+# Calculamos los picos corregidos a partir de df_light_curves
+df_peaks_corregidos = calcular_picos_corregidos(df_light_curves)
+
+# 2. Renombrar la columna 'snid' a 'SNID' para hacer el merge con df_parameters
+df_peaks_corregidos = df_peaks_corregidos.rename(columns={'snid': 'SNID'})
+
+# 3. Combinar picos corregidos con df_parameters
+def combinar_picos_con_clustering(df_parameters, df_peaks):
+    # Realizar el merge con la columna 'SNID'
+    df_parameters = pd.merge(df_parameters, df_peaks, on='SNID', how='left')
+    return df_parameters
+
+# Supongamos que df_parameters ya ha sido creado
+df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
+
+# Combinar los picos corregidos
+df_parameters = combinar_picos_con_clustering(df_parameters, df_peaks_corregidos)
+
+# Mostrar el DataFrame resultante para verificar
+st.write("Verificando df_parameters con picos corregidos:")
+st.write(df_parameters)
+
+
+##############
+###############
+################
+
+
+
 # Remove rows with NaN values
 df_supernova_clustering = df_parameters.dropna()
 
