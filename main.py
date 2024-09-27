@@ -653,7 +653,7 @@ if len(supernovae_in_cluster) > 0:
 else:
     st.write(f"No supernovae in {selected_cluster}.") 
 
-st.write(df_supernova_clustering.columns)
+st.write(df_supernova_clustering)
 
 ########
 import pandas as pd
