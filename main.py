@@ -208,41 +208,133 @@ def calculate_days_relative_to_peak(df_supernova):
     return df_supernova
 
 # Function to plot the light curve of a specific supernova with relevant information in the title
+#def plot_light_curve(df_supernova):
+#    fig = go.Figure()
+#
+#    # Calculate days relative to the luminosity peak
+#    df_supernova = calculate_days_relative_to_peak(df_supernova)
+#
+#    for filter in df_supernova['filter'].unique():
+#        df_filter = df_supernova[df_supernova['filter'] == filter]
+#        fig.add_trace(go.Scatter(
+#            x=df_filter['days_relative'],  # Use days relative to the peak as the X axis
+#            y=df_filter['mag'],
+#            mode='lines+markers',
+#            name=filter
+#        ))
+
+#    # Extract relevant information for the title
+#    snid = df_supernova['snid'].iloc[0]
+#    supernova_type = df_supernova['parsnip_pred'].iloc[0]
+#    ra = df_supernova['ra'].iloc[0]
+#    decl = df_supernova['decl'].iloc[0]
+#    redshift = df_supernova['redshift'].iloc[0]
+
+#    # Invert the Y axis since lower magnitudes are brighter and add the information to the title
+#    fig.update_layout(
+#        title=(
+#            f'Light Curve of {snid} ({supernova_type})\n'
+#            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
+#        ),
+#        xaxis_title='Days Relative to Luminosity Peak',
+#        yaxis_title='Magnitude',
+#        yaxis=dict(autorange='reversed'),  # Invert the Y axis
+#        showlegend=True
+#    )
+
+#    return fig
+
+import numpy as np
+
+# Constantes de extinción para diferentes filtros
+extincion_filtros = {
+    'g': 3.303,
+    'r': 2.285,
+    'i': 1.698,
+    'z': 1.263
+}
+
+def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
+    """
+    Corrige la magnitud aparente por la extinción debido al polvo galáctico.
+    
+    :param m: Magnitud aparente sin corregir.
+    :param MWEBV: Valor de extinción por polvo galáctico (MWEBV).
+    :param filtro: Filtro utilizado (g, r, i, z).
+    :return: Magnitud corregida por extinción.
+    """
+    if filtro in extincion_filtros:
+        A_lambda = extincion_filtros[filtro] * MWEBV
+        m_corregida = m - A_lambda
+    else:
+        raise ValueError("Filtro no válido. Usa 'g', 'r', 'i' o 'z'.")
+    
+    return m_corregida
+
+def corregir_magnitud_redshift(m_corregida, z):
+    """
+    Corrige la magnitud aparente por el efecto del redshift (corrimiento al rojo).
+    
+    :param m_corregida: Magnitud corregida por extinción.
+    :param z: Redshift de la supernova.
+    :return: Magnitud corregida por redshift.
+    """
+    # La corrección por redshift es básicamente una corrección de distancia.
+    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
+    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
+    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+    
+    return m_redshift_corregida
+
+# Modificar la función plot_light_curve
 def plot_light_curve(df_supernova):
     fig = go.Figure()
 
-    # Calculate days relative to the luminosity peak
+    # Calcular días relativos al pico de luminosidad
     df_supernova = calculate_days_relative_to_peak(df_supernova)
+    
+    # Obtener valores generales para la corrección
+    MWEBV = df_supernova['mwebv'].iloc[0]  # Extinción por polvo
+    redshift = df_supernova['redshift'].iloc[0]  # Redshift de la supernova
 
-    for filter in df_supernova['filter'].unique():
-        df_filter = df_supernova[df_supernova['filter'] == filter]
+    for filtro in df_supernova['filter'].unique():
+        df_filtro = df_supernova[df_supernova['filter'] == filtro]
+        
+        # Corregir la magnitud por extinción y redshift
+        df_filtro['mag_corregida'] = df_filtro['mag'].apply(lambda m: corregir_magnitud_redshift(
+            corregir_magnitud_extincion(m, MWEBV, filtro), redshift))
+        
+        # Añadir la curva corregida al gráfico
         fig.add_trace(go.Scatter(
-            x=df_filter['days_relative'],  # Use days relative to the peak as the X axis
-            y=df_filter['mag'],
+            x=df_filtro['days_relative'],  # Usar días relativos al pico como eje X
+            y=df_filtro['mag_corregida'],  # Usar magnitudes corregidas
             mode='lines+markers',
-            name=filter
+            name=filtro
         ))
 
-    # Extract relevant information for the title
+    # Extraer información relevante para el título
     snid = df_supernova['snid'].iloc[0]
-    supernova_type = df_supernova['parsnip_pred'].iloc[0]
+    tipo_supernova = df_supernova['parsnip_pred'].iloc[0]
     ra = df_supernova['ra'].iloc[0]
     decl = df_supernova['decl'].iloc[0]
-    redshift = df_supernova['redshift'].iloc[0]
 
-    # Invert the Y axis since lower magnitudes are brighter and add the information to the title
+    # Invertir el eje Y porque las magnitudes menores son más brillantes y añadir la información al título
     fig.update_layout(
         title=(
-            f'Light Curve of {snid} ({supernova_type})\n'
+            f'Curva de Luz de {snid} ({tipo_supernova})\n'
             f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
         ),
-        xaxis_title='Days Relative to Luminosity Peak',
-        yaxis_title='Magnitude',
-        yaxis=dict(autorange='reversed'),  # Invert the Y axis
+        xaxis_title='Días Relativos al Pico de Luminosidad',
+        yaxis_title='Magnitud Corregida',
+        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
         showlegend=True
     )
 
     return fig
+
+
+
+
 
 # Select the supernova type and minimum number of observations with a slider
 supernova_type = st.text_input("Enter the supernova type (e.g., 'SN Ia', 'SN Ib', 'SN II'):")
