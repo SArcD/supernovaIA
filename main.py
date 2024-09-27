@@ -753,7 +753,7 @@ extincion_filtros = {
 }
 
 # Aplicamos la corrección de magnitudes absolutas
-df_supernova_clustering = corregir_magnitudes_abs(df_supernova_clustering, extincion_filtros)
+#df_supernova_clustering = corregir_magnitudes_abs(df_supernova_clustering, extincion_filtros)
 st.write(df_supernova_clustering)
 ########
 st.write(df_supernova_clustering.columns)
