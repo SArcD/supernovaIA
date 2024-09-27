@@ -265,14 +265,14 @@ def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
     }
     
     
-    """
-    Corrige la magnitud aparente por la extinción debido al polvo galáctico.
+    #"""
+    #Corrige la magnitud aparente por la extinción debido al polvo galáctico.
     
-    :param m: Magnitud aparente sin corregir.
-    :param MWEBV: Valor de extinción por polvo galáctico (MWEBV).
-    :param filtro: Filtro utilizado (g, r, i, z).
-    :return: Magnitud corregida por extinción.
-    """
+    #:param m: Magnitud aparente sin corregir.
+    #:param MWEBV: Valor de extinción por polvo galáctico (MWEBV).
+    #:param filtro: Filtro utilizado (g, r, i, z).
+    #:return: Magnitud corregida por extinción.
+    #"""
     if filtro in extincion_filtros:
         A_lambda = extincion_filtros[filtro] * MWEBV
         m_corregida = m - A_lambda
