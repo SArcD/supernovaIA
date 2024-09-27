@@ -245,6 +245,10 @@ def calculate_days_relative_to_peak(df_supernova):
 #    return fig
 
 # Constantes de extinción para diferentes filtros
+
+def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
+    # Constantes de extinción para diferentes filtros
+    
     extincion_filtros = {
         'g': 3.303,
         'r': 2.285,
@@ -253,7 +257,8 @@ def calculate_days_relative_to_peak(df_supernova):
         'X': 2.000,  # Valor ajustado para el filtro 'x'
         'Y': 1.000   # Valor ajustado para el filtro 'Y'
     }
-def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
+    
+    
     """
     Corrige la magnitud aparente por la extinción debido al polvo galáctico.
     
