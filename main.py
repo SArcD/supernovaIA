@@ -600,18 +600,32 @@ st.write(df_parameters)
 
 # Función para calcular las magnitudes corregidas
 def calcular_magnitudes_corregidas(df):
-    # Crear una columna para magnitudes corregidas
-    df['mag_corregida'] = np.nan  # Inicializa la columna
+    # Inicializar la columna de magnitudes corregidas
+    df['mag_corregida'] = np.nan  
+    
+    # Verificar si hay datos
+    if df.empty:
+        return df
+
+    # Iterar sobre cada filtro único
     for filtro in df['filter'].unique():
-        # Filtra por el filtro actual
         df_filtro = df[df['filter'] == filtro]
-        MWEBV = df_filtro['mwebv'].iloc[0]  # Suponiendo que MWEBV es constante para el SN
-        redshift = df_filtro['redshift'].iloc[0]  # Suponiendo que redshift es constante para el SN
+        
+        # Comprobar si hay datos para este filtro
+        if df_filtro.empty:
+            continue
+        
+        # Suponiendo que MWEBV y redshift son constantes para el SN
+        MWEBV = df_filtro['mwebv'].iloc[0]
+        redshift = df_filtro['redshift'].iloc[0]
+        
         # Aplica las correcciones
         df.loc[df['filter'] == filtro, 'mag_corregida'] = df_filtro['mag'].apply(
             lambda m: corregir_magnitud_redshift(corregir_magnitud_extincion(m, MWEBV, filtro), redshift)
         )
+    
     return df
+
 
 # Aplica la función a df_light_curves
 df_light_curves = calcular_magnitudes_corregidas(df_light_curves)
