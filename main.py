@@ -553,7 +553,9 @@ def corregir_magnitud_extincion(m, MWEBV, filtro):
         'g': 3.303,
         'r': 2.285,
         'i': 1.698,
-        'z': 1.263
+        'z': 1.263,
+        'X': 2.000,  # Valor ajustado para el filtro 'x'
+        'Y': 1.000   # Valor ajustado para el filtro 'Y'
     }
     
     if filtro in extincion_filtros:
