@@ -620,36 +620,56 @@ st.write(df_parameters.head())
 ################
 
 
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import AgglomerativeClustering
+import streamlit as st
 
-# Remove rows with NaN values
+# Suponiendo que df_parameters ya está definido y tiene las columnas necesarias
+# Elimina las filas con valores NaN en df_parameters
 df_supernova_clustering = df_parameters.dropna()
 
-# Select numerical columns for clustering
-numerical_columns = df_supernova_clustering.select_dtypes(include=['number'])
+# Permitir que el usuario seleccione columnas específicas para el clustering
+selected_columns = st.multiselect(
+    'Select columns for clustering:',
+    options=df_supernova_clustering.columns.tolist(),  # Todas las columnas del DataFrame
+    default=df_supernova_clustering.columns.tolist()    # Por defecto, selecciona todas las columnas
+)
 
-# Normalize the data
-scaler = StandardScaler()
-numerical_columns_scaled = scaler.fit_transform(numerical_columns)
+# Verificar que al menos una columna esté seleccionada
+if selected_columns:
+    # Selecciona solo las columnas elegidas por el usuario
+    numerical_columns = df_supernova_clustering[selected_columns].select_dtypes(include=['number'])
 
-# Hierarchical clustering
-num_clusters = st.number_input('Select the number of clusters', min_value=2, max_value=10, value=5, step=1)
-clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
-df_supernova_clustering['cluster'] = clustering.fit_predict(numerical_columns_scaled)
+    # Normaliza los datos
+    scaler = StandardScaler()
+    numerical_columns_scaled = scaler.fit_transform(numerical_columns)
 
-# Collect the names of supernovae in each cluster and store them
-supernova_names_clusters = {}
+    # Clustering jerárquico
+    num_clusters = st.number_input('Select the number of clusters', min_value=2, max_value=10, value=5, step=1)
+    clustering = AgglomerativeClustering(n_clusters=num_clusters, linkage='ward')
+    df_supernova_clustering['cluster'] = clustering.fit_predict(numerical_columns_scaled)
 
-for cluster_id in range(num_clusters):
-    # Filter the supernovae by cluster
-    supernovae_in_cluster = df_supernova_clustering[df_supernova_clustering['cluster'] == cluster_id]['SNID'].tolist()
-    
-    # Store in the dictionary with the name 'cluster_X'
-    supernova_names_clusters[f'cluster_{cluster_id}'] = supernovae_in_cluster
+    # Recopilar los nombres de las supernovas en cada clúster y almacenarlos
+    supernova_names_clusters = {}
 
-# Show the names of the supernovae in each cluster
-#for cluster_id, supernovae in supernova_names_clusters.items():
-#    st.write(f"Supernovae in {cluster_id}:")
-#    st.write(supernovae)
+    for cluster_id in range(num_clusters):
+        # Filtrar las supernovas por clúster
+        supernovae_in_cluster = df_supernova_clustering[df_supernova_clustering['cluster'] == cluster_id]['SNID'].tolist()
+        
+        # Almacenar en el diccionario con el nombre 'cluster_X'
+        supernova_names_clusters[f'cluster_{cluster_id}'] = supernovae_in_cluster
+
+    # Mostrar los resultados
+    st.write("Supernovae in each cluster:")
+    for cluster, supernovae in supernova_names_clusters.items():
+        st.write(f"{cluster}: {supernovae}")
+
+else:
+    st.write("Please select at least one column for clustering.")
+
+
 
 ##############
 
