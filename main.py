@@ -1000,107 +1000,107 @@ else:
     st.write("Please select at least one variable to train the model.")
 
 
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
+#import pandas as pd
+#import numpy as np
+#import plotly.graph_objects as go
+#from sklearn.preprocessing import StandardScaler
+#from sklearn.manifold import TSNE
+#from sklearn.decomposition import PCA
 
 # Select the cluster
-selected_cluster = st.selectbox(
-    "Select the cluster to analyze subclusters:",
-    df_supernova_clustering['cluster'].unique()
-)
+#selected_cluster = st.selectbox(
+#    "Select the cluster to analyze subclusters:",
+#    df_supernova_clustering['cluster'].unique()
+#)
 
 # Filter the supernovae from the selected cluster
-df_filtered_cluster = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
+#df_filtered_cluster = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
 # Select numerical columns excluding RA, Dec, and cluster
-filtered_numerical_columns = df_filtered_cluster.select_dtypes(include=['number']).drop(columns=['RA', 'Dec', 'cluster'])
+#filtered_numerical_columns = df_filtered_cluster.select_dtypes(include=['number']).drop(columns=['RA', 'Dec', 'cluster'])
 
 # Normalize the data
-scaler = StandardScaler()
-scaled_filtered_numerical_columns = scaler.fit_transform(filtered_numerical_columns)
+#scaler = StandardScaler()
+#scaled_filtered_numerical_columns = scaler.fit_transform(filtered_numerical_columns)
 
 # Select the number of subclusters
-num_subclusters = st.number_input('Select the number of subclusters within the selected cluster:', min_value=2, max_value=10, value=3, step=1)
+#num_subclusters = st.number_input('Select the number of subclusters within the selected cluster:', min_value=2, max_value=10, value=3, step=1)
 
 # Apply agglomerative clustering within the selected cluster
-clustering_subclusters = AgglomerativeClustering(n_clusters=num_subclusters, linkage='ward')
-df_filtered_cluster['subcluster'] = clustering_subclusters.fit_predict(scaled_filtered_numerical_columns)
+#clustering_subclusters = AgglomerativeClustering(n_clusters=num_subclusters, linkage='ward')
+#df_filtered_cluster['subcluster'] = clustering_subclusters.fit_predict(scaled_filtered_numerical_columns)
 
 # --- Apply PCA and then t-SNE ---
 
 # Apply PCA to reduce dimensionality to 50 components, for example
-pca = PCA(n_components=2)  # Increase the number of PCA components to retain more information
-pca_data_cluster = pca.fit_transform(scaled_filtered_numerical_columns)
+#pca = PCA(n_components=2)  # Increase the number of PCA components to retain more information
+#pca_data_cluster = pca.fit_transform(scaled_filtered_numerical_columns)
 
 # Now apply t-SNE over the result of PCA with adjustments in the hyperparameters
-tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=5)
-tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
+#tsne = TSNE(n_components=2, perplexity=10, early_exaggeration=10, learning_rate=5)
+#tsne_data_cluster = tsne.fit_transform(pca_data_cluster)
 
 # Create a DataFrame with the t-SNE results and the subclusters
-df_tsne_cluster = pd.DataFrame(tsne_data_cluster, columns=['t-SNE1', 't-SNE2'])
-df_tsne_cluster['subcluster'] = df_filtered_cluster['subcluster']
+#df_tsne_cluster = pd.DataFrame(tsne_data_cluster, columns=['t-SNE1', 't-SNE2'])
+#df_tsne_cluster['subcluster'] = df_filtered_cluster['subcluster']
 
 # Visualize the subclusters within the selected cluster using t-SNE
-fig_tsne_subcluster = go.Figure()
+#fig_tsne_subcluster = go.Figure()
 
-for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
-    indices = df_tsne_cluster['subcluster'] == subcluster_id
+#for subcluster_id in np.unique(df_tsne_cluster['subcluster']):
+#    indices = df_tsne_cluster['subcluster'] == subcluster_id
     
-    scatter_trace = go.Scatter(
-        x=df_tsne_cluster.loc[indices, 't-SNE1'],
-        y=df_tsne_cluster.loc[indices, 't-SNE2'],
-        mode='markers',
-        marker=dict(size=7, line=dict(width=0.5, color='black')),
-        name=f'Subcluster {subcluster_id}'
-    )
-    fig_tsne_subcluster.add_trace(scatter_trace)
+#    scatter_trace = go.Scatter(
+#        x=df_tsne_cluster.loc[indices, 't-SNE1'],
+#        y=df_tsne_cluster.loc[indices, 't-SNE2'],
+#        mode='markers',
+#        marker=dict(size=7, line=dict(width=0.5, color='black')),
+#        name=f'Subcluster {subcluster_id}'
+#    )
+#    fig_tsne_subcluster.add_trace(scatter_trace)
 
 # Configure the layout of the t-SNE plot
-fig_tsne_subcluster.update_layout(
-    title=f'Subclusters within Cluster {selected_cluster} using t-SNE after PCA',
-    xaxis_title='t-SNE1',
-    yaxis_title='t-SNE2',
-    showlegend=True,
-    legend_title='Subclusters',
-    width=1084  # Adjust the width of the plot
-)
+#fig_tsne_subcluster.update_layout(
+#    title=f'Subclusters within Cluster {selected_cluster} using t-SNE after PCA',
+#    xaxis_title='t-SNE1',
+#    yaxis_title='t-SNE2',
+#    showlegend=True,
+#    legend_title='Subclusters',
+#    width=1084  # Adjust the width of the plot
+#)
 
-# Show the t-SNE plot in Streamlit
-#st.plotly_chart(fig_tsne_subcluster)
+## Show the t-SNE plot in Streamlit
+##st.plotly_chart(fig_tsne_subcluster)
 
 
-# Create box plots to compare variables between subclusters within the selected cluster
+## Create box plots to compare variables between subclusters within the selected cluster
 
-# Get the names of the numerical columns
-filtered_numerical_columns = df_filtered_cluster.select_dtypes(include=['number']).drop(columns=['subcluster']).columns
+## Get the names of the numerical columns
+#filtered_numerical_columns = df_filtered_cluster.select_dtypes(include=['number']).drop(columns=['subcluster']).columns
 
 # Calculate the number of rows for the subplot
-num_rows = len(filtered_numerical_columns)
+#num_rows = len(filtered_numerical_columns)
 
 # Create subplots for each numerical parameter, similar to the first clustering routine
-fig_box = make_subplots(rows=num_rows, cols=1, subplot_titles=filtered_numerical_columns)
+#fig_box = make_subplots(rows=num_rows, cols=1, subplot_titles=filtered_numerical_columns)
 
 # Add box plots for each numerical column, comparing subclusters within the selected cluster
-for i, column in enumerate(filtered_numerical_columns):
-    for subcluster in range(num_subclusters):
-        cluster_data = df_filtered_cluster[df_filtered_cluster['subcluster'] == subcluster][column]
-        box = go.Box(y=cluster_data, boxpoints='all', notched=True, name=f'Subcluster {subcluster}')
-        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
-        box.text = df_filtered_cluster[df_filtered_cluster['subcluster'] == subcluster]['SNID']  # Assign 'SNID' values to the text
-        fig_box.add_trace(box, row=i+1, col=1)
+#for i, column in enumerate(filtered_numerical_columns):
+#    for subcluster in range(num_subclusters):
+#        cluster_data = df_filtered_cluster[df_filtered_cluster['subcluster'] == subcluster][column]
+#        box = go.Box(y=cluster_data, boxpoints='all', notched=True, name=f'Subcluster {subcluster}')
+#        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
+#        box.text = df_filtered_cluster[df_filtered_cluster['subcluster'] == subcluster]['SNID']  # Assign 'SNID' values to the text
+#        fig_box.add_trace(box, row=i+1, col=1)
 
 # Adjust the layout to make it similar to the original plot
-fig_box.update_layout(showlegend=False, height=400*num_rows, width=800,
-                      title_text=f'Comparison of Variables between Subclusters within Cluster {selected_cluster}',
-                      margin=dict(t=100, b=100, l=50, r=50))
+#fig_box.update_layout(showlegend=False, height=400*num_rows, width=800,
+#                      title_text=f'Comparison of Variables between Subclusters within Cluster {selected_cluster}',
+#                      margin=dict(t=100, b=100, l=50, r=50))
 
 # Show the box plots
-st.plotly_chart(fig_box)
+#st.plotly_chart(fig_box)
 
 # Show the DataFrame with subclusters assigned within the selected cluster
-st.write(f"DataFrame with subclusters assigned within Cluster {selected_cluster}:")
-st.write(df_filtered_cluster[['SNID', 'subcluster']])
+#st.write(f"DataFrame with subclusters assigned within Cluster {selected_cluster}:")
+#st.write(df_filtered_cluster[['SNID', 'subcluster']])
