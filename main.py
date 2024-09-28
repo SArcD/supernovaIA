@@ -809,42 +809,94 @@ extincion_filtros = {
 st.write(df_supernova_clustering)
 ########
 st.write(df_supernova_clustering.columns)
+
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import streamlit as st
 
 # Get the names of the numerical columns, excluding the 'cluster' column
 numerical_columns = df_supernova_clustering.select_dtypes(include='number').drop(columns=['cluster']).columns
 
+# Allow the user to select columns for the boxplots
+selected_columns = st.multiselect(
+    'Select columns to include in the boxplots:',
+    options=numerical_columns.tolist(),  # List of numerical columns
+    default=numerical_columns.tolist()     # Default selection is all columns
+)
+
+# Check if any columns were selected
+if selected_columns:
+    # Calculate the number of rows and columns in the panel (one column per selected parameter)
+    num_rows = len(selected_columns)
+    num_cols = 1  # One column for each parameter
+
+    # Adjust vertical spacing and the height of the subplots
+    subplot_height = 400  # Adjust the height as preferred
+    vertical_spacing = 0.01  # Adjust the vertical spacing as preferred
+
+    # Create subplots for each selected parameter
+    fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=selected_columns, vertical_spacing=vertical_spacing)
+
+    # Create a box plot for each selected parameter and compare clusters
+    for i, column in enumerate(selected_columns):
+        # Get the data for each cluster for the current parameter
+        cluster_data = [df_supernova_clustering[df_supernova_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
+
+        # Add the box plot to the corresponding subplot
+        for j in range(num_clusters):
+            box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
+            box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
+            box.text = df_supernova_clustering[df_supernova_clustering['cluster'] == j]['SNID']  # Assign 'SNID' values to the text
+            fig.add_trace(box, row=i + 1, col=1)
+
+    # Update the layout and show the panel of box plots
+    fig.update_layout(showlegend=False, height=subplot_height * num_rows, width=800,
+                      title_text='Cluster Comparison - Box Plot',
+                      margin=dict(t=100, b=100, l=50, r=50))  # Adjust the margins of the layout
+
+    # Show the box plot in Streamlit
+    st.plotly_chart(fig)
+else:
+    st.write("Please select at least one column to display the boxplots.")
+
+
+#import plotly.graph_objects as go
+#from plotly.subplots import make_subplots
+
+# Get the names of the numerical columns, excluding the 'cluster' column
+#numerical_columns = df_supernova_clustering.select_dtypes(include='number').drop(columns=['cluster']).columns
+
 # Calculate the number of rows and columns in the panel (one column per parameter)
-num_rows = len(numerical_columns)
-num_cols = 1  # One column for each parameter
+#num_rows = len(numerical_columns)
+#num_cols = 1  # One column for each parameter
 
 # Adjust vertical spacing and the height of the subplots
-subplot_height = 400  # Adjust the height as preferred
-vertical_spacing = 0.01  # Adjust the vertical spacing as preferred
+#subplot_height = 400  # Adjust the height as preferred
+#vertical_spacing = 0.01  # Adjust the vertical spacing as preferred
 
 # Create subplots for each parameter
-fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=numerical_columns, vertical_spacing=vertical_spacing)
+#fig = make_subplots(rows=num_rows, cols=num_cols, subplot_titles=numerical_columns, vertical_spacing=vertical_spacing)
 
 # Create a box plot for each parameter and compare clusters
-for i, column in enumerate(numerical_columns):
-    # Get the data for each cluster for the current parameter
-    cluster_data = [df_supernova_clustering[df_supernova_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]
+#for i, column in enumerate(numerical_columns):
+#    # Get the data for each cluster for the current parameter
+#    cluster_data = [df_supernova_clustering[df_supernova_clustering['cluster'] == cluster][column] for cluster in range(num_clusters)]#
 
-    # Add the box plot to the corresponding subplot
-    for j in range(num_clusters):
-        box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
-        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
-        box.text = df_supernova_clustering[df_supernova_clustering['cluster'] == j]['SNID']  # Assign 'SNID' values to the text
-        fig.add_trace(box, row=i+1, col=1)
+#    # Add the box plot to the corresponding subplot
+#    for j in range(num_clusters):
+#        box = go.Box(y=cluster_data[j], boxpoints='all', notched=True, name=f'Cluster {j}')
+#        box.hovertemplate = 'id: %{text}'  # Add the value of the 'SNID' column to the hovertemplate
+#        box.text = df_supernova_clustering[df_supernova_clustering['cluster'] == j]['SNID']  # Assign 'SNID' values to the text
+#        fig.add_trace(box, row=i+1, col=1)
 
 # Update the layout and show the panel of box plots
-fig.update_layout(showlegend=False, height=subplot_height*num_rows, width=800,
-                  title_text='Cluster Comparison - Box Plot',
-                  margin=dict(t=100, b=100, l=50, r=50))  # Adjust the margins of the layout
+#fig.update_layout(showlegend=False, height=subplot_height*num_rows, width=800,
+#                  title_text='Cluster Comparison - Box Plot',
+#                  margin=dict(t=100, b=100, l=50, r=50))  # Adjust the margins of the layout
 
 # Show the box plot in Streamlit
-st.plotly_chart(fig)
+#st.plotly_chart(fig)
 
 
 #########################
