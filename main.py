@@ -548,66 +548,57 @@ import pandas as pd
 import numpy as np
 
 def corregir_magnitud_extincion(m, MWEBV, filtro):
-    # Constantes de extinción para diferentes filtros
+    # Define los valores de extinción para cada filtro
     extincion_filtros = {
         'g': 3.303,
         'r': 2.285,
         'i': 1.698,
-        'z': 1.263,
-        'X': 2.000,
-        'Y': 1.000
+        'z': 1.263
     }
-
+    
     if filtro in extincion_filtros:
         A_lambda = extincion_filtros[filtro] * MWEBV
         return m - A_lambda
     else:
-        raise ValueError("Filtro no válido.")
+        raise ValueError(f"Filtro no válido: {filtro}")
 
 def corregir_magnitud_redshift(m_corregida, z):
+    # Corrección por redshift
     D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad en Mpc
     D_L_parsecs = D_L * 1e6  # Convertir a parsecs
     return m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
 
-def calcular_magnitudes_absolutas(df_light_curves):
-    # Crear un DataFrame vacío para almacenar los resultados
-    df_parametros = pd.DataFrame(columns=['SNID', 'peak_magnitude'])
-
-    # Agrupar por SNID
+def calcular_picos_y_magnitudes_absolutas(df_light_curves, df_parametros):
+    # Agrupa por SNID
     for snid, group in df_light_curves.groupby('snid'):
-        # Obtener el número de observaciones en el pico
-        peak_observation = group['peak_observations'].iloc[0]
-        
-        # Verificar si hay suficientes datos
-        if peak_observation >= len(group):
-            print(f"No hay suficientes observaciones para SNID {snid}.")
-            continue
-
-        # Localizar la fila correspondiente al pico
-        peak_row = group.iloc[peak_observation - 1]  # Restar 1 por el índice
-
-        # Extraer magnitud, MWEBV y redshift
-        mag_aparente = peak_row['mag']
-        MWEBV = peak_row['mwebv']
-        redshift = peak_row['redshift']
-        filtro = peak_row['filter']
-        
-        # Verificar si hay valores válidos
-        if pd.isnull(mag_aparente) or pd.isnull(MWEBV) or pd.isnull(redshift):
-            print(f"Datos insuficientes para SNID {snid} en el pico.")
-            continue
-
-        # Calcular la magnitud absoluta
-        mag_extincion = corregir_magnitud_extincion(mag_aparente, MWEBV, filtro)
-        mag_absoluta = corregir_magnitud_redshift(mag_extincion, redshift)
-
-        # Añadir los resultados al DataFrame
-        df_parametros = df_parameters.append({'SNID': snid, 'peak_magnitude': mag_absoluta}, ignore_index=True)
+        for filtro in group['filter'].unique():
+            # Filtra por el filtro actual
+            df_filtro = group[group['filter'] == filtro]
+            
+            # Verifica si hay suficientes datos
+            if df_filtro['mag'].count() > 1:  # Se requiere más de un dato para calcular el pico
+                # Encuentra el índice del mínimo de magnitud
+                idx_pico = df_filtro['mag'].idxmin()
+                
+                # Obtener los valores necesarios para la corrección
+                m_aparente = df_filtro.loc[idx_pico, 'mag']
+                MWEBV = df_filtro['mwebv'].iloc[0]
+                redshift = df_filtro['redshift'].iloc[0]
+                
+                # Aplica las correcciones
+                m_corregida = corregir_magnitud_extincion(m_aparente, MWEBV, filtro)
+                m_absoluta = corregir_magnitud_redshift(m_corregida, redshift)
+                
+                # Almacena el resultado en df_parametros
+                df_parametros.loc[df_parametros['SNID'] == snid, f'peak_magnitude_{filtro}'] = m_absoluta
+                # Agregar otros campos como filtros si es necesario
 
     return df_parametros
 
-# Aplicar la función
-df_parametros = calcular_magnitudes_absolutas(df_light_curves)
+# Ejemplo de uso
+df_parametros = pd.DataFrame({'SNID': df_light_curves['snid'].unique()})
+df_parametros = calcular_picos_y_magnitudes_absolutas(df_light_curves, df_parametros)
+
 
 # Mostrar el DataFrame de parámetros
 st.write("PI")
