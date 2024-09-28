@@ -211,43 +211,6 @@ def calculate_days_relative_to_peak(df_supernova):
     df_supernova['days_relative'] = df_supernova['mjd'] - mjd_peak
     return df_supernova
 
-# Function to plot the light curve of a specific supernova with relevant information in the title
-#def plot_light_curve(df_supernova):
-#    fig = go.Figure()
-#
-#    # Calculate days relative to the luminosity peak
-#    df_supernova = calculate_days_relative_to_peak(df_supernova)
-#
-#    for filter in df_supernova['filter'].unique():
-#        df_filter = df_supernova[df_supernova['filter'] == filter]
-#        fig.add_trace(go.Scatter(
-#            x=df_filter['days_relative'],  # Use days relative to the peak as the X axis
-#            y=df_filter['mag'],
-#            mode='lines+markers',
-#            name=filter
-#        ))
-
-#    # Extract relevant information for the title
-#    snid = df_supernova['snid'].iloc[0]
-#    supernova_type = df_supernova['parsnip_pred'].iloc[0]
-#    ra = df_supernova['ra'].iloc[0]
-#    decl = df_supernova['decl'].iloc[0]
-#    redshift = df_supernova['redshift'].iloc[0]
-
-#    # Invert the Y axis since lower magnitudes are brighter and add the information to the title
-#    fig.update_layout(
-#        title=(
-#            f'Light Curve of {snid} ({supernova_type})\n'
-#            f'RA: {ra}°, Dec: {decl}°, Redshift: {redshift}'
-#        ),
-#        xaxis_title='Days Relative to Luminosity Peak',
-#        yaxis_title='Magnitude',
-#        yaxis=dict(autorange='reversed'),  # Invert the Y axis
-#        showlegend=True
-#    )
-
-#    return fig
-
 # Constantes de extinción para diferentes filtros
 
 def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
@@ -580,6 +543,86 @@ st.write("Verifying df_parameters content:")
 st.write(df_parameters)
 
 ###############33
+
+import pandas as pd
+import numpy as np
+
+def corregir_magnitud_extincion(m, MWEBV, filtro):
+    # Constantes de extinción para diferentes filtros
+    extincion_filtros = {
+        'g': 3.303,
+        'r': 2.285,
+        'i': 1.698,
+        'z': 1.263,
+        'X': 2.000,
+        'Y': 1.000
+    }
+
+    if filtro in extincion_filtros:
+        A_lambda = extincion_filtros[filtro] * MWEBV
+        return m - A_lambda
+    else:
+        raise ValueError("Filtro no válido.")
+
+def corregir_magnitud_redshift(m_corregida, z):
+    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad en Mpc
+    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
+    return m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+
+def calcular_magnitudes_absolutas(df_light_curves):
+    # Crear un DataFrame vacío para almacenar los resultados
+    df_parametros = pd.DataFrame(columns=['SNID', 'peak_magnitude'])
+
+    # Agrupar por SNID
+    for snid, group in df_light_curves.groupby('snid'):
+        # Obtener el número de observaciones en el pico
+        peak_observation = group['peak_observations'].iloc[0]
+        
+        # Verificar si hay suficientes datos
+        if peak_observation >= len(group):
+            print(f"No hay suficientes observaciones para SNID {snid}.")
+            continue
+
+        # Localizar la fila correspondiente al pico
+        peak_row = group.iloc[peak_observation - 1]  # Restar 1 por el índice
+
+        # Extraer magnitud, MWEBV y redshift
+        mag_aparente = peak_row['mag']
+        MWEBV = peak_row['mwebv']
+        redshift = peak_row['redshift']
+        filtro = peak_row['filter']
+        
+        # Verificar si hay valores válidos
+        if pd.isnull(mag_aparente) or pd.isnull(MWEBV) or pd.isnull(redshift):
+            print(f"Datos insuficientes para SNID {snid} en el pico.")
+            continue
+
+        # Calcular la magnitud absoluta
+        mag_extincion = corregir_magnitud_extincion(mag_aparente, MWEBV, filtro)
+        mag_absoluta = corregir_magnitud_redshift(mag_extincion, redshift)
+
+        # Añadir los resultados al DataFrame
+        df_parametros = df_parameters.append({'SNID': snid, 'peak_magnitude': mag_absoluta}, ignore_index=True)
+
+    return df_parametros
+
+# Aplicar la función
+df_parametros = calcular_magnitudes_absolutas(df_light_curves)
+
+# Mostrar el DataFrame de parámetros
+print(df_parametros.head())
+
+
+
+
+
+
+
+
+
+
+
+
 ###############
 ##############
 
