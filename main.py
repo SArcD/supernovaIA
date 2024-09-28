@@ -599,7 +599,7 @@ st.write(df_parameters)
 ##############
 
 def calcular_magnitudes_corregidas(df):
-    df['mag_corregida'] = np.nan  # Inicializa la columna
+    df['mag'] = np.nan  # Inicializa la columna
     for filtro in df['filter'].unique():
         df_filtro = df[df['filter'] == filtro]
         
