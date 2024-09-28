@@ -1115,6 +1115,7 @@ else:
 #st.write(df_filtered_cluster[['SNID', 'subcluster']])
 
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.cluster import KMeans
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -1141,45 +1142,65 @@ if not df_clustered_supernovae.empty:
         lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
     )
 
-    # Crear el conjunto de entrenamiento
-    X = df_light_curves_cluster[['days_relative_normalized']]  # Días relativos normalizados
-    y = df_light_curves_cluster['mag']  # Magnitudes observadas
+    # Paso 2.2: Crear características para clustering (puedes añadir más características según sea necesario)
+    features = []
+    for snid in supernova_ids:
+        curve_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
+        duration = curve_data['days_relative_normalized'].max()  # Duración normalizada
+        amplitude = curve_data['mag'].min() - curve_data['mag'].max()  # Amplitud
+        features.append([duration, amplitude])
+    
+    features_df = pd.DataFrame(features, columns=['duration', 'amplitude'], index=supernova_ids)
 
-    # Paso 3: Entrenar el modelo de árbol de regresión
-    model = DecisionTreeRegressor(random_state=42)
-    model.fit(X, y)
+    # Paso 3: Aplicar clustering
+    num_clusters = st.number_input('Select the number of clusters for curves:', min_value=2, max_value=10, value=3, step=1)
+    kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+    features_df['cluster'] = kmeans.fit_predict(features_df[['duration', 'amplitude']])
 
-    # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
-    days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
-    predicted_magnitudes = model.predict(days_range)
-
-    # Paso 5: Graficar la curva de luz ajustada
+    # Paso 4: Entrenar el modelo de árbol de regresión para cada subcluster
     fig = go.Figure()
     
-    # Gráfica de los datos originales
-    for snid in supernova_ids:
-        df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
-        fig.add_trace(go.Scatter(
-            x=df_supernova_data['days_relative_normalized'],
-            y=df_supernova_data['mag'],
-            mode='markers',
-            name=f'SNID: {snid}',
-            hoverinfo='text',
-            text=df_supernova_data['snid']  # Información al pasar el mouse
-        ))
+    for cluster_id in features_df['cluster'].unique():
+        # Filtrar las supernovas que pertenecen a este subcluster
+        snids_in_cluster = features_df[features_df['cluster'] == cluster_id].index
+        df_subcluster = df_light_curves_cluster[df_light_curves_cluster['snid'].isin(snids_in_cluster)]
 
-    # Gráfica de la curva de ajuste
-    fig.add_trace(go.Scatter(
-        x=days_range.flatten(),
-        y=predicted_magnitudes,
-        mode='lines',
-        name='Curva de Ajuste',
-        line=dict(color='red')
-    ))
+        # Crear el conjunto de entrenamiento
+        X = df_subcluster[['days_relative_normalized']]  # Días relativos normalizados
+        y = df_subcluster['mag']  # Magnitudes observadas
+
+        # Entrenar el modelo de árbol de regresión
+        model = DecisionTreeRegressor(random_state=42)
+        model.fit(X, y)
+
+        # Predecir las magnitudes para un rango de días relativos normalizados
+        days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
+        predicted_magnitudes = model.predict(days_range)
+
+        # Gráfica de los datos originales
+        for snid in snids_in_cluster:
+            df_supernova_data = df_subcluster[df_subcluster['snid'] == snid]
+            fig.add_trace(go.Scatter(
+                x=df_supernova_data['days_relative_normalized'],
+                y=df_supernova_data['mag'],
+                mode='markers',
+                name=f'SNID: {snid}',
+                hoverinfo='text',
+                text=df_supernova_data['snid']  # Información al pasar el mouse
+            ))
+
+        # Gráfica de la curva de ajuste
+        fig.add_trace(go.Scatter(
+            x=days_range.flatten(),
+            y=predicted_magnitudes,
+            mode='lines',
+            name=f'Curva de Ajuste Cluster {cluster_id}',
+            line=dict(color='red')
+        ))
 
     # Actualizar el layout
     fig.update_layout(
-        title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
+        title=f'Curvas de Luz Ajustadas para el Clúster {selected_cluster}',
         xaxis_title='Días Relativos Normalizados al Pico',
         yaxis_title='Magnitud',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
@@ -1189,5 +1210,6 @@ if not df_clustered_supernovae.empty:
     st.plotly_chart(fig)
 else:
     st.write("No hay supernovas en este clúster.")
+
 
 
