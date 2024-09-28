@@ -520,7 +520,8 @@ def create_summary_dataframe(df_supernovae, supernova_type):
 
     return pd.DataFrame(results)
 
-##############3
+##############
+st.write("II")
 st.write(df_light_curves)
 
 #############
