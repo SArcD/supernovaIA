@@ -262,15 +262,6 @@ def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
         'Y': 1.000   # Valor ajustado para el filtro 'Y'
     }
     
-    
-    #"""
-    #Corrige la magnitud aparente por la extinción debido al polvo galáctico.
-    
-    #:param m: Magnitud aparente sin corregir.
-    #:param MWEBV: Valor de extinción por polvo galáctico (MWEBV).
-    #:param filtro: Filtro utilizado (g, r, i, z).
-    #:return: Magnitud corregida por extinción.
-    #"""
     if filtro in extincion_filtros:
         A_lambda = extincion_filtros[filtro] * MWEBV
         m_corregida = m - A_lambda
@@ -282,13 +273,7 @@ def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
 
 
 def corregir_magnitud_redshift(m_corregida, z):
-    """
-    Corrige la magnitud aparente por el efecto del redshift (corrimiento al rojo).
-    
-    :param m_corregida: Magnitud corregida por extinción.
-    :param z: Redshift de la supernova.
-    :return: Magnitud corregida por redshift.
-    """
+
     # La corrección por redshift es básicamente una corrección de distancia.
     D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
     D_L_parsecs = D_L * 1e6  # Convertir a parsecs
@@ -613,8 +598,8 @@ def calcular_magnitudes_corregidas(df):
             lambda m: corregir_magnitud_redshift(corregir_magnitud_extincion(m, MWEBV, filtro), redshift)
         )
     
-    print("Magnitudes corregidas calculadas:")
-    print(df[['snid', 'filter', 'mag', 'mag_corregida']].head())  # Muestra las magnitudes corregidas
+    st.write("Magnitudes corregidas calculadas:")
+    st.write(df[['snid', 'filter', 'mag', 'mag_corregida']].head())  # Muestra las magnitudes corregidas
     return df
 
 # Aplica la función a df_light_curves
