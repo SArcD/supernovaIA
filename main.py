@@ -1184,3 +1184,87 @@ else:
 # Show the DataFrame with subclusters assigned within the selected cluster
 #st.write(f"DataFrame with subclusters assigned within Cluster {selected_cluster}:")
 #st.write(df_filtered_cluster[['SNID', 'subcluster']])
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from sklearn.tree import DecisionTreeRegressor
+
+# Función para estandarizar las curvas de luz
+def estandarizar_curvas(df_light_curves, rango=(-30, 30), num_points=100):
+    """
+    Estandariza las curvas de luz para que todas tengan el mismo rango de días relativos.
+    """
+    # Rango de días
+    days_range = np.linspace(rango[0], rango[1], num_points)
+    curvas_estandarizadas = []
+
+    # Iterar sobre cada supernova
+    for snid, group in df_light_curves.groupby('snid'):
+        # Calcular días relativos al pico
+        group = calculate_days_relative_to_peak(group)
+
+        # Interpolar las magnitudes para el rango común
+        interpolated_magnitudes = np.interp(days_range, group['days_relative'], group['mag'], left=np.nan, right=np.nan)
+
+        # Crear un DataFrame con los días estandarizados y las magnitudes
+        curvas_estandarizadas.append(pd.DataFrame({
+            'days_relative': days_range,
+            'mag': interpolated_magnitudes,
+            'SNID': snid
+        }))
+
+    # Concatenar todas las curvas estandarizadas
+    return pd.concat(curvas_estandarizadas, ignore_index=True)
+
+# Estandarizar las curvas de luz
+df_curvas_estandarizadas = estandarizar_curvas(df_light_curves)
+
+# Entrenar un modelo de árbol de regresión con las curvas estandarizadas
+X = df_curvas_estandarizadas[['days_relative']]
+y = df_curvas_estandarizadas['mag']
+
+# Entrenar el modelo
+model = DecisionTreeRegressor(random_state=42)
+model.fit(X, y)
+
+# Predecir para el rango de días estandarizados
+predicted_magnitudes = model.predict(X)
+
+# Graficar los resultados
+fig = go.Figure()
+
+# Gráfica de las curvas estandarizadas
+for snid in df_curvas_estandarizadas['SNID'].unique():
+    df_snid = df_curvas_estandarizadas[df_curvas_estandarizadas['SNID'] == snid]
+    fig.add_trace(go.Scatter(
+        x=df_snid['days_relative'],
+        y=df_snid['mag'],
+        mode='markers',
+        name=f'SNID: {snid}',
+        hoverinfo='text',
+        text=df_snid['SNID']  # Información al pasar el mouse
+    ))
+
+# Gráfica de la curva de ajuste
+fig.add_trace(go.Scatter(
+    x=X['days_relative'],
+    y=predicted_magnitudes,
+    mode='lines',
+    name='Curva de Ajuste',
+    line=dict(color='red')
+))
+
+# Configurar el layout
+fig.update_layout(
+    title='Curvas de Luz Estandarizadas y Curva de Ajuste',
+    xaxis_title='Días Relativos al Pico',
+    yaxis_title='Magnitud',
+    yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+    showlegend=True
+)
+
+# Mostrar la gráfica
+st.plotly_chart(fig)
+
+
