@@ -610,6 +610,7 @@ def calcular_magnitudes_absolutas(df_light_curves):
 df_parametros = calcular_magnitudes_absolutas(df_light_curves)
 
 # Mostrar el DataFrame de parámetros
+st.write("PI")
 st.write(df_parametros.head())
 
 
