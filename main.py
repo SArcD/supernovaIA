@@ -1120,6 +1120,7 @@ else:
 
 
 #=#
+
 from sklearn.tree import DecisionTreeRegressor
 import numpy as np
 import pandas as pd
@@ -1173,80 +1174,90 @@ if not df_clustered_supernovae.empty:
     for snid in supernova_ids:
         df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
 
+        # Verificar si hay datos para la supernova
+        if df_supernova_data.empty:
+            continue  # Saltar si no hay datos
+
         # Obtener valores generales para la corrección
-        MWEBV = df_supernova_data['mwebv'].iloc[0]  # Extinción por polvo
-        redshift = df_supernova_data['redshift'].iloc[0]  # Redshift de la supernova
+        MWEBV = df_supernova_data['mwebv'].iloc[0] if not df_supernova_data['mwebv'].isnull().all() else None
+        redshift = df_supernova_data['redshift'].iloc[0] if not df_supernova_data['redshift'].isnull().all() else None
 
         # Iterar sobre cada filtro único
         for filtro in df_supernova_data['filter'].unique():
             df_filtro = df_supernova_data[df_supernova_data['filter'] == filtro]
-            # Verificar si hay datos suficientes para el filtro
+
+            # Comprobar si hay datos suficientes para el filtro
             if len(df_filtro) < 1:
                 continue  # Saltar filtros sin datos
 
             # Corregir la magnitud por extinción y redshift
-            df_filtro['mag_corrected'] = df_filtro['mag'].apply(
-                lambda m: corregir_magnitud_redshift(corregir_magnitud_extincion(m, MWEBV, filtro), redshift)
-            )
+            if MWEBV is not None and redshift is not None:
+                df_filtro['mag_corrected'] = df_filtro['mag'].apply(
+                    lambda m: corregir_magnitud_redshift(corregir_magnitud_extincion(m, MWEBV, filtro), redshift)
+                )
 
-            # Añadir datos al arreglo de curvas
-            curves_data.append(df_filtro)
+                # Añadir datos al arreglo de curvas
+                curves_data.append(df_filtro)
 
     # Crear un DataFrame de las curvas de luz corregidas
-    df_curves_corrected = pd.concat(curves_data, ignore_index=True)
+    if curves_data:
+        df_curves_corrected = pd.concat(curves_data, ignore_index=True)
 
-    # Normalizar los días relativos al pico
-    df_curves_corrected['days_relative_normalized'] = df_curves_corrected.groupby('snid')['days_relative'].transform(
-        lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
-    )
+        # Normalizar los días relativos al pico
+        df_curves_corrected['days_relative_normalized'] = df_curves_corrected.groupby('snid')['days_relative'].transform(
+            lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
+        )
 
-    # Crear el conjunto de entrenamiento
-    X = df_curves_corrected[['days_relative_normalized']]  # Días relativos normalizados
-    y = df_curves_corrected['mag_corrected']  # Magnitudes corregidas
+        # Crear el conjunto de entrenamiento
+        X = df_curves_corrected[['days_relative_normalized']]  # Días relativos normalizados
+        y = df_curves_corrected['mag_corrected']  # Magnitudes corregidas
 
-    # Paso 3: Entrenar el modelo de árbol de regresión
-    model = DecisionTreeRegressor(random_state=42)
-    model.fit(X, y)
+        # Paso 3: Entrenar el modelo de árbol de regresión
+        model = DecisionTreeRegressor(random_state=42)
+        model.fit(X, y)
 
-    # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
-    days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
-    predicted_magnitudes = model.predict(days_range)
+        # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
+        days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
+        predicted_magnitudes = model.predict(days_range)
 
-    # Paso 5: Graficar la curva de luz ajustada
-    fig = go.Figure()
-    
-    # Gráfica de los datos originales
-    for snid in supernova_ids:
-        df_supernova_data = df_curves_corrected[df_curves_corrected['snid'] == snid]
+        # Paso 5: Graficar la curva de luz ajustada
+        fig = go.Figure()
+        
+        # Gráfica de los datos originales
+        for snid in supernova_ids:
+            df_supernova_data = df_curves_corrected[df_curves_corrected['snid'] == snid]
+            fig.add_trace(go.Scatter(
+                x=df_supernova_data['days_relative_normalized'],
+                y=df_supernova_data['mag_corrected'],
+                mode='markers',
+                name=f'SNID: {snid}',
+                hoverinfo='text',
+                text=df_supernova_data['snid']  # Información al pasar el mouse
+            ))
+
+        # Gráfica de la curva de ajuste
         fig.add_trace(go.Scatter(
-            x=df_supernova_data['days_relative_normalized'],
-            y=df_supernova_data['mag_corrected'],
-            mode='markers',
-            name=f'SNID: {snid}',
-            hoverinfo='text',
-            text=df_supernova_data['snid']  # Información al pasar el mouse
+            x=days_range.flatten(),
+            y=predicted_magnitudes,
+            mode='lines',
+            name='Curva de Ajuste',
+            line=dict(color='red')
         ))
 
-    # Gráfica de la curva de ajuste
-    fig.add_trace(go.Scatter(
-        x=days_range.flatten(),
-        y=predicted_magnitudes,
-        mode='lines',
-        name='Curva de Ajuste',
-        line=dict(color='red')
-    ))
+        # Actualizar el layout
+        fig.update_layout(
+            title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
+            xaxis_title='Días Relativos Normalizados al Pico',
+            yaxis_title='Magnitud Corregida',
+            yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+            showlegend=True
+        )
 
-    # Actualizar el layout
-    fig.update_layout(
-        title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
-        xaxis_title='Días Relativos Normalizados al Pico',
-        yaxis_title='Magnitud Corregida',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
-        showlegend=True
-    )
-
-    st.plotly_chart(fig)
+        st.plotly_chart(fig)
+    else:
+        st.write("No se encontraron curvas de luz válidas para las supernovas en este clúster.")
 else:
     st.write("No hay supernovas en este clúster.")
+
 
 
