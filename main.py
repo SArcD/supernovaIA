@@ -162,16 +162,12 @@ st.write("""
     </div>
     """, unsafe_allow_html=True)
 
-
 import streamlit as st
 
 st.markdown("""
 <div style='text-align: justify;'>
     <h2>Purpose of the Application</h2>
     <p>
-        This application is a comprehensive tool for exploring and analyzing supernova data, designed for researchers 
-        and astronomy enthusiasts who wish to delve deeper into the study of these cosmic events.
-   
         The primary goal of this application is to provide an interactive platform for analyzing and visualizing data on supernovae, 
         specifically those obtained from the Young Supernova Experiment (YSE). The tool allows users to access relevant data about 
         supernovae, perform statistical analyses, and visualize light curves, thus facilitating a better understanding of these complex 
@@ -198,9 +194,12 @@ st.markdown("""
     </ul>
     
     <p>
+        In summary, this application is a comprehensive tool for exploring and analyzing supernova data, designed for researchers 
+        and astronomy enthusiasts who wish to delve deeper into the study of these cosmic events.
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 # Function to create a scatter plot for supernova positions
