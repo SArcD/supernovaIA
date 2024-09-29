@@ -207,6 +207,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
+import streamlit as st
+
 # Filtrar el DataFrame para obtener solo una fila por supernova
 df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv'])
 
@@ -232,7 +238,10 @@ plt.scatter(ra, decl, c='red', s=5)  # Muestra los puntos originales
 plt.title('Mapa de Extinción en Función de las Coordenadas (RA, Dec)')
 plt.xlabel('Right Ascension (RA)')
 plt.ylabel('Declination (Dec)')
-plt.show()
+
+# Mostrar la gráfica en Streamlit
+st.pyplot(plt)
+
 
 
 
