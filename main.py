@@ -219,22 +219,50 @@ from scipy.interpolate import griddata
 import plotly.graph_objects as go
 import streamlit as st
 
-# Deslizador para seleccionar el rango de redshift
-min_redshift = 0.0024
-max_redshift = 0.3073
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import streamlit as st
 
-selected_range = st.slider(
-    "Select redshift range:",
-    min_value=min_redshift,
-    max_value=max_redshift,
-    value=(min_redshift, max_redshift)  # Rango inicial por defecto
+# Asegúrate de que df_light_curves tenga la columna 'redshift'
+
+# Mostrar el título de la aplicación
+st.title("Young Supernova Experiment (YSE) Database")
+
+# Obtener el rango mínimo y máximo de redshift
+min_redshift = df_light_curves['redshift'].min()
+max_redshift = df_light_curves['redshift'].max()
+
+# Crear un deslizador para seleccionar el rango de redshift
+selected_redshift = st.slider(
+    "Select the redshift range:",
+    min_value=float(min_redshift),
+    max_value=float(max_redshift),
+    value=(0.0, 0.5)  # Establecer un rango por defecto
 )
 
-# Filtrar el DataFrame por el rango seleccionado
-df_filtered_redshift = df_light_curves[
-    (df_light_curves['redshift'] >= selected_range[0]) & 
-    (df_light_curves['redshift'] <= selected_range[1])
+# Filtrar el DataFrame según el rango de redshift seleccionado
+filtered_supernovae = df_light_curves[
+    (df_light_curves['redshift'] >= selected_redshift[0]) & 
+    (df_light_curves['redshift'] <= selected_redshift[1])
 ]
+
+# Comprobar si hay supernovas filtradas
+if not filtered_supernovae.empty:
+    # Visualizar los datos filtrados
+    fig = px.scatter(
+        filtered_supernovae,
+        x='ra',
+        y='decl',
+        color='parsnip_pred',  # O el tipo de supernova
+        hover_data=['snid', 'redshift'],
+        title='Supernovae within Selected Redshift Range'
+    )
+    
+    st.plotly_chart(fig)
+else:
+    st.write("No supernovae found in the selected redshift range.")
+
 
 # Continúa con la visualización usando df_filtered_redshift
 
