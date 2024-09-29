@@ -162,9 +162,7 @@ st.write("""
     </div>
     """, unsafe_allow_html=True)
 
-import streamlit as st
-
-st.markdown("""
+st.write("""
 <div style='text-align: justify;'>
     <h4>Purpose of the Application</h4>
     <p>
