@@ -207,23 +207,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
-
-
-############################
-
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
+import plotly.graph_objects as go
+import streamlit as st
 
 # Filtrar el DataFrame para obtener solo una fila por supernova
-df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv', 'redshift'])
+df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv', 'parsnip_pred'])
 
-# Extraer coordenadas, valores de extinción y redshift
+# Extraer coordenadas, valores de extinción y tipo de supernova
 ra = df_single['ra'].values
 decl = df_single['decl'].values
 mwebv = df_single['mwebv'].values
-redshift = df_single['redshift'].values
+supernova_types = df_single['parsnip_pred'].values  # Tipo de supernova
 
 # Definir una malla de coordenadas
 ra_grid = np.linspace(ra.min(), ra.max(), 100)
@@ -233,20 +230,51 @@ ra_mesh, decl_mesh = np.meshgrid(ra_grid, decl_grid)
 # Interpolación de los valores de extinción
 mwebv_interp = griddata((ra, decl), mwebv, (ra_mesh, decl_mesh), method='cubic')
 
-# Visualización
-plt.figure(figsize=(10, 6))
-plt.imshow(mwebv_interp, extent=(ra.min(), ra.max(), decl.min(), decl.max()), origin='lower', 
-           aspect='auto', cmap='viridis')
-plt.colorbar(label='Extinción MWEBV')
+# Crear el gráfico de Plotly
+fig = go.Figure()
 
-# Colorear los puntos según el redshift
-sc = plt.scatter(ra, decl, c=redshift, s=5, cmap='plasma', edgecolor='k')  # Muestra los puntos originales
-plt.colorbar(sc, label='Redshift')  # Barra de colores para el redshift
+# Agregar el mapa de extinción
+fig.add_trace(go.Heatmap(
+    z=mwebv_interp,
+    x=ra_grid,
+    y=decl_grid,
+    colorscale='Viridis',
+    colorbar=dict(title='Extinción MWEBV'),
+    zmin=mwebv.min(),
+    zmax=mwebv.max(),
+    opacity=0.7
+))
 
-plt.title('Mapa de Extinción en Función de las Coordenadas (RA, Dec)')
-plt.xlabel('Right Ascension (RA)')
-plt.ylabel('Declination (Dec)')
-st.pyplot(plt)
+# Colorear los puntos según el tipo de supernova
+unique_types = np.unique(supernova_types)
+color_map = {t: i for i, t in enumerate(unique_types)}  # Mapa de colores
+colors = [color_map[t] for t in supernova_types]
+
+# Agregar los puntos de supernova al gráfico
+fig.add_trace(go.Scatter(
+    x=ra,
+    y=decl,
+    mode='markers',
+    marker=dict(color=colors, size=5, colorscale='Jet', showscale=True),
+    text=supernova_types,  # Texto de hover para mostrar el tipo de supernova
+    hoverinfo='text'
+))
+
+# Actualizar el layout
+fig.update_layout(
+    title='Mapa de Extinción en Función de las Coordenadas (RA, Dec)',
+    xaxis_title='Right Ascension (RA)',
+    yaxis_title='Declination (Dec)',
+    showlegend=False
+)
+
+# Mostrar el gráfico en Streamlit
+st.plotly_chart(fig)
+
+
+############################
+
+
 
 
 
