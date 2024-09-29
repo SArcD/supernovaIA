@@ -174,7 +174,7 @@ st.markdown("""
         astronomical phenomena.
     </n>
     
-    <h2>Main Sections</h2>
+    <h3>Main Sections</h3>
     <ul>
         <li><strong>Data Download:</strong> Allows users to access data files from a GitHub repository, filtering and processing the 
         necessary information for analysis.</li>
