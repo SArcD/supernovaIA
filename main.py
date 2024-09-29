@@ -1231,7 +1231,7 @@ def create_light_curve_dataframe(df_light_curves):
 light_curve_df = create_light_curve_dataframe(df_light_curves)
 
 # Paso 3: Mostrar un menú desplegable para que el usuario elija el clúster
-selected_cluster = st.selectbox("Select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
+selected_cluster = st.selectbox("Please, select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
 # Paso 4: Preparar los datos
