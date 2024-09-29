@@ -279,7 +279,7 @@ plt.colorbar(sc, label='Redshift')  # Barra de colores para el redshift
 plt.title('Mapa de Extinción en Función de las Coordenadas (RA, Dec)')
 plt.xlabel('Right Ascension (RA)')
 plt.ylabel('Declination (Dec)')
-plt.show()
+st.pyplot(plt)
 
 
 
