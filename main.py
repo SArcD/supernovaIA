@@ -148,11 +148,7 @@ The **Young Supernova Experiment (YSE)** focuses on discovering and studying sup
 - **Milky Way Extinction**: Accounts for interstellar dust that affects the observed brightness.
 - **Spectroscopy**: Select supernovae also include spectroscopic data for detailed chemical composition analysis.
 
-## Applications:
-- **Cosmology**: Type Ia supernovae are vital for measuring cosmic distances and studying the universe’s expansion.
-- **Stellar Evolution**: Helps refine models of how stars end their lives.
-- **Transient Events**: Aids in understanding short-lived cosmic phenomena beyond supernovae.
-
+## About this app:
 The primary goal of this application is to provide an interactive platform for analyzing and visualizing data on supernovae, specifically those obtained from the Young Supernova Experiment (YSE). The tool allows users to access relevant data about supernovae, perform statistical analyses, and visualize light curves, thus facilitating a better understanding of these complex astronomical phenomena.
 
 ## Main Sections
