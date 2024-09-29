@@ -204,43 +204,35 @@ elif plot_option == "Declination vs Redshift" :
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
-
-import numpy as np
-import pandas as pd
-from scipy.interpolate import griddata
-import plotly.graph_objects as go
-import streamlit as st
-
-import numpy as np
-import pandas as pd
-from scipy.interpolate import griddata
-import plotly.graph_objects as go
-import streamlit as st
-
-
-import numpy as np
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from scipy.interpolate import griddata
 import streamlit as st
-from sklearn.tree import DecisionTreeRegressor
 
-# Mostrar el título de la aplicación
-st.title("Young Supernova Experiment (YSE) Database")
+# Filtrar el DataFrame para obtener solo una fila por supernova
+df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv', 'parsnip_pred'])
 
-# Obtener el rango mínimo y máximo de redshift
-min_redshift = 0.0024
-max_redshift = 0.3073
+# Extraer coordenadas, valores de extinción y tipo de supernova
+ra = df_single['ra'].values
+decl = df_single['decl'].values
+mwebv = df_single['mwebv'].values
+supernova_types = df_single['parsnip_pred'].values  # Tipo de supernova
 
-# Crear un deslizador para seleccionar el rango de redshift
-selected_redshift = st.slider(
+# Crear un menú desplegable para seleccionar el rango de redshift
+redshift_option = st.selectbox(
     "Select the redshift range:",
-    min_value=min_redshift,
-    max_value=max_redshift,
-    value=(min_redshift, max_redshift)  # Establecer un rango por defecto
+    options=["Range 1 (0.0024 - 0.1)", "Range 2 (0.1 - 0.2)", "Range 3 (0.2 - 0.3073)", "Total Range (0.0024 - 0.3073)"]
 )
+
+# Definir los límites de los rangos de redshift
+if redshift_option == "Range 1 (0.0024 - 0.1)":
+    selected_redshift = (0.0024, 0.1)
+elif redshift_option == "Range 2 (0.1 - 0.2)":
+    selected_redshift = (0.1, 0.2)
+elif redshift_option == "Range 3 (0.2 - 0.3073)":
+    selected_redshift = (0.2, 0.3073)
+else:  # Total Range
+    selected_redshift = (0.0024, 0.3073)
 
 # Filtrar el DataFrame según el rango de redshift seleccionado
 filtered_supernovae = df_light_curves[
@@ -250,50 +242,64 @@ filtered_supernovae = df_light_curves[
 
 # Comprobar si hay supernovas filtradas
 if not filtered_supernovae.empty:
-    # Entrenar el modelo de regresión de árbol
-    X = filtered_supernovae[['redshift']]  # Usar redshift como predictor
-    y = filtered_supernovae['mwebv']  # Usar MWEBV como objetivo
+    # Filtrar el DataFrame para las coordenadas y valores de extinción de las supernovas filtradas
+    ra_filtered = filtered_supernovae['ra'].values
+    decl_filtered = filtered_supernovae['decl'].values
+    mwebv_filtered = filtered_supernovae['mwebv'].values
+    supernova_types_filtered = filtered_supernovae['parsnip_pred'].values
 
-    # Crear y ajustar el modelo
-    model = DecisionTreeRegressor(random_state=42)
-    model.fit(X, y)
+    # Definir una malla de coordenadas para interpolación
+    ra_grid = np.linspace(ra_filtered.min(), ra_filtered.max(), 100)
+    decl_grid = np.linspace(decl_filtered.min(), decl_filtered.max(), 100)
+    ra_mesh, decl_mesh = np.meshgrid(ra_grid, decl_grid)
 
-    # Predecir la extinción (MWEBV) para un rango de redshift
-    redshift_range = np.linspace(selected_redshift[0], selected_redshift[1], 100).reshape(-1, 1)
-    predicted_mwebv = model.predict(redshift_range)
+    # Interpolación de los valores de extinción
+    mwebv_interp = griddata((ra_filtered, decl_filtered), mwebv_filtered, (ra_mesh, decl_mesh), method='cubic')
 
-    # Visualizar los datos filtrados
+    # Crear el gráfico de Plotly
     fig = go.Figure()
 
-    # Gráfica de supernovas filtradas
-    fig.add_trace(go.Scatter(
-        x=filtered_supernovae['ra'],
-        y=filtered_supernovae['decl'],
-        mode='markers',
-        marker=dict(color='red', size=8),
-        name='Supernovae'
+    # Agregar el mapa de extinción
+    fig.add_trace(go.Heatmap(
+        z=mwebv_interp,
+        x=ra_grid,
+        y=decl_grid,
+        colorscale='Viridis',
+        colorbar=dict(title='Extinción MWEBV'),
+        zmin=mwebv.min(),
+        zmax=mwebv.max(),
+        opacity=0.7,
+        showscale=True
     ))
 
-    # Gráfica de la predicción de MWEBV
-    fig.add_trace(go.Scatter(
-        x=redshift_range.flatten(),
-        y=predicted_mwebv,
-        mode='lines',
-        name='Predicted MWEBV',
-        line=dict(color='blue')
-    ))
+    # Colorear los puntos según el tipo de supernova
+    unique_types = np.unique(supernova_types_filtered)
+    
+    for t in unique_types:
+        mask = supernova_types_filtered == t
+        fig.add_trace(go.Scatter(
+            x=ra_filtered[mask],
+            y=decl_filtered[mask],
+            mode='markers',
+            marker=dict(size=5),
+            name=t,  # Asignar el nombre del tipo de supernova a la leyenda
+            text=t,  # Texto de hover para mostrar el tipo de supernova
+            hoverinfo='text'
+        ))
 
     # Actualizar el layout
     fig.update_layout(
-        title='Supernovae within Selected Redshift Range and Predicted MWEBV',
+        title='Mapa de Extinción en Función de las Coordenadas (RA, Dec)',
         xaxis_title='Right Ascension (RA)',
         yaxis_title='Declination (Dec)',
-        showlegend=True
+        showlegend=True,  # Asegurarse de que la leyenda se muestre
+        legend=dict(title='Tipo de Supernova', orientation='h', xanchor='center', x=0.5, yanchor='bottom', y=1.1)
     )
 
+    # Mostrar el gráfico en Streamlit
     st.plotly_chart(fig)
 else:
-    st.write("No supernovae found in the selected redshift range.")
+    st.write("No se encontraron supernovas en el rango de redshift seleccionado.")
 
 
 ############################
