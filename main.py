@@ -1259,5 +1259,3 @@ if not df_clustered_supernovae.empty:
 else:
     st.write("No hay supernovas en este clúster.")
 
-
-
