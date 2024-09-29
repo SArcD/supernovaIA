@@ -1272,8 +1272,10 @@ if not df_clustered_supernovae.empty:
     y = df_light_curves_cluster['magnitud_bolometrica']  # Magnitudes bolométricas
 
     # Validar que no haya NaN en X o y
-    if X.isnull().any().any() or y.isnull().any():
-        st.write("Error: hay valores NaN en los datos de entrada. Por favor, verifica los datos.")
+    if X.isnull().any().any():
+        st.write("Error: hay valores NaN en X.")
+    elif y.isnull().any():
+        st.write("Error: hay valores NaN en y.")
     elif len(X) != len(y):
         st.write("Error: las longitudes de X y y no coinciden.")
     else:
@@ -1321,4 +1323,5 @@ if not df_clustered_supernovae.empty:
         st.plotly_chart(fig)
 else:
     st.write("No hay supernovas en este clúster.")
+
 
