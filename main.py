@@ -1120,8 +1120,11 @@ else:
 
 
 #=#
-
+# Comprobar cuántas filas hay para cada SNID
+counts = df_light_curves['snid'].value_counts()
+st.write(counts)  # Muestra cuántas observaciones hay para cada supernova
 # Paso 1: Filtrar las supernovas del clúster seleccionado
+
 selected_cluster = st.selectbox("Select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
