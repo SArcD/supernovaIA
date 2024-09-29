@@ -1271,48 +1271,54 @@ if not df_clustered_supernovae.empty:
     X = df_light_curves_cluster[['days_relative_normalized']]  # Días relativos normalizados
     y = df_light_curves_cluster['magnitud_bolometrica']  # Magnitudes bolométricas
 
-    # Paso 3: Entrenar el modelo de árbol de regresión
-    model = DecisionTreeRegressor(random_state=42)
-    model.fit(X, y)
+    # Validar que no haya NaN en X o y
+    if X.isnull().any().any() or y.isnull().any():
+        st.write("Error: hay valores NaN en los datos de entrada. Por favor, verifica los datos.")
+    elif len(X) != len(y):
+        st.write("Error: las longitudes de X y y no coinciden.")
+    else:
+        # Paso 3: Entrenar el modelo de árbol de regresión
+        model = DecisionTreeRegressor(random_state=42)
+        model.fit(X, y)
 
-    # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
-    days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
-    predicted_magnitudes = model.predict(days_range)
+        # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
+        days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
+        predicted_magnitudes = model.predict(days_range)
 
-    # Paso 5: Graficar la curva de luz ajustada
-    fig = go.Figure()
-    
-    # Gráfica de los datos originales
-    for snid in supernova_ids:
-        df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid].drop_duplicates(subset=['days_relative_normalized'])
+        # Paso 5: Graficar la curva de luz ajustada
+        fig = go.Figure()
+        
+        # Gráfica de los datos originales
+        for snid in supernova_ids:
+            df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid].drop_duplicates(subset=['days_relative_normalized'])
+            fig.add_trace(go.Scatter(
+                x=df_supernova_data['days_relative_normalized'],
+                y=df_supernova_data['magnitud_bolometrica'],
+                mode='markers',
+                name=f'SNID: {snid}',
+                hoverinfo='text',
+                text=df_supernova_data['snid']  # Información al pasar el mouse
+            ))
+
+        # Gráfica de la curva de ajuste
         fig.add_trace(go.Scatter(
-            x=df_supernova_data['days_relative_normalized'],
-            y=df_supernova_data['magnitud_bolometrica'],
-            mode='markers',
-            name=f'SNID: {snid}',
-            hoverinfo='text',
-            text=df_supernova_data['snid']  # Información al pasar el mouse
+            x=days_range.flatten(),
+            y=predicted_magnitudes,
+            mode='lines',
+            name='Curva de Ajuste',
+            line=dict(color='red')
         ))
 
-    # Gráfica de la curva de ajuste
-    fig.add_trace(go.Scatter(
-        x=days_range.flatten(),
-        y=predicted_magnitudes,
-        mode='lines',
-        name='Curva de Ajuste',
-        line=dict(color='red')
-    ))
+        # Actualizar el layout
+        fig.update_layout(
+            title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
+            xaxis_title='Días Relativos Normalizados al Pico',
+            yaxis_title='Magnitud Bolométrica',
+            yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+            showlegend=True
+        )
 
-    # Actualizar el layout
-    fig.update_layout(
-        title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
-        xaxis_title='Días Relativos Normalizados al Pico',
-        yaxis_title='Magnitud Bolométrica',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
-        showlegend=True
-    )
-
-    st.plotly_chart(fig)
+        st.plotly_chart(fig)
 else:
     st.write("No hay supernovas en este clúster.")
 
