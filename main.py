@@ -139,7 +139,7 @@ st.write("""
         The <strong>Young Supernova Experiment (YSE)</strong> focuses on discovering and studying supernovae in their early stages. This allows scientists to understand the explosions of massive stars and other transient phenomena.
     </p>
     
-    <h3>Key Features:</h3>
+    <h2>Key Features:</h2>
     <ul>
         <li><strong>Early Detection</strong>: Captures supernovae within days or hours of explosion.</li>
         <li><strong>Light Curves</strong>: Provides detailed light curves across multiple wavelengths, helping track the evolution of each supernova.</li>
