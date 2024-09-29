@@ -1234,7 +1234,7 @@ def calcular_magnitud_bolometrica(df_supernova):
     return M_bol
 
 # Paso 1: Filtrar las supernovas del clúster seleccionado
-selected_cluster = st.selectbox("Selecting the cluster to analyze:", df_supernova_clustering['cluster'].unique())
+selected_cluster = st.selectbox("Seleccionando el clúster a analizar:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
 # Paso 2: Preparar los datos
@@ -1274,8 +1274,10 @@ if not df_clustered_supernovae.empty:
     # Validar que no haya NaN en X o y
     if X.isnull().any().any():
         st.write("Error: hay valores NaN en X.")
+        st.write(X[X.isnull().any(axis=1)])  # Mostrar filas con NaN en X
     elif y.isnull().any():
         st.write("Error: hay valores NaN en y.")
+        st.write(y[y.isnull()])  # Mostrar filas con NaN en y
     elif len(X) != len(y):
         st.write("Error: las longitudes de X y y no coinciden.")
     else:
@@ -1323,5 +1325,3 @@ if not df_clustered_supernovae.empty:
         st.plotly_chart(fig)
 else:
     st.write("No hay supernovas en este clúster.")
-
-
