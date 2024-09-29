@@ -1202,11 +1202,32 @@ else:
 from sklearn.tree import DecisionTreeRegressor
 
 
-# Comprobar cuántas filas hay para cada SNID
-counts = df_light_curves['snid'].value_counts()
-st.write(counts)  # Muestra cuántas observaciones hay para cada supernova
-# Paso 1: Filtrar las supernovas del clúster seleccionado
 
+
+###---###---###
+
+from sklearn.tree import DecisionTreeRegressor
+import numpy as np
+import pandas as pd
+import streamlit as st
+import plotly.graph_objects as go
+
+# Función para calcular la magnitud bolométrica
+def calcular_magnitud_bolometrica(df_supernova):
+    M_ref = 0  # Magnitud de referencia (ajustar según necesidad)
+    bolometric_sum = 0
+    
+    for filtro in df_supernova['filter'].unique():
+        df_filtro = df_supernova[df_supernova['filter'] == filtro]
+        
+        if not df_filtro.empty:
+            mag_corregida = df_filtro['mag_corregida']  # Utilizamos la magnitud corregida
+            bolometric_sum += 10 ** (-0.4 * (mag_corregida - M_ref)).sum()
+
+    M_bol = M_ref - 2.5 * np.log10(bolometric_sum)
+    return M_bol
+
+# Paso 1: Filtrar las supernovas del clúster seleccionado
 selected_cluster = st.selectbox("Selecting the cluster to analyze:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
@@ -1227,6 +1248,9 @@ if not df_clustered_supernovae.empty:
         lambda row: corregir_magnitud_redshift(corregir_magnitud_extincion(row['mag'], row['mwebv'], row['filter']), row['redshift']),
         axis=1
     )
+
+    # Calcular la magnitud bolométrica para la supernova
+    magnitud_bolometrica = calcular_magnitud_bolometrica(df_light_curves_cluster)
 
     # Normalizar los días relativos al pico
     df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
@@ -1271,7 +1295,7 @@ if not df_clustered_supernovae.empty:
 
     # Actualizar el layout
     fig.update_layout(
-        title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
+        title=f'Curva de Luz Ajustada para el Clúster {selected_cluster} (Magnitud Bolométrica: {magnitud_bolometrica:.2f})',
         xaxis_title='Días Relativos Normalizados al Pico',
         yaxis_title='Magnitud Corregida',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
