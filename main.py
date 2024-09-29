@@ -1182,26 +1182,28 @@ if not df_clustered_supernovae.empty:
         MWEBV = df_supernova_data['mwebv'].iloc[0] if not df_supernova_data['mwebv'].isnull().all() else None
         redshift = df_supernova_data['redshift'].iloc[0] if not df_supernova_data['redshift'].isnull().all() else None
 
-        # Iterar sobre cada filtro único
-        for filtro in df_supernova_data['filter'].unique():
-            df_filtro = df_supernova_data[df_supernova_data['filter'] == filtro]
+        # Verificar si hay suficientes datos para corregir la magnitud
+        if MWEBV is not None and redshift is not None:
+            for filtro in df_supernova_data['filter'].unique():
+                df_filtro = df_supernova_data[df_supernova_data['filter'] == filtro]
 
-            # Comprobar si hay datos suficientes para el filtro
-            if len(df_filtro) < 1:
-                continue  # Saltar filtros sin datos
+                # Comprobar si hay datos suficientes para el filtro
+                if len(df_filtro) < 1:
+                    continue  # Saltar filtros sin datos
 
-            # Corregir la magnitud por extinción y redshift
-            if MWEBV is not None and redshift is not None:
+                # Corregir la magnitud por extinción y redshift
                 df_filtro['mag_corrected'] = df_filtro['mag'].apply(
                     lambda m: corregir_magnitud_redshift(corregir_magnitud_extincion(m, MWEBV, filtro), redshift)
                 )
-
                 # Añadir datos al arreglo de curvas
                 curves_data.append(df_filtro)
 
     # Crear un DataFrame de las curvas de luz corregidas
     if curves_data:
         df_curves_corrected = pd.concat(curves_data, ignore_index=True)
+
+        # Agrupar por snid y tomar solo la primera observación para evitar duplicados
+        df_curves_corrected = df_curves_corrected.groupby(['snid', 'days_relative']).first().reset_index()
 
         # Normalizar los días relativos al pico
         df_curves_corrected['days_relative_normalized'] = df_curves_corrected.groupby('snid')['days_relative'].transform(
@@ -1258,4 +1260,3 @@ if not df_clustered_supernovae.empty:
         st.write("No se encontraron curvas de luz válidas para las supernovas en este clúster.")
 else:
     st.write("No hay supernovas en este clúster.")
-
