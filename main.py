@@ -200,8 +200,44 @@ elif plot_option == "Declination vs Right Ascension" :
 elif plot_option == "Declination vs Redshift" :
     st.plotly_chart(create_decl_vs_redshift_plot())
 
-#######
+##########-----#############
 
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+
+# Asumiendo que df_supernovas tiene columnas 'ra', 'dec' y 'extincion'
+X = df_supernovas[['ra', 'dec']]
+y = df_supernovas['extincion']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Entrenar el modelo
+model = DecisionTreeRegressor()
+model.fit(X_train, y_train)
+
+# Predecir en una cuadrícula
+x_range = np.linspace(df_supernovas['ra'].min(), df_supernovas['ra'].max(), 100)
+y_range = np.linspace(df_supernovas['dec'].min(), df_supernovas['dec'].max(), 100)
+X_grid = np.array(np.meshgrid(x_range, y_range)).T.reshape(-1, 2)
+
+# Predicciones
+predictions = model.predict(X_grid)
+
+# Visualizar la superficie de decisión
+plt.figure(figsize=(10, 6))
+plt.tricontourf(X_grid[:, 0], X_grid[:, 1], predictions, levels=14, cmap='viridis')
+plt.colorbar(label='Predicted Extinction E(B-V)')
+plt.scatter(df_supernovas['ra'], df_supernovas['dec'], c=df_supernovas['extincion'], edgecolor='k')
+plt.title('Superficie de Decisión para la Extinción')
+plt.xlabel('Ascensión Recta (RA)')
+plt.ylabel('Declinación (Dec)')
+plt.show()
+
+
+
+
+
+##########-----#############
 # Function to calculate days relative to the luminosity peak
 def calculate_days_relative_to_peak(df_supernova):
     # Calculate the MJD of the luminosity peak (minimum magnitude)
