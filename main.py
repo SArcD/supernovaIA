@@ -219,69 +219,24 @@ from scipy.interpolate import griddata
 import plotly.graph_objects as go
 import streamlit as st
 
-# Filtrar el DataFrame para obtener solo una fila por supernova
-df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv', 'parsnip_pred'])
+# Deslizador para seleccionar el rango de redshift
+min_redshift = 0.0024
+max_redshift = 0.3073
 
-# Extraer coordenadas, valores de extinción y tipo de supernova
-ra = df_single['ra'].values
-decl = df_single['decl'].values
-mwebv = df_single['mwebv'].values
-supernova_types = df_single['parsnip_pred'].values  # Tipo de supernova
-
-# Definir una malla de coordenadas
-ra_grid = np.linspace(ra.min(), ra.max(), 100)
-decl_grid = np.linspace(decl.min(), decl.max(), 100)
-ra_mesh, decl_mesh = np.meshgrid(ra_grid, decl_grid)
-
-# Interpolación de los valores de extinción
-mwebv_interp = griddata((ra, decl), mwebv, (ra_mesh, decl_mesh), method='cubic')
-
-# Crear el gráfico de Plotly
-fig = go.Figure()
-
-# Agregar el mapa de extinción
-fig.add_trace(go.Heatmap(
-    z=mwebv_interp,
-    x=ra_grid,
-    y=decl_grid,
-    colorscale='Viridis',
-    colorbar=dict(title='Extinción MWEBV'),
-    zmin=mwebv.min(),
-    zmax=mwebv.max(),
-    opacity=0.7,
-    showscale=True
-))
-
-# Colorear los puntos según el tipo de supernova
-unique_types = np.unique(supernova_types)
-color_map = {t: i for i, t in enumerate(unique_types)}  # Mapa de colores
-colors = [color_map[t] for t in supernova_types]
-
-# Agregar los puntos de supernova al gráfico
-for t in unique_types:
-    mask = supernova_types == t
-    fig.add_trace(go.Scatter(
-        x=ra[mask],
-        y=decl[mask],
-        mode='markers',
-        marker=dict(size=5),
-        name=t,  # Asignar el nombre del tipo de supernova a la leyenda
-        text=t,  # Texto de hover para mostrar el tipo de supernova
-        hoverinfo='text'
-    ))
-
-# Actualizar el layout
-fig.update_layout(
-    title='Mapa de Extinción en Función de las Coordenadas (RA, Dec)',
-    xaxis_title='Right Ascension (RA)',
-    yaxis_title='Declination (Dec)',
-    showlegend=True,  # Asegurarse de que la leyenda se muestre
-    legend=dict(title='Tipo de Supernova', orientation='h', xanchor='center', x=0.5, yanchor='bottom', y=1.1)
+selected_range = st.slider(
+    "Select redshift range:",
+    min_value=min_redshift,
+    max_value=max_redshift,
+    value=(min_redshift, max_redshift)  # Rango inicial por defecto
 )
 
-# Mostrar el gráfico en Streamlit
-st.plotly_chart(fig)
+# Filtrar el DataFrame por el rango seleccionado
+df_filtered_redshift = df_light_curves[
+    (df_light_curves['redshift'] >= selected_range[0]) & 
+    (df_light_curves['redshift'] <= selected_range[1])
+]
 
+# Continúa con la visualización usando df_filtered_redshift
 
 ############################
 
