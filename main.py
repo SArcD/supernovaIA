@@ -202,35 +202,36 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
 
-# Asumiendo que df_supernovas tiene columnas 'ra', 'dec' y 'extincion'
-X = df_supernovas[['ra', 'dec']]
-y = df_supernovas['extincion']
+# Filtrar el DataFrame para obtener solo una fila por supernova
+df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv'])
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Extraer coordenadas y valores de extinción
+ra = df_single['ra'].values
+decl = df_single['decl'].values
+mwebv = df_single['mwebv'].values
 
-# Entrenar el modelo
-model = DecisionTreeRegressor()
-model.fit(X_train, y_train)
+# Definir una malla de coordenadas
+ra_grid = np.linspace(ra.min(), ra.max(), 100)
+decl_grid = np.linspace(decl.min(), decl.max(), 100)
+ra_mesh, decl_mesh = np.meshgrid(ra_grid, decl_grid)
 
-# Predecir en una cuadrícula
-x_range = np.linspace(df_supernovas['ra'].min(), df_supernovas['ra'].max(), 100)
-y_range = np.linspace(df_supernovas['dec'].min(), df_supernovas['dec'].max(), 100)
-X_grid = np.array(np.meshgrid(x_range, y_range)).T.reshape(-1, 2)
+# Interpolación de los valores de extinción
+mwebv_interp = griddata((ra, decl), mwebv, (ra_mesh, decl_mesh), method='cubic')
 
-# Predicciones
-predictions = model.predict(X_grid)
-
-# Visualizar la superficie de decisión
+# Visualización
 plt.figure(figsize=(10, 6))
-plt.tricontourf(X_grid[:, 0], X_grid[:, 1], predictions, levels=14, cmap='viridis')
-plt.colorbar(label='Predicted Extinction E(B-V)')
-plt.scatter(df_supernovas['ra'], df_supernovas['dec'], c=df_supernovas['extincion'], edgecolor='k')
-plt.title('Superficie de Decisión para la Extinción')
-plt.xlabel('Ascensión Recta (RA)')
-plt.ylabel('Declinación (Dec)')
+plt.imshow(mwebv_interp, extent=(ra.min(), ra.max(), decl.min(), decl.max()), origin='lower', 
+           aspect='auto', cmap='viridis')
+plt.colorbar(label='Extinción MWEBV')
+plt.scatter(ra, decl, c='red', s=5)  # Muestra los puntos originales
+plt.title('Mapa de Extinción en Función de las Coordenadas (RA, Dec)')
+plt.xlabel('Right Ascension (RA)')
+plt.ylabel('Declination (Dec)')
 plt.show()
 
 
