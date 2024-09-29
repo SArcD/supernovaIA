@@ -1212,122 +1212,36 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 
-from sklearn.tree import DecisionTreeRegressor
-import numpy as np
-import pandas as pd
-import streamlit as st
-import plotly.graph_objects as go
+# Filtrar por el SNID de la supernova seleccionada
+df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == selected_snid]
 
-# Función para calcular la magnitud bolométrica
-def calcular_magnitud_bolometrica(df_supernova):
-    M_ref = 0  # Magnitud de referencia (ajustar según necesidad)
-    bolometric_sum = 0
-    
-    for filtro in df_supernova['filter'].unique():
-        df_filtro = df_supernova[df_supernova['filter'] == filtro]
-        
-        if not df_filtro.empty:
-            mag_corregida = df_filtro['mag_corregida']  # Utilizamos la magnitud corregida
-            bolometric_sum += 10 ** (-0.4 * (mag_corregida - M_ref)).sum()
+# Verifica si hay datos para graficar
+if not df_supernova_data.empty:
+    # Crear la gráfica
+    fig = go.Figure()
 
-    M_bol = M_ref - 2.5 * np.log10(bolometric_sum)
-    return M_bol
+    # Usar la magnitud corregida
+    df_supernova_data['mag_corregida'] = df_supernova_data.apply(lambda row: corregir_magnitud_redshift(corregir_magnitud_extincion(row['mag'], row['mwebv'], row['filter']), row['redshift']), axis=1)
 
-# Paso 1: Filtrar las supernovas del clúster seleccionado
-selected_cluster = st.selectbox("Seleccionando el clúster a analizar:", df_supernova_clustering['cluster'].unique())
-df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
+    # Agregar puntos a la gráfica
+    fig.add_trace(go.Scatter(
+        x=df_supernova_data['days_relative_normalized'],
+        y=df_supernova_data['mag_corregida'],
+        mode='markers',
+        name=f'SNID: {selected_snid}',
+        hoverinfo='text',
+        text=df_supernova_data['snid']  # Información al pasar el mouse
+    ))
 
-# Paso 2: Preparar los datos
-if not df_clustered_supernovae.empty:
-    # Unir todos los datos de supernovas en el clúster
-    supernova_ids = df_clustered_supernovae['SNID'].unique()
-    df_light_curves_cluster = df_light_curves[df_light_curves['snid'].isin(supernova_ids)]
-
-    # Calcular días relativos al pico de luminosidad
-    df_light_curves_cluster = calculate_days_relative_to_peak(df_light_curves_cluster)
-
-    # Filtrar para usar solo los datos desde el pico hasta el final
-    df_light_curves_cluster = df_light_curves_cluster[df_light_curves_cluster['days_relative'] >= 0]
-
-    # Calcular magnitudes corregidas
-    df_light_curves_cluster['mag_corregida'] = df_light_curves_cluster.apply(
-        lambda row: corregir_magnitud_redshift(corregir_magnitud_extincion(row['mag'], row['mwebv'], row['filter']), row['redshift']),
-        axis=1
+    # Configurar la gráfica
+    fig.update_layout(
+        title=f'Curva de Luz para {selected_snid}',
+        xaxis_title='Días Relativos Normalizados al Pico',
+        yaxis_title='Magnitud Corregida',
+        yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+        showlegend=True
     )
 
-    # Agrupar por SNID y calcular la magnitud bolométrica para cada supernova
-    df_bolometric = df_light_curves_cluster.groupby('snid').apply(calcular_magnitud_bolometrica).reset_index()
-    df_bolometric.columns = ['snid', 'magnitud_bolometrica']
-
-    # Unir la magnitud bolométrica al DataFrame de curvas de luz
-    df_light_curves_cluster = df_light_curves_cluster.merge(df_bolometric, on='snid', how='left')
-
-    # Normalizar los días relativos al pico
-    df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
-        lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
-    )
-
-    # Crear el conjunto de entrenamiento
-    X = df_light_curves_cluster[['days_relative_normalized']]  # Días relativos normalizados
-    y = df_light_curves_cluster['magnitud_bolometrica']  # Magnitudes bolométricas
-
-    # Verificar si hay valores NaN en X o y
-    if X.isnull().any().any():
-        st.write("Error: hay valores NaN en X.")
-        st.write(X[X.isnull().any(axis=1)])  # Mostrar filas con NaN en X
-    elif y.isnull().any():
-        st.write("Error: hay valores NaN en y.")
-        st.write(y[y.isnull()])  # Mostrar filas con NaN en y
-    else:
-        # Filtrar NaN
-        X = X.dropna()
-        y = y.loc[X.index]  # Asegurarse de que y tenga el mismo índice que X
-
-        # Verificar que las longitudes coincidan
-        if len(X) != len(y):
-            st.write("Error: las longitudes de X y y no coinciden después del filtrado.")
-        else:
-            # Paso 3: Entrenar el modelo de árbol de regresión
-            model = DecisionTreeRegressor(random_state=42)
-            model.fit(X, y)
-
-            # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
-            days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
-            predicted_magnitudes = model.predict(days_range)
-
-            # Paso 5: Graficar la curva de luz ajustada
-            fig = go.Figure()
-            
-            # Gráfica de los datos originales
-            for snid in supernova_ids:
-                df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid].drop_duplicates(subset=['days_relative_normalized'])
-                fig.add_trace(go.Scatter(
-                    x=df_supernova_data['days_relative_normalized'],
-                    y=df_supernova_data['magnitud_bolometrica'],
-                    mode='markers',
-                    name=f'SNID: {snid}',
-                    hoverinfo='text',
-                    text=df_supernova_data['snid']  # Información al pasar el mouse
-                ))
-
-            # Gráfica de la curva de ajuste
-            fig.add_trace(go.Scatter(
-                x=days_range.flatten(),
-                y=predicted_magnitudes,
-                mode='lines',
-                name='Curva de Ajuste',
-                line=dict(color='red')
-            ))
-
-            # Actualizar el layout
-            fig.update_layout(
-                title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
-                xaxis_title='Días Relativos Normalizados al Pico',
-                yaxis_title='Magnitud Bolométrica',
-                yaxis=dict(autorange='reversed'),  # Invertir el eje Y
-                showlegend=True
-            )
-
-            st.plotly_chart(fig)
+    st.plotly_chart(fig)
 else:
-    st.write("No hay supernovas en este clúster.")
+    st.write(f"No hay datos de curva de luz para la supernova {selected_snid}.")
