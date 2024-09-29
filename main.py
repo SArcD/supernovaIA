@@ -213,6 +213,12 @@ from scipy.interpolate import griddata
 import plotly.graph_objects as go
 import streamlit as st
 
+import numpy as np
+import pandas as pd
+from scipy.interpolate import griddata
+import plotly.graph_objects as go
+import streamlit as st
+
 # Filtrar el DataFrame para obtener solo una fila por supernova
 df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv', 'parsnip_pred'])
 
@@ -242,7 +248,8 @@ fig.add_trace(go.Heatmap(
     colorbar=dict(title='Extinción MWEBV'),
     zmin=mwebv.min(),
     zmax=mwebv.max(),
-    opacity=0.7
+    opacity=0.7,
+    showscale=True
 ))
 
 # Colorear los puntos según el tipo de supernova
@@ -251,21 +258,25 @@ color_map = {t: i for i, t in enumerate(unique_types)}  # Mapa de colores
 colors = [color_map[t] for t in supernova_types]
 
 # Agregar los puntos de supernova al gráfico
-fig.add_trace(go.Scatter(
-    x=ra,
-    y=decl,
-    mode='markers',
-    marker=dict(color=colors, size=5, colorscale='Jet', showscale=True),
-    text=supernova_types,  # Texto de hover para mostrar el tipo de supernova
-    hoverinfo='text'
-))
+for t in unique_types:
+    mask = supernova_types == t
+    fig.add_trace(go.Scatter(
+        x=ra[mask],
+        y=decl[mask],
+        mode='markers',
+        marker=dict(size=5),
+        name=t,  # Asignar el nombre del tipo de supernova a la leyenda
+        text=t,  # Texto de hover para mostrar el tipo de supernova
+        hoverinfo='text'
+    ))
 
 # Actualizar el layout
 fig.update_layout(
     title='Mapa de Extinción en Función de las Coordenadas (RA, Dec)',
     xaxis_title='Right Ascension (RA)',
     yaxis_title='Declination (Dec)',
-    showlegend=False
+    showlegend=True,  # Asegurarse de que la leyenda se muestre
+    legend=dict(title='Tipo de Supernova', orientation='h', xanchor='center', x=0.5, yanchor='bottom', y=1.1)
 )
 
 # Mostrar el gráfico en Streamlit
