@@ -132,7 +132,9 @@ st.write("Data saved in 'light_curves_with_parsnip_and_ra_decl_redshift_snid.csv
 
 import streamlit as st
 
-st.write("""
+import streamlit as st
+
+st.markdown("""
 <div style='text-align: justify;'>
     <h1>Young Supernova Experiment (YSE) Database</h1>
     <p>
@@ -150,7 +152,7 @@ st.write("""
         <li><strong>Spectroscopy</strong>: Select supernovae also include spectroscopic data for detailed chemical composition analysis.</li>
     </ul>
 
-    <h3>Applications:</h3>
+    <h2>Applications:</h2>
     <ul>
         <li><strong>Cosmology</strong>: Type Ia supernovae are vital for measuring cosmic distances and studying the universe’s expansion.</li>
         <li><strong>Stellar Evolution</strong>: Helps refine models of how stars end their lives.</li>
@@ -163,8 +165,8 @@ st.write("""
         supernovae, perform statistical analyses, and visualize light curves, thus facilitating a better understanding of these complex 
         astronomical phenomena.
     </p>
-    
-    <h4>Main Sections</h4>
+
+    <h2>Main Sections</h2>
     <ul>
         <li><strong>Data Download:</strong> Allows users to access data files from a GitHub repository, filtering and processing the 
         necessary information for analysis.</li>
@@ -182,15 +184,13 @@ st.write("""
         <li><strong>Interactivity:</strong> Provides a user-friendly interface that allows users to interact with the data, perform queries, 
         and visualize results intuitively.</li>
     </ul>
-    
+
     <p>
         In summary, this application is a comprehensive tool for exploring and analyzing supernova data, designed for researchers 
         and astronomy enthusiasts who wish to delve deeper into the study of these cosmic events.
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
 
 
 # Function to create a scatter plot for supernova positions
