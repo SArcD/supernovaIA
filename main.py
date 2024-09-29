@@ -242,6 +242,44 @@ plt.ylabel('Declination (Dec)')
 # Mostrar la gráfica en Streamlit
 st.pyplot(plt)
 
+############################
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
+
+# Filtrar el DataFrame para obtener solo una fila por supernova
+df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv', 'redshift'])
+
+# Extraer coordenadas, valores de extinción y redshift
+ra = df_single['ra'].values
+decl = df_single['decl'].values
+mwebv = df_single['mwebv'].values
+redshift = df_single['redshift'].values
+
+# Definir una malla de coordenadas
+ra_grid = np.linspace(ra.min(), ra.max(), 100)
+decl_grid = np.linspace(decl.min(), decl.max(), 100)
+ra_mesh, decl_mesh = np.meshgrid(ra_grid, decl_grid)
+
+# Interpolación de los valores de extinción
+mwebv_interp = griddata((ra, decl), mwebv, (ra_mesh, decl_mesh), method='cubic')
+
+# Visualización
+plt.figure(figsize=(10, 6))
+plt.imshow(mwebv_interp, extent=(ra.min(), ra.max(), decl.min(), decl.max()), origin='lower', 
+           aspect='auto', cmap='viridis')
+plt.colorbar(label='Extinción MWEBV')
+
+# Colorear los puntos según el redshift
+sc = plt.scatter(ra, decl, c=redshift, s=5, cmap='plasma', edgecolor='k')  # Muestra los puntos originales
+plt.colorbar(sc, label='Redshift')  # Barra de colores para el redshift
+
+plt.title('Mapa de Extinción en Función de las Coordenadas (RA, Dec)')
+plt.xlabel('Right Ascension (RA)')
+plt.ylabel('Declination (Dec)')
+plt.show()
 
 
 
