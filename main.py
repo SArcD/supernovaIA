@@ -172,7 +172,7 @@ st.markdown("""
         specifically those obtained from the Young Supernova Experiment (YSE). The tool allows users to access relevant data about 
         supernovae, perform statistical analyses, and visualize light curves, thus facilitating a better understanding of these complex 
         astronomical phenomena.
-    </p>
+    </n>
     
     <h2>Main Sections</h2>
     <ul>
