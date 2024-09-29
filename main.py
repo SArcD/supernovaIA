@@ -207,40 +207,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
-import streamlit as st
 
-# Filtrar el DataFrame para obtener solo una fila por supernova
-df_single = df_light_curves.drop_duplicates(subset=['snid', 'ra', 'decl', 'mwebv'])
-
-# Extraer coordenadas y valores de extinción
-ra = df_single['ra'].values
-decl = df_single['decl'].values
-mwebv = df_single['mwebv'].values
-
-# Definir una malla de coordenadas
-ra_grid = np.linspace(ra.min(), ra.max(), 100)
-decl_grid = np.linspace(decl.min(), decl.max(), 100)
-ra_mesh, decl_mesh = np.meshgrid(ra_grid, decl_grid)
-
-# Interpolación de los valores de extinción
-mwebv_interp = griddata((ra, decl), mwebv, (ra_mesh, decl_mesh), method='cubic')
-
-# Visualización
-plt.figure(figsize=(10, 6))
-plt.imshow(mwebv_interp, extent=(ra.min(), ra.max(), decl.min(), decl.max()), origin='lower', 
-           aspect='auto', cmap='viridis')
-plt.colorbar(label='Extinción MWEBV')
-plt.scatter(ra, decl, c='red', s=5)  # Muestra los puntos originales
-plt.title('Mapa de Extinción en Función de las Coordenadas (RA, Dec)')
-plt.xlabel('Right Ascension (RA)')
-plt.ylabel('Declination (Dec)')
-
-# Mostrar la gráfica en Streamlit
-st.pyplot(plt)
 
 ############################
 
