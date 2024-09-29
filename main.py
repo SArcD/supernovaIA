@@ -1120,6 +1120,7 @@ else:
 
 
 #=#
+
 # Comprobar cuántas filas hay para cada SNID
 counts = df_light_curves['snid'].value_counts()
 st.write(counts)  # Muestra cuántas observaciones hay para cada supernova
