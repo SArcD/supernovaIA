@@ -265,7 +265,7 @@ if not filtered_supernovae.empty:
         x=ra_grid,
         y=decl_grid,
         colorscale='Viridis',
-        colorbar=dict(title='Extinción MWEBV'),
+        colorbar=dict(title='Extinction (MWEBV)'),
         zmin=mwebv.min(),
         zmax=mwebv.max(),
         opacity=0.7,
@@ -289,11 +289,11 @@ if not filtered_supernovae.empty:
 
     # Actualizar el layout
     fig.update_layout(
-        title='Mapa de Extinción en Función de las Coordenadas (RA, Dec)',
+        title='Extinction (MWEB) as a function of Right ascension and Declination',
         xaxis_title='Right Ascension (RA)',
         yaxis_title='Declination (Dec)',
         showlegend=True,  # Asegurarse de que la leyenda se muestre
-        legend=dict(title='Tipo de Supernova', orientation='h', xanchor='center', x=0.5, yanchor='bottom', y=1.1)
+        legend=dict(title='Supernova Type', orientation='h', xanchor='center', x=0.5, yanchor='bottom', y=0.95)
     )
 
     # Mostrar el gráfico en Streamlit
