@@ -166,7 +166,7 @@ import streamlit as st
 
 st.markdown("""
 <div style='text-align: justify;'>
-    <h2>Purpose of the Application</h2>
+    <h4>Purpose of the Application</h4>
     <p>
         The primary goal of this application is to provide an interactive platform for analyzing and visualizing data on supernovae, 
         specifically those obtained from the Young Supernova Experiment (YSE). The tool allows users to access relevant data about 
@@ -174,7 +174,7 @@ st.markdown("""
         astronomical phenomena.
     </n>
     
-    <h3>Main Sections</h3>
+    <h5>Main Sections</h5>
     <ul>
         <li><strong>Data Download:</strong> Allows users to access data files from a GitHub repository, filtering and processing the 
         necessary information for analysis.</li>
