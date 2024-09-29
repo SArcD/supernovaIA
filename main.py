@@ -135,62 +135,35 @@ import streamlit as st
 import streamlit as st
 
 st.markdown("""
-<div style='text-align: justify;'>
-    <h1>Young Supernova Experiment (YSE) Database</h1>
-    <p>
-        The <strong>Young Supernova Experiment (YSE)</strong> focuses on discovering and studying supernovae in their early stages. This allows scientists to understand the explosions of massive stars and other transient phenomena.
-    </p>
-    
-    <h2>Key Features:</h2>
-    <ul>
-        <li><strong>Early Detection</strong>: Captures supernovae within days or hours of explosion.</li>
-        <li><strong>Light Curves</strong>: Provides detailed light curves across multiple wavelengths, helping track the evolution of each supernova.</li>
-        <li><strong>Multi-band Photometry</strong>: Includes data in different filters (g, r, i, z) for comprehensive spectral analysis.</li>
-        <li><strong>Classification</strong>: Supernovae are categorized by type, including Type Ia (thermonuclear), Type II, and Type Ibc (collapsing massive stars).</li>
-        <li><strong>Redshift & Astrometry</strong>: Contains redshift info to estimate distances and precise coordinates (RA, Dec).</li>
-        <li><strong>Milky Way Extinction</strong>: Accounts for interstellar dust that affects the observed brightness.</li>
-        <li><strong>Spectroscopy</strong>: Select supernovae also include spectroscopic data for detailed chemical composition analysis.</li>
-    </ul>
+# Young Supernova Experiment (YSE) Database
 
-    <h2>Applications:</h2>
-    <ul>
-        <li><strong>Cosmology</strong>: Type Ia supernovae are vital for measuring cosmic distances and studying the universe’s expansion.</li>
-        <li><strong>Stellar Evolution</strong>: Helps refine models of how stars end their lives.</li>
-        <li><strong>Transient Events</strong>: Aids in understanding short-lived cosmic phenomena beyond supernovae.</li>
-    </ul>
+The **Young Supernova Experiment (YSE)** focuses on discovering and studying supernovae in their early stages. This allows scientists to understand the explosions of massive stars and other transient phenomena.
 
-    <p>
-        The primary goal of this application is to provide an interactive platform for analyzing and visualizing data on supernovae, 
-        specifically those obtained from the Young Supernova Experiment (YSE). The tool allows users to access relevant data about 
-        supernovae, perform statistical analyses, and visualize light curves, thus facilitating a better understanding of these complex 
-        astronomical phenomena.
-    </p>
+## Key Features:
+- **Early Detection**: Captures supernovae within days or hours of explosion.
+- **Light Curves**: Provides detailed light curves across multiple wavelengths, helping track the evolution of each supernova.
+- **Multi-band Photometry**: Includes data in different filters (g, r, i, z) for comprehensive spectral analysis.
+- **Classification**: Supernovae are categorized by type, including Type Ia (thermonuclear), Type II, and Type Ibc (collapsing massive stars).
+- **Redshift & Astrometry**: Contains redshift info to estimate distances and precise coordinates (RA, Dec).
+- **Milky Way Extinction**: Accounts for interstellar dust that affects the observed brightness.
+- **Spectroscopy**: Select supernovae also include spectroscopic data for detailed chemical composition analysis.
 
-    <h2>Main Sections</h2>
-    <ul>
-        <li><strong>Data Download:</strong> Allows users to access data files from a GitHub repository, filtering and processing the 
-        necessary information for analysis.</li>
-        
-        <li><strong>Data Visualization:</strong> Offers multiple interactive plots that represent the evolution of supernova magnitude over 
-        time, as well as their positions in the sky. Users can select different filters and features to customize their visualizations.</li>
-        
-        <li><strong>Parameter Calculation:</strong> Includes functions to calculate metrics such as plateau duration, magnitude drop rate, 
-        and absolute magnitudes, providing deeper insight into the behavior of supernovae.</li>
-        
-        <li><strong>Classification and Clustering:</strong> Implements machine learning models that allow for the classification of 
-        supernovae into different clusters based on user-selected parameters, facilitating comparative analysis between different 
-        groups of supernovae.</li>
-        
-        <li><strong>Interactivity:</strong> Provides a user-friendly interface that allows users to interact with the data, perform queries, 
-        and visualize results intuitively.</li>
-    </ul>
+## Applications:
+- **Cosmology**: Type Ia supernovae are vital for measuring cosmic distances and studying the universe’s expansion.
+- **Stellar Evolution**: Helps refine models of how stars end their lives.
+- **Transient Events**: Aids in understanding short-lived cosmic phenomena beyond supernovae.
 
-    <p>
-        In summary, this application is a comprehensive tool for exploring and analyzing supernova data, designed for researchers 
-        and astronomy enthusiasts who wish to delve deeper into the study of these cosmic events.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+The primary goal of this application is to provide an interactive platform for analyzing and visualizing data on supernovae, specifically those obtained from the Young Supernova Experiment (YSE). The tool allows users to access relevant data about supernovae, perform statistical analyses, and visualize light curves, thus facilitating a better understanding of these complex astronomical phenomena.
+
+## Main Sections
+- **Data Download**: Allows users to access data files from a GitHub repository, filtering and processing the necessary information for analysis.
+- **Data Visualization**: Offers multiple interactive plots that represent the evolution of supernova magnitude over time, as well as their positions in the sky. Users can select different filters and features to customize their visualizations.
+- **Parameter Calculation**: Includes functions to calculate metrics such as plateau duration, magnitude drop rate, and absolute magnitudes, providing deeper insight into the behavior of supernovae.
+- **Classification and Clustering**: Implements machine learning models that allow for the classification of supernovae into different clusters based on user-selected parameters, facilitating comparative analysis between different groups of supernovae.
+- **Interactivity**: Provides a user-friendly interface that allows users to interact with the data, perform queries, and visualize results intuitively.
+
+In summary, this application is a comprehensive tool for exploring and analyzing supernova data, designed for researchers and astronomy enthusiasts who wish to delve deeper into the study of these cosmic events.
+""")
 
 
 # Function to create a scatter plot for supernova positions
