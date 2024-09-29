@@ -163,6 +163,46 @@ st.write("""
     """, unsafe_allow_html=True)
 
 
+import streamlit as st
+
+st.markdown("""
+<div style='text-align: justify;'>
+    <h2>Propósito de la Aplicación</h2>
+    <p>
+        Esta aplicación tiene como objetivo principal proporcionar una plataforma interactiva para analizar y visualizar datos de supernovas, 
+        específicamente aquellas obtenidas a partir del Young Supernova Experiment (YSE). La herramienta permite a los usuarios acceder a 
+        datos relevantes sobre supernovas, realizar análisis estadísticos y visualizar curvas de luz, facilitando así la comprensión 
+        de estos fenómenos astronómicos complejos.
+    </p>
+    
+    <h2>Secciones Principales</h2>
+    <ul>
+        <li><strong>Descarga de Datos:</strong> Permite a los usuarios acceder a archivos de datos desde un repositorio de GitHub, 
+        filtrando y procesando la información necesaria para su análisis.</li>
+        
+        <li><strong>Visualización de Datos:</strong> Ofrece múltiples gráficos interactivos que representan la evolución de la magnitud de 
+        las supernovas a lo largo del tiempo, así como su posición en el cielo. Los usuarios pueden seleccionar diferentes filtros y 
+        características para personalizar sus visualizaciones.</li>
+        
+        <li><strong>Calculo de Parámetros:</strong> Incluye funciones para calcular métricas como la duración del plateau, la tasa de caída 
+        de magnitud y las magnitudes absolutas, brindando una comprensión más profunda del comportamiento de las supernovas.</li>
+        
+        <li><strong>Clasificación y Clustering:</strong> Implementa modelos de aprendizaje automático que permiten clasificar las supernovas 
+        en diferentes clústeres basados en parámetros seleccionados por el usuario, facilitando el análisis comparativo entre diferentes 
+        grupos de supernovas.</li>
+        
+        <li><strong>Interactividad:</strong> Proporciona una interfaz amigable que permite a los usuarios interactuar con los datos, realizar 
+        consultas y visualizar resultados de manera intuitiva.</li>
+    </ul>
+    
+    <p>
+        En resumen, esta aplicación es una herramienta integral para la exploración y análisis de datos de supernovas, diseñada para 
+        investigadores y entusiastas de la astronomía que deseen profundizar en el estudio de estos eventos cósmicos.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+
 
 # Function to create a scatter plot for supernova positions
 def create_position_plot():
