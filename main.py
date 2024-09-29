@@ -1218,33 +1218,34 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 
-# Paso 1: Agregar columna de clúster a df_light_curves
-df_light_curves = df_light_curves.merge(df_supernova_clustering[['SNID', 'cluster']], left_on='snid', right_on='SNID', how='left')
+from sklearn.tree import DecisionTreeRegressor
 
-# Paso 2: Crear un DataFrame con las curvas de luz
-def create_light_curve_dataframe(df_light_curves):
-    # Filtrar para que solo queden las columnas relevantes
-    light_curve_data = df_light_curves[['snid', 'mjd', 'mag', 'filter', 'cluster']]
-    return light_curve_data
 
-# Crear el DataFrame de curvas de luz
-light_curve_df = create_light_curve_dataframe(df_light_curves)
+# Comprobar cuántas filas hay para cada SNID
+counts = df_light_curves['snid'].value_counts()
+st.write(counts)  # Muestra cuántas observaciones hay para cada supernova
+# Paso 1: Filtrar las supernovas del clúster seleccionado
 
-# Paso 3: Mostrar un menú desplegable para que el usuario elija el clúster
 selected_cluster = st.selectbox("Please, select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
-# Paso 4: Preparar los datos
+# Paso 2: Preparar los datos
 if not df_clustered_supernovae.empty:
-    # Obtener todos los datos de supernovas en el clúster
+    # Unir todos los datos de supernovas en el clúster
     supernova_ids = df_clustered_supernovae['SNID'].unique()
-    df_light_curves_cluster = light_curve_df[light_curve_df['snid'].isin(supernova_ids)]
+    df_light_curves_cluster = df_light_curves[df_light_curves['snid'].isin(supernova_ids)]
 
     # Calcular días relativos al pico de luminosidad
     df_light_curves_cluster = calculate_days_relative_to_peak(df_light_curves_cluster)
 
-    # Paso 4.1: Filtrar para usar solo los datos desde el pico hasta el final
+    # Filtrar para usar solo los datos desde el pico hasta el final
     df_light_curves_cluster = df_light_curves_cluster[df_light_curves_cluster['days_relative'] >= 0]
+
+    # Calcular magnitudes corregidas
+    df_light_curves_cluster['mag_corregida'] = df_light_curves_cluster.apply(
+        lambda row: corregir_magnitud_redshift(corregir_magnitud_extincion(row['mag'], row['mwebv'], row['filter']), row['redshift']),
+        axis=1
+    )
 
     # Normalizar los días relativos al pico
     df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
@@ -1253,17 +1254,17 @@ if not df_clustered_supernovae.empty:
 
     # Crear el conjunto de entrenamiento
     X = df_light_curves_cluster[['days_relative_normalized']]  # Días relativos normalizados
-    y = df_light_curves_cluster['mag']  # Magnitudes observadas (ya corregidas)
+    y = df_light_curves_cluster['mag_corregida']  # Magnitudes corregidas
 
-    # Paso 5: Entrenar el modelo de árbol de regresión
+    # Paso 3: Entrenar el modelo de árbol de regresión
     model = DecisionTreeRegressor(random_state=42)
     model.fit(X, y)
 
-    # Paso 6: Predecir las magnitudes para un rango de días relativos normalizados
+    # Paso 4: Predecir las magnitudes para un rango de días relativos normalizados
     days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
     predicted_magnitudes = model.predict(days_range)
 
-    # Paso 7: Graficar la curva de luz ajustada
+    # Paso 5: Graficar la curva de luz ajustada
     fig = go.Figure()
     
     # Gráfica de los datos originales
@@ -1271,7 +1272,7 @@ if not df_clustered_supernovae.empty:
         df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
         fig.add_trace(go.Scatter(
             x=df_supernova_data['days_relative_normalized'],
-            y=df_supernova_data['mag'],
+            y=df_supernova_data['mag_corregida'],
             mode='markers',
             name=f'SNID: {snid}',
             hoverinfo='text',
@@ -1291,7 +1292,7 @@ if not df_clustered_supernovae.empty:
     fig.update_layout(
         title=f'Curva de Luz Ajustada para el Clúster {selected_cluster}',
         xaxis_title='Días Relativos Normalizados al Pico',
-        yaxis_title='Magnitud',
+        yaxis_title='Magnitud Corregida',
         yaxis=dict(autorange='reversed'),  # Invertir el eje Y
         showlegend=True
     )
