@@ -163,10 +163,11 @@ In summary, this application is a comprehensive tool for exploring and analyzing
 
 st.write("""
 
-##Position of Supernovae as a Function of Celestial Coordinates and Redshift
+### **Position of Supernovae as a Function of Celestial Coordinates and Redshift**
 
 In this section, you can plot the position of each type of supernova based on celestial coordinates and redshift. The available plots are Right Ascension vs Redshift, Declination vs Redshift, and Declination vs Right Ascension.
 """)
+
 
 
 
