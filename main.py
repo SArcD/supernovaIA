@@ -331,13 +331,21 @@ else:
 
 ############################
 
+st.write("""
+
+### **Light curves for the supernovae**
+
+The horizontal axis of each light curve corresponds to the number of days relative to the peak in the light curve (calculated from the Modified Julian Date). The vertical axis represents the absolute magnitude in each filter, corrected for extinction due to interstellar dust, using constants for different filters (g, r, i, z, X, and Y) and for redshift. 
+
+The user can select the type of supernova they want to display, as well as the minimum number of observations a light curve must have to be plotted. Additionally, a DataFrame is included showing additional parameters such as peak magnitudes, event duration, and specific parameters based on supernova type:
+
+- `calculate_delta_m15`: Magnitude drop in 15 days for type Ia supernovae.
+- `calculate_plateau_duration`: Plateau duration for type II or Ibc supernovae.
+- `calculate_fall_rate`: Luminosity drop rate after the plateau.
+- `calculate_plateau_average_magnitude`: Average magnitude during the plateau.
+""")
 
 
-
-
-
-
-##########-----#############
 # Function to calculate days relative to the luminosity peak
 def calculate_days_relative_to_peak(df_supernova):
     # Calculate the MJD of the luminosity peak (minimum magnitude)
