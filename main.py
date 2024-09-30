@@ -681,7 +681,9 @@ with st.expander("Calculated Parameters"):
     - This is the rate of luminosity decline after the end of the plateau, calculated as the difference between the magnitude at the end of the event and the magnitude at the peak, divided by the time elapsed between the peak and the end of the event.
 
     **Average Magnitude During the Plateau**:
-    - Applies to Type II or Ibc
+    - Applies to Type II or Ibc supernovae.
+    - It is calculated as the average of the magnitudes observed during the plateau, where the magnitude is less than or equal to the peak magnitude plus 1 unit.
+    """)
 
 
 #############
