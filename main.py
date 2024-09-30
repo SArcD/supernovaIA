@@ -1518,6 +1518,8 @@ from sklearn.tree import DecisionTreeRegressor
 
 
 import numpy as np
+
+import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
@@ -1528,6 +1530,9 @@ from scipy.signal import savgol_filter  # Para suavizar la curva
 # Paso 1: Filtrar las supernovas del clúster seleccionado
 selected_cluster = st.selectbox("Please, select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
+
+# Inicializar la lista de supernovas con datos insuficientes
+insufficient_data_supernovas = []
 
 # Paso 2: Preparar los datos
 if not df_clustered_supernovae.empty:
@@ -1577,6 +1582,7 @@ if not df_clustered_supernovae.empty:
 
     # Verificar si hay suficientes puntos de datos para entrenar el modelo
     if df_supernova_data.shape[0] < 2:
+        insufficient_data_supernovas.append(selected_snid)  # Agregar a la lista de supernovas con datos insuficientes
         st.write(f"Not enough data points to fit a model for supernova {selected_snid}.")
     else:
         # Entrenar el modelo de árbol de regresión para la supernova seleccionada
@@ -1598,7 +1604,46 @@ if not df_clustered_supernovae.empty:
             line=dict(width=2, color='red')
         ), row=1, col=2)
 
-    # Actualizar el layout
+        # Paso 5: Graficar la curva suavizada debajo de las gráficas originales
+        # Aplicar el filtro de Savitzky-Golay para suavizar la curva ajustada
+        smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=11, polyorder=3)
+
+        # Crear una nueva gráfica para la curva suavizada
+        fig_smoothed = go.Figure()
+
+        # Graficar los datos originales en esta curva también
+        fig_smoothed.add_trace(go.Scatter(
+            x=df_supernova_data['days_relative_normalized'],
+            y=df_supernova_data['mag_corregida'],
+            mode='markers',
+            name='Original Data',
+            hoverinfo='text',
+            text=df_supernova_data['snid'],
+            marker=dict(size=5)
+        ))
+
+        # Añadir la curva suavizada
+        fig_smoothed.add_trace(go.Scatter(
+            x=days_range.flatten(),
+            y=smoothed_magnitudes,
+            mode='lines',
+            name='Smoothed Curve',
+            line=dict(width=2, color='blue')
+        ))
+
+        # Actualizar el layout de la gráfica suavizada
+        fig_smoothed.update_layout(
+            title=f'Smoothed Curve for Supernova {selected_snid}',
+            xaxis_title='Normalized Days Relative to Peak',
+            yaxis_title='Corrected Magnitude',
+            yaxis=dict(autorange='reversed'),
+            showlegend=True
+        )
+
+        # Mostrar la gráfica suavizada debajo
+        st.plotly_chart(fig_smoothed, use_container_width=True)
+
+    # Actualizar el layout de las gráficas
     fig.update_layout(
         title=f'Light Curve and Fitted Curve for Supernova {selected_snid}',
         xaxis_title='Normalized Days Relative to Peak',
@@ -1611,46 +1656,11 @@ if not df_clustered_supernovae.empty:
     # Mostrar las gráficas lado a lado
     st.plotly_chart(fig, use_container_width=True)
 
-    ### Paso 5: Graficar la curva suavizada debajo de las gráficas originales
-    # Aplicar el filtro de Savitzky-Golay para suavizar la curva ajustada
-    smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=11, polyorder=3)
-
-    # Crear una nueva gráfica para la curva suavizada
-    fig_smoothed = go.Figure()
-
-    # Graficar los datos originales en esta curva también
-    fig_smoothed.add_trace(go.Scatter(
-        x=df_supernova_data['days_relative_normalized'],
-        y=df_supernova_data['mag_corregida'],
-        mode='markers',
-        name='Original Data',
-        hoverinfo='text',
-        text=df_supernova_data['snid'],
-        marker=dict(size=5)
-    ))
-
-    # Añadir la curva suavizada
-    fig_smoothed.add_trace(go.Scatter(
-        x=days_range.flatten(),
-        y=smoothed_magnitudes,
-        mode='lines',
-        name='Smoothed Curve',
-        line=dict(width=2, color='blue')
-    ))
-
-    # Actualizar el layout de la gráfica suavizada
-    fig_smoothed.update_layout(
-        title=f'Smoothed Curve for Supernova {selected_snid}',
-        xaxis_title='Normalized Days Relative to Peak',
-        yaxis_title='Corrected Magnitude',
-        yaxis=dict(autorange='reversed'),
-        showlegend=True
-    )
-
-    # Mostrar la gráfica suavizada debajo
-    st.plotly_chart(fig_smoothed, use_container_width=True)
+    # Mostrar la lista de supernovas con datos insuficientes (si las hay)
+    if insufficient_data_supernovas:
+        st.write("Supernovas with insufficient data points:")
+        st.write(insufficient_data_supernovas)
 
 else:
     st.write("No supernovas found in this cluster.")
-
 
