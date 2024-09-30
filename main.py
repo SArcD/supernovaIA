@@ -337,12 +337,8 @@ st.write("""
 
 The horizontal axis of each light curve corresponds to the number of days relative to the peak in the light curve (calculated from the Modified Julian Date). The vertical axis represents the absolute magnitude in each filter, corrected for extinction due to interstellar dust, using constants for different filters (g, r, i, z, X, and Y) and for redshift. 
 
-The user can select the type of supernova they want to display, as well as the minimum number of observations a light curve must have to be plotted. Additionally, a DataFrame is included showing additional parameters such as peak magnitudes, event duration, and specific parameters based on supernova type:
+The user can select the type of supernova they want to display, as well as the minimum number of observations a light curve must have to be plotted. Additionally, a DataFrame is included showing additional parameters such as peak magnitudes, event duration, and specific parameters based on supernova type.
 
-- `calculate_delta_m15`: Magnitude drop in 15 days for type Ia supernovae.
-- `calculate_plateau_duration`: Plateau duration for type II or Ibc supernovae.
-- `calculate_fall_rate`: Luminosity drop rate after the plateau.
-- `calculate_plateau_average_magnitude`: Average magnitude during the plateau.
 """)
 
 
@@ -663,10 +659,32 @@ def create_summary_dataframe(df_supernovae, supernova_type):
     return pd.DataFrame(results)
 
 ##############
-st.write("Summary")
-st.write(df_light_curves)
 
-with st.expander("Calculated Parameters"):
+
+#############
+
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.decomposition import PCA
+from scipy.stats import gaussian_kde
+import plotly.express as px
+
+# We assume that df_supernova_clustering has already been generated after clustering
+df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
+
+# Show the DataFrame to verify it has data
+st.write("**Summary")
+
+
+st.write(df_parameters)
+
+#st.write(df_light_curves)
+
+with st.expander("**Calculated Parameters**"):
     st.write("""
     **Δm15 (Magnitude Drop in 15 Days)**:
     - Applies to Type Ia supernovae.
@@ -686,24 +704,6 @@ with st.expander("Calculated Parameters"):
     """)
 
 
-#############
-
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.decomposition import PCA
-from scipy.stats import gaussian_kde
-import plotly.express as px
-
-# We assume that df_supernova_clustering has already been generated after clustering
-df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
-
-# Show the DataFrame to verify it has data
-st.write("Verifying df_parameters content:")
-st.write(df_parameters)
 
 ###############33
 
