@@ -868,7 +868,11 @@ df_parameters = pd.merge(df_parameters, df_parametros, on='SNID', how='left')
 ###############
 ################
 
+
+
 st.write("""
+## **Aglomerative clustering**
+
 This section implements a process for performing hierarchical clustering on supernova data. It allows the user to select relevant columns for clustering and then displays the supernovae grouped into clusters. The data is normalized before clustering using StandardScaler, and the user can choose the number of clusters. After clustering, the supernovae in each cluster are displayed, and the user can select a specific supernova to view its light curve. Additionally, peak magnitudes are calculated for each filter, and corrections for extinction and redshift are applied to obtain absolute magnitudes.
 """)
 
