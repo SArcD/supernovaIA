@@ -685,7 +685,8 @@ st.write(df_parameters)
 #st.write(df_light_curves)
 
 # Expander for column descriptions
-with st.expander("Description of Columns in the summary"):
+# Expander for column descriptions
+with st.expander("Description of Columns in df_parameters"):
     st.write("""
     **SNID**: The unique identifier for each supernova event. This identifier is used to track and reference supernovae across various datasets.
 
@@ -696,6 +697,10 @@ with st.expander("Description of Columns in the summary"):
     **peak_magnitude_i**: The peak apparent magnitude observed in the 'i' (infrared) filter, indicating brightness at infrared wavelengths.
 
     **peak_magnitude_z**: The peak apparent magnitude observed in the 'z' (near-infrared) filter, reflecting the supernova's brightness in near-infrared wavelengths.
+
+    **peak_magnitude_X**: The peak apparent magnitude observed in the 'X' filter, capturing brightness in a specific wavelength range tailored for certain observations.
+
+    **peak_magnitude_Y**: The peak apparent magnitude observed in the 'Y' filter, reflecting the supernova's brightness in another specific wavelength range.
 
     **Event Duration**: The total duration of the supernova event, calculated as the time between the first observation and the last observation of the supernova.
 
@@ -713,7 +718,6 @@ with st.expander("Description of Columns in the summary"):
 
     **Average Plateau Magnitude (r)**: The average magnitude of the supernova during the plateau phase in the 'r' filter, providing insight into the supernova's brightness stability.
     """)
-
 
 
 
