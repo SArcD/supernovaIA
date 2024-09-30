@@ -161,6 +161,14 @@ The primary goal of this application is to provide an interactive platform for a
 In summary, this application is a comprehensive tool for exploring and analyzing supernova data, designed for researchers and astronomy enthusiasts who wish to delve deeper into the study of these cosmic events.
 """)
 
+st.write("""
+
+##Position of Supernovae as a Function of Celestial Coordinates and Redshift
+
+In this section, you can plot the position of each type of supernova based on celestial coordinates and redshift. The available plots are Right Ascension vs Redshift, Declination vs Redshift, and Declination vs Right Ascension.
+""")
+
+
 
 # Function to create a scatter plot for supernova positions
 def create_position_plot():
