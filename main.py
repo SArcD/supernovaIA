@@ -289,7 +289,7 @@ if not filtered_supernovae.empty:
 
     # Actualizar el layout
     fig.update_layout(
-        title='Extinction (MWEB) as a function of Right ascension and Declination - Redshift: {selected_redshift[0]} to {selected_redshift[1]}',
+        title=f'Extinction (MWEB) as a function of Right Ascension and Declination - Rango de Redshift: {selected_redshift[0]} a {selected_redshift[1]}',
         xaxis_title='Right Ascension (RA)',
         yaxis_title='Declination (Dec)',
         showlegend=True,  # Asegurarse de que la leyenda se muestre
@@ -299,7 +299,7 @@ if not filtered_supernovae.empty:
     # Mostrar el gráfico en Streamlit
     st.plotly_chart(fig)
 else:
-    st.write("No se encontraron supernovas en el rango de redshift seleccionado.")
+    st.write("There are no supernovas within the selected range ")
 
 
 ############################
