@@ -184,7 +184,7 @@ def create_position_plot():
         title='Polar Positions of Supernovae',
         autosize=True,
         polar=dict(
-            radialaxis=dict(range=[0, max_redshift * 1.1], showticklabels=True),  # Ajustar rango según el máximo redshift
+            radialaxis=dict(range=[0, max_redshift], showticklabels=True),  # Ajustar rango según el máximo redshift
             angularaxis=dict(showticklabels=True)
         )
     )
