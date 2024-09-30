@@ -868,6 +868,9 @@ df_parameters = pd.merge(df_parameters, df_parametros, on='SNID', how='left')
 ###############
 ################
 
+st.write("""
+This section implements a process for performing hierarchical clustering on supernova data. It allows the user to select relevant columns for clustering and then displays the supernovae grouped into clusters. The data is normalized before clustering using StandardScaler, and the user can choose the number of clusters. After clustering, the supernovae in each cluster are displayed, and the user can select a specific supernova to view its light curve. Additionally, peak magnitudes are calculated for each filter, and corrections for extinction and redshift are applied to obtain absolute magnitudes.
+""")
 
 import pandas as pd
 import numpy as np
@@ -1055,9 +1058,9 @@ extincion_filtros = {
 
 # Aplicamos la corrección de magnitudes absolutas
 #df_supernova_clustering = corregir_magnitudes_abs(df_supernova_clustering, extincion_filtros)
-st.write(df_supernova_clustering)
+#st.write(df_supernova_clustering)
 ########
-st.write(df_supernova_clustering.columns)
+#st.write(df_supernova_clustering.columns)
 
 
 import plotly.graph_objects as go
