@@ -1192,6 +1192,14 @@ import numpy as np
 import plotly.graph_objects as go
 from sklearn.manifold import TSNE
 
+st.write("""
+
+##**t-SNE Plot**
+
+This section creates a t-SNE visualization for dimensionality reduction and plots the supernovae data in two dimensions. A t-SNE instance is created with specific hyperparameters (perplexity, early exaggeration, and learning rate) to transform the PCA-reduced data into a 2D space. The resulting 2D points are grouped by their clusters, and each cluster is represented with a different marker on a scatter plot. The hover tool displays additional information for each supernova, including its 'SNID', 'RA', 'Dec', and 'Redshift'. The layout is customized with titles and a legend showing the cluster IDs.
+""")
+
+
 # Create a t-SNE instance with the desired hyperparameters
 tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
 
