@@ -211,6 +211,15 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
+
+st.write("""
+### **Types of Supernovae as a Function of Redshift with extintion (MWEB)**
+
+This code allows filtering and visualizing supernovae based on a selected redshift range and then plots the positions of the supernovae as a function of their celestial coordinates (Right Ascension and Declination), along with an extinction map. A dropdown menu is provided for the user to select a redshift range. If supernovae are found within the selected range, a heatmap is created with the coordinates and extinction values, as well as a scatter plot to represent the supernovae by type. Additionally, a pie chart is generated to show the percentage of each supernova type within the selected range.
+""")
+
+
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
