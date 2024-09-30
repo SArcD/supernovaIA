@@ -677,31 +677,43 @@ import plotly.express as px
 df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
 
 # Show the DataFrame to verify it has data
-st.write("**Summary")
+st.write("**Summary**")
 
 
 st.write(df_parameters)
 
 #st.write(df_light_curves)
 
-with st.expander("**Calculated Parameters**"):
+# Expander for column descriptions
+with st.expander("Description of Columns in the summary"):
     st.write("""
-    **Δm15 (Magnitude Drop in 15 Days)**:
-    - Applies to Type Ia supernovae.
-    - It is calculated by measuring the magnitude at the luminosity peak (minimum magnitude) and then the magnitude 15 days after the peak. The difference between these two values is Δm15.
+    **SNID**: The unique identifier for each supernova event. This identifier is used to track and reference supernovae across various datasets.
 
-    **Plateau Duration**:
-    - Applies to Type II or Ibc supernovae.
-    - It is defined as the time between the luminosity peak (minimum magnitude) and the moment when the magnitude increases by 1 unit from the peak value.
+    **peak_magnitude_g**: The peak apparent magnitude observed in the 'g' (green) filter. This value indicates the brightness of the supernova at its brightest point in this specific wavelength range.
 
-    **Fall Rate**:
-    - Applies to Type II or Ibc supernovae.
-    - This is the rate of luminosity decline after the end of the plateau, calculated as the difference between the magnitude at the end of the event and the magnitude at the peak, divided by the time elapsed between the peak and the end of the event.
+    **peak_magnitude_r**: The peak apparent magnitude observed in the 'r' (red) filter. Similar to the 'g' filter, this measurement reflects the supernova's brightness in the red wavelength range.
 
-    **Average Magnitude During the Plateau**:
-    - Applies to Type II or Ibc supernovae.
-    - It is calculated as the average of the magnitudes observed during the plateau, where the magnitude is less than or equal to the peak magnitude plus 1 unit.
+    **peak_magnitude_i**: The peak apparent magnitude observed in the 'i' (infrared) filter, indicating brightness at infrared wavelengths.
+
+    **peak_magnitude_z**: The peak apparent magnitude observed in the 'z' (near-infrared) filter, reflecting the supernova's brightness in near-infrared wavelengths.
+
+    **Event Duration**: The total duration of the supernova event, calculated as the time between the first observation and the last observation of the supernova.
+
+    **RA**: The right ascension of the supernova, measured in degrees. This celestial coordinate helps locate the supernova in the sky.
+
+    **Dec**: The declination of the supernova, also measured in degrees. It complements the right ascension for precise location in the celestial coordinate system.
+
+    **Redshift**: The redshift value of the supernova, which indicates how much the light from the supernova has been stretched due to the expansion of the universe. It is essential for determining the distance to the supernova.
+
+    **Δm15 (g/i)**: The decline in magnitude (Δm) measured 15 days after the peak brightness in the 'g' or 'i' filter. This metric is often used to classify supernovae types and assess their explosion mechanisms.
+
+    **Plateau Duration (r)**: The duration for which the supernova remains at a constant brightness level (the plateau) in the 'r' filter. This is significant for understanding the characteristics of Type II supernovae.
+
+    **Fall Rate (r)**: The rate at which the brightness of the supernova decreases after the plateau phase, calculated in the 'r' filter.
+
+    **Average Plateau Magnitude (r)**: The average magnitude of the supernova during the plateau phase in the 'r' filter, providing insight into the supernova's brightness stability.
     """)
+
 
 
 
