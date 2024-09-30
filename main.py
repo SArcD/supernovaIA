@@ -1501,18 +1501,8 @@ else:
 
 #=#
 
-from sklearn.tree import DecisionTreeRegressor
-
-
-
-
 ###---###---###
 
-from sklearn.tree import DecisionTreeRegressor
-import numpy as np
-import pandas as pd
-import streamlit as st
-import plotly.graph_objects as go
 
 from sklearn.tree import DecisionTreeRegressor
 import numpy as np
@@ -1525,7 +1515,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 # Comprobar cuántas filas hay para cada SNID
 counts = df_light_curves['snid'].value_counts()
-st.write(counts)  # Muestra cuántas observaciones hay para cada supernova
+#st.write(counts)  # Muestra cuántas observaciones hay para cada supernova
 # Paso 1: Filtrar las supernovas del clúster seleccionado
 
 selected_cluster = st.selectbox("Please, select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
