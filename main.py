@@ -289,7 +289,7 @@ if not filtered_supernovae.empty:
 
     # Actualizar el layout
     fig.update_layout(
-        title=f'Extinction (MWEB) as a function of Right Ascension and Declination - Rango de Redshift: {selected_redshift[0]} a {selected_redshift[1]}',
+        title=f'Extinction (MWEB) as a function of Right Ascension and Declination - Redshift: {selected_redshift[0]} to {selected_redshift[1]}',
         xaxis_title='Right Ascension (RA)',
         yaxis_title='Declination (Dec)',
         showlegend=True,  # Asegurarse de que la leyenda se muestre
@@ -298,6 +298,15 @@ if not filtered_supernovae.empty:
 
     # Mostrar el gráfico en Streamlit
     st.plotly_chart(fig)
+
+    # Pie chart for the percentage of supernovae of each type
+    type_counts = filtered_supernovae['parsnip_pred'].value_counts()
+    fig_pie = go.Figure(data=[go.Pie(labels=type_counts.index, values=type_counts.values, hole=.3)])
+    fig_pie.update_layout(title_text='Percentage of Supernovae by Type in the Selected Range')
+
+    # Display the pie chart in Streamlit
+    st.plotly_chart(fig_pie)
+
 else:
     st.write("There are no supernovas within the selected range ")
 
