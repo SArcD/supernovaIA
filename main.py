@@ -168,10 +168,6 @@ st.write("""
 In this section, you can plot the position of each type of supernova based on celestial coordinates and redshift. The available plots are Right Ascension vs Redshift, Declination vs Redshift, and Declination vs Right Ascension.
 """)
 
-
-
-
-
 def create_position_plot():
     # Obtener el valor máximo del redshift en los datos
     max_redshift = df_light_curves['redshift'].max()
@@ -188,11 +184,12 @@ def create_position_plot():
             angularaxis=dict(showticklabels=True)
         )
     )
+
     # Añadir botones personalizados para resetear el gráfico con un botón más pequeño y color naranja
     fig.update_layout(
         updatemenus=[dict(type="buttons",
                           direction="left",
-                          buttons=[dict(args=["polar.radialaxis.range", [None]], 
+                          buttons=[dict(args=["polar.radialaxis.range", [0, max_redshift * 1.1]], 
                                         label="Reset Zoom", 
                                         method="relayout"
                                         )],
@@ -208,6 +205,7 @@ def create_position_plot():
                           borderwidth=1
                          )]
     )
+
     return fig
 
 
