@@ -1517,13 +1517,10 @@ import plotly.graph_objects as go
 from sklearn.tree import DecisionTreeRegressor
 
 
-
-
 import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from sklearn.tree import DecisionTreeRegressor
 
 # Paso 1: Filtrar las supernovas del clúster seleccionado
@@ -1553,56 +1550,65 @@ if not df_clustered_supernovae.empty:
         lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
     )
 
-    # Crear subplots lado a lado
-    fig = make_subplots(rows=1, cols=2, subplot_titles=("Original Light Curves", "Fitted Curves"))
+    # Paso 3: Crear el deslizador para seleccionar una supernova
+    selected_snid_index = st.slider('Select a supernova to view its light curve:', 
+                                    min_value=0, max_value=len(supernova_ids)-1, step=1)
+    selected_snid = supernova_ids[selected_snid_index]
 
-    # Paso 3: Graficar las curvas de luz originales a la izquierda
-    for snid in supernova_ids:
-        df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
+    # Paso 4: Graficar las curvas de luz originales y las curvas ajustadas solo para la supernova seleccionada
+    df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == selected_snid]
+
+    # Verificar si hay suficientes puntos de datos para entrenar el modelo
+    if df_supernova_data.shape[0] < 2:
+        st.write(f"Not enough data points to fit a model for supernova {selected_snid}.")
+    else:
+        # Entrenar el modelo de árbol de regresión para la supernova seleccionada
+        X = df_supernova_data[['days_relative_normalized']]
+        y = df_supernova_data['mag_corregida']
+        model = DecisionTreeRegressor(random_state=42)
+        model.fit(X, y)
+
+        # Predecir las magnitudes para un rango de días relativos normalizados
+        days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
+        predicted_magnitudes = model.predict(days_range)
+
+        # Crear subplots lado a lado
+        fig = make_subplots(rows=1, cols=2, subplot_titles=(f"Original Light Curve for SNID {selected_snid}", 
+                                                            f"Fitted Curve for SNID {selected_snid}"))
+
+        # Graficar la curva de luz original a la izquierda
         fig.add_trace(go.Scatter(
             x=df_supernova_data['days_relative_normalized'],
             y=df_supernova_data['mag_corregida'],
             mode='markers',
-            name=f'SNID: {snid}',
+            name='Original Data',
             hoverinfo='text',
             text=df_supernova_data['snid'],  # Información al pasar el mouse
             marker=dict(size=5)
         ), row=1, col=1)
 
-    # Paso 4: Graficar las curvas de ajuste a la derecha
-    for snid in supernova_ids:
-        df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
-        
-        # Entrenar el modelo de árbol de regresión para cada supernova
-        X = df_supernova_data[['days_relative_normalized']]
-        y = df_supernova_data['mag_corregida']
-        model = DecisionTreeRegressor(random_state=42)
-        model.fit(X, y)
-        
-        # Predecir las magnitudes para un rango de días relativos normalizados
-        days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
-        predicted_magnitudes = model.predict(days_range)
-
-        # Añadir la curva de ajuste al gráfico derecho
+        # Graficar la curva de ajuste a la derecha
         fig.add_trace(go.Scatter(
             x=days_range.flatten(),
             y=predicted_magnitudes,
             mode='lines',
-            name=f'Fitted SNID: {snid}',
-            line=dict(width=2)
+            name='Fitted Curve',
+            line=dict(width=2, color='red')
         ), row=1, col=2)
 
-    # Actualizar el layout
-    fig.update_layout(
-        title=f'Light Curves and Fitted Curves for Cluster {selected_cluster}',
-        xaxis_title='Normalized Days Relative to Peak',
-        yaxis_title='Corrected Magnitude',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y en ambas gráficas
-        showlegend=False
-    )
+        # Actualizar el layout
+        fig.update_layout(
+            title=f'Light Curve and Fitted Curve for Supernova {selected_snid}',
+            xaxis_title='Normalized Days Relative to Peak',
+            yaxis_title='Corrected Magnitude',
+            yaxis=dict(autorange='reversed'),  # Invertir el eje Y en ambas gráficas
+            showlegend=False
+        )
 
-    # Mostrar las gráficas lado a lado
-    st.plotly_chart(fig, use_container_width=True)
+        # Mostrar las gráficas lado a lado
+        st.plotly_chart(fig, use_container_width=True)
+
 else:
     st.write("No supernovas found in this cluster.")
+
 
