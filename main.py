@@ -914,9 +914,9 @@ if selected_columns:
         supernova_names_clusters[f'cluster_{cluster_id}'] = supernovae_in_cluster
 
     # Mostrar los resultados
-    st.write("Supernovae in each cluster:")
-    for cluster, supernovae in supernova_names_clusters.items():
-        st.write(f"{cluster}: {supernovae}")
+    #st.write("Supernovae in each cluster:")
+    #for cluster, supernovae in supernova_names_clusters.items():
+    #    st.write(f"{cluster}: {supernovae}")
 
 else:
     st.write("Please select at least one column for clustering.")
@@ -1061,6 +1061,11 @@ extincion_filtros = {
 #st.write(df_supernova_clustering)
 ########
 #st.write(df_supernova_clustering.columns)
+
+st.write("Supernovae in each cluster:")
+for cluster, supernovae in supernova_names_clusters.items():
+    with st.expander(f"{cluster} (Total: {len(supernovae)} supernovae)"):
+        st.write(supernovae)
 
 
 import plotly.graph_objects as go
