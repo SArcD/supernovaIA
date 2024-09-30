@@ -1550,7 +1550,7 @@ if not df_clustered_supernovae.empty:
     )
 
     # Paso 3: Crear el deslizador para seleccionar una supernova
-    selected_snid_index = st.slider('Select a supernova to view its light curve:', 
+    selected_snid_index = st.slider('Select one supernova to view its light curve:', 
                                     min_value=0, max_value=len(supernova_ids)-1, step=1)
     selected_snid = supernova_ids[selected_snid_index]
 
