@@ -173,6 +173,9 @@ In this section, you can plot the position of each type of supernova based on ce
 
 
 def create_position_plot():
+    # Obtener el valor máximo del redshift en los datos
+    max_redshift = df_light_curves['redshift'].max()
+
     fig = px.scatter_polar(df_light_curves, r='redshift', theta='ra', color='parsnip_pred', 
                            hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae')
 
@@ -181,22 +184,28 @@ def create_position_plot():
         title='Polar Positions of Supernovae',
         autosize=True,
         polar=dict(
-            radialaxis=dict(range=[0, df_light_curves['redshift'].max() * 1.1], showticklabels=True),
+            radialaxis=dict(range=[0, max_redshift * 1.1], showticklabels=True),  # Ajustar rango según el máximo redshift
             angularaxis=dict(showticklabels=True)
         )
     )
-
-    # Añadir botones personalizados para resetear el gráfico (opcional, plotly incluye herramientas de reset)
+    # Añadir botones personalizados para resetear el gráfico con un botón más pequeño y color naranja
     fig.update_layout(
         updatemenus=[dict(type="buttons",
                           direction="left",
-                          buttons=[dict(args=["polar.radialaxis.range", [None]], label="Reset Zoom", method="relayout")],
+                          buttons=[dict(args=["polar.radialaxis.range", [None]], 
+                                        label="Reset Zoom", 
+                                        method="relayout"
+                                        )],
                           pad={"r": 10, "t": 10},
                           showactive=True,
                           x=0.8,
                           xanchor="left",
                           y=1.15,
-                          yanchor="top"
+                          # Personalizar estilo del botón
+                          font=dict(size=10, color="black"),
+                          bgcolor="orange",  # Color de fondo del botón
+                          bordercolor="black",
+                          borderwidth=1
                          )]
     )
     return fig
