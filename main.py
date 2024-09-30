@@ -171,11 +171,36 @@ In this section, you can plot the position of each type of supernova based on ce
 
 
 
-# Function to create a scatter plot for supernova positions
+
 def create_position_plot():
     fig = px.scatter_polar(df_light_curves, r='redshift', theta='ra', color='parsnip_pred', 
                            hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae')
+
+    # Habilitar el botón de reset y zoom out desde la barra de herramientas
+    fig.update_layout(
+        title='Polar Positions of Supernovae',
+        autosize=True,
+        polar=dict(
+            radialaxis=dict(range=[0, df_light_curves['redshift'].max() * 1.1], showticklabels=True),
+            angularaxis=dict(showticklabels=True)
+        )
+    )
+
+    # Añadir botones personalizados para resetear el gráfico (opcional, plotly incluye herramientas de reset)
+    fig.update_layout(
+        updatemenus=[dict(type="buttons",
+                          direction="left",
+                          buttons=[dict(args=["polar.radialaxis.range", [None]], label="Reset Zoom", method="relayout")],
+                          pad={"r": 10, "t": 10},
+                          showactive=True,
+                          x=0.8,
+                          xanchor="left",
+                          y=1.15,
+                          yanchor="top"
+                         )]
+    )
     return fig
+
 
 # Show the position plot in Streamlit
 #st.plotly_chart(create_position_plot())
