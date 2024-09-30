@@ -686,6 +686,7 @@ st.write(df_parameters)
 
 # Expander for column descriptions
 # Expander for column descriptions
+# Expander for column descriptions
 with st.expander("Description of Columns in df_parameters"):
     st.write("""
     **SNID**: The unique identifier for each supernova event. This identifier is used to track and reference supernovae across various datasets.
@@ -717,8 +718,15 @@ with st.expander("Description of Columns in df_parameters"):
     **Fall Rate (r)**: The rate at which the brightness of the supernova decreases after the plateau phase, calculated in the 'r' filter.
 
     **Average Plateau Magnitude (r)**: The average magnitude of the supernova during the plateau phase in the 'r' filter, providing insight into the supernova's brightness stability.
-    """)
 
+    **Wavelength ranges for each filter**:
+    - **g (green)**: 400 - 550 nm
+    - **r (red)**: 550 - 700 nm
+    - **i (infrared)**: 700 - 850 nm
+    - **z (infrared)**: 850 - 1000 nm
+    - **X**: Specific to the YSE database, with a defined range between 500 - 800 nm.
+    - **Y (infrared)**: 970 - 1070 nm
+    """)
 
 
 ###############33
