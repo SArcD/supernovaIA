@@ -224,11 +224,47 @@ def create_rectangular_position_plot():
                      )
     return fig
 
-# Create a Declination vs Redshift plot
 def create_decl_vs_redshift_plot():
+    # Obtener el valor máximo del redshift en los datos
+    max_redshift = df_light_curves['redshift'].max()
+
+    # Crear la gráfica de dispersión polar para Declinación vs Redshift
     fig = px.scatter_polar(df_light_curves, r='redshift', theta='decl', color='parsnip_pred', 
                            hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae (Dec) vs Redshift')
+
+    # Habilitar el botón de reset y zoom out desde la barra de herramientas
+    fig.update_layout(
+        title='Polar Positions of Supernovae (Dec) vs Redshift',
+        autosize=True,
+        polar=dict(
+            radialaxis=dict(range=[0, max_redshift * 1.1], showticklabels=True),  # Ajustar rango según el máximo redshift
+            angularaxis=dict(showticklabels=True)
+        )
+    )
+
+    # Añadir botón personalizado para resetear el gráfico con un botón más pequeño y color naranja
+    fig.update_layout(
+        updatemenus=[dict(type="buttons",
+                          direction="left",
+                          buttons=[dict(args=["polar.radialaxis.range", [0, max_redshift * 1.1]], 
+                                        label="Reset Zoom", 
+                                        method="relayout"
+                                        )],
+                          pad={"r": 10, "t": 10},
+                          showactive=True,
+                          x=0.8,
+                          xanchor="left",
+                          y=1.15,
+                          # Personalizar estilo del botón
+                          font=dict(size=10, color="black"),
+                          bgcolor="orange",  # Color de fondo del botón
+                          bordercolor="black",
+                          borderwidth=1
+                         )]
+    )
+
     return fig
+
 
 # Let the user select the type of plot to display
 plot_option = st.selectbox("Select the type of plot to display:", ["Right Ascension vs Redshift", "Declination vs Redshift", "Declination vs Right Ascension"])
