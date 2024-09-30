@@ -1253,12 +1253,12 @@ excluding non-numerical columns like Right Ascension ('RA') and Declination ('De
 """)
 
 with st.expander("**Key features**"):
-    ### Key Components:
+    st.write("""### Key Components:
     - **Feature Selection:** Users can choose which numerical variables to include in the model through a multi-select dropdown menu.
     - **Data Splitting:** The selected features are split into training and test datasets to evaluate the model's performance.
     - **Model Training:** A decision tree classifier is trained on the selected features, with adjustable hyperparameters to control tree depth and minimum samples for splits and leaves.
     - **Visualization:** The learned decision rules from the classifier are displayed, providing insight into how the model makes predictions.
-    - **Model Evaluation:** The accuracy of the model on the test set is calculated and displayed, giving users feedback on its predictive performance.
+    - **Model Evaluation:** The accuracy of the model on the test set is calculated and displayed, giving users feedback on its predictive performance.""")
 
 
 import pandas as pd
