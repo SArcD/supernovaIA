@@ -1078,6 +1078,14 @@ with st.expander("Supernovae in each cluster"):
         st.write(supernovae)
 
 
+st.write("""
+
+## **Blox plots for each cluster**
+
+Generates a set of comparative boxplots between supernova clusters, allowing the user to select which numerical columns from the DataFrame to include in the plots. Each plot shows a boxplot comparing the values of that column between different clusters. When hovering over the points in the boxplots, additional information is displayed (the value of the 'SNID' column).
+""")
+
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
