@@ -679,14 +679,8 @@ df_parameters = create_summary_dataframe(df_filtered_supernovae, supernova_type)
 # Show the DataFrame to verify it has data
 st.write("**Summary**")
 
-
 st.write(df_parameters)
 
-#st.write(df_light_curves)
-
-# Expander for column descriptions
-# Expander for column descriptions
-# Expander for column descriptions
 with st.expander("Description of Columns in df_parameters"):
     st.write("""
     **SNID**: The unique identifier for each supernova event. This identifier is used to track and reference supernovae across various datasets.
@@ -790,8 +784,8 @@ df_parametros = calcular_picos_y_magnitudes_absolutas(df_light_curves, df_parame
 
 
 # Mostrar el DataFrame de parámetros
-st.write("PI")
-st.write(df_parametros.head())
+#st.write("PI")
+#st.write(df_parametros.head())
 
 
 ###############
@@ -801,7 +795,7 @@ st.write(df_parametros.head())
 df_parameters = pd.merge(df_parameters, df_parametros, on='SNID', how='left')
 
 # Muestra los resultados
-st.write(df_parameters.head())
+#st.write(df_parameters.head())
 
 ###############
 ################
