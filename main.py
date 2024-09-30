@@ -1066,9 +1066,15 @@ extincion_filtros = {
 ########
 #st.write(df_supernova_clustering.columns)
 
-st.write("Supernovae in each cluster:")
-for cluster, supernovae in supernova_names_clusters.items():
-    with st.expander(f"{cluster} (Total: {len(supernovae)} supernovae)"):
+#st.write("Supernovae in each cluster:")
+#for cluster, supernovae in supernova_names_clusters.items():
+#    with st.expander(f"{cluster} (Total: {len(supernovae)} supernovae)"):
+#        st.write(supernovae)
+
+# Crear un solo expander para todos los clusters
+with st.expander("Supernovae in each cluster"):
+    for cluster, supernovae in supernova_names_clusters.items():
+        st.write(f"{cluster} (Total: {len(supernovae)} supernovae):")
         st.write(supernovae)
 
 
