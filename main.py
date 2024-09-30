@@ -663,8 +663,26 @@ def create_summary_dataframe(df_supernovae, supernova_type):
     return pd.DataFrame(results)
 
 ##############
-st.write("II")
+st.write("Summary")
 st.write(df_light_curves)
+
+with st.expander("Calculated Parameters"):
+    st.write("""
+    **Δm15 (Magnitude Drop in 15 Days)**:
+    - Applies to Type Ia supernovae.
+    - It is calculated by measuring the magnitude at the luminosity peak (minimum magnitude) and then the magnitude 15 days after the peak. The difference between these two values is Δm15.
+
+    **Plateau Duration**:
+    - Applies to Type II or Ibc supernovae.
+    - It is defined as the time between the luminosity peak (minimum magnitude) and the moment when the magnitude increases by 1 unit from the peak value.
+
+    **Fall Rate**:
+    - Applies to Type II or Ibc supernovae.
+    - This is the rate of luminosity decline after the end of the plateau, calculated as the difference between the magnitude at the end of the event and the magnitude at the peak, divided by the time elapsed between the peak and the end of the event.
+
+    **Average Magnitude During the Plateau**:
+    - Applies to Type II or Ibc
+
 
 #############
 
