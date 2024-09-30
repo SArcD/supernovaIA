@@ -1201,10 +1201,27 @@ This section creates a t-SNE visualization for dimensionality reduction and plot
 
 
 # Create a t-SNE instance with the desired hyperparameters
-tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
+#tsne = TSNE(n_components=2, perplexity=40, early_exaggeration=10, learning_rate=5)
 
 # Fit t-SNE to the PCA data (assuming pca_data has already been calculated)
+#tsne_data = tsne.fit_transform(pca_data)
+
+
+
+# Assuming you have your PCA data
+num_samples = pca_data.shape[0]  # Number of samples after PCA
+default_perplexity = 30  # Set a default value for perplexity
+
+# Dynamically adjust the perplexity
+if num_samples < default_perplexity:
+    perplexity = max(1, num_samples - 1)  # Ensure it's at least 1 and less than n_samples
+else:
+    perplexity = default_perplexity
+
+# Now apply t-SNE with the dynamically determined perplexity
+tsne = TSNE(n_components=2, perplexity=perplexity, early_exaggeration=10, learning_rate=5)
 tsne_data = tsne.fit_transform(pca_data)
+
 
 # Create a Plotly figure
 fig = go.Figure()
