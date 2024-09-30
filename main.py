@@ -1253,7 +1253,7 @@ excluding non-numerical columns like Right Ascension ('RA') and Declination ('De
 """)
 
 with st.expander("**Key features**"):
-    st.write("""### Key Components:
+    st.write("""
     - **Feature Selection:** Users can choose which numerical variables to include in the model through a multi-select dropdown menu.
     - **Data Splitting:** The selected features are split into training and test datasets to evaluate the model's performance.
     - **Model Training:** A decision tree classifier is trained on the selected features, with adjustable hyperparameters to control tree depth and minimum samples for splits and leaves.
