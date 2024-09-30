@@ -1241,6 +1241,24 @@ st.plotly_chart(fig)
 
 ###########
 
+st.write("""
+
+## **Regression Tree clasifier**
+
+This code snippet implements a decision tree classifier using the `scikit-learn` library within a Streamlit application. 
+It allows users to select numerical features from the `df_supernova_clustering` DataFrame to train the model, while 
+excluding non-numerical columns like Right Ascension ('RA') and Declination ('Dec').
+
+### Key Components:
+- **Feature Selection:** Users can choose which numerical variables to include in the model through a multi-select dropdown menu.
+- **Data Splitting:** The selected features are split into training and test datasets to evaluate the model's performance.
+- **Model Training:** A decision tree classifier is trained on the selected features, with adjustable hyperparameters to control tree depth and minimum samples for splits and leaves.
+- **Visualization:** The learned decision rules from the classifier are displayed, providing insight into how the model makes predictions.
+- **Model Evaluation:** The accuracy of the model on the test set is calculated and displayed, giving users feedback on its predictive performance.
+""")
+
+
+
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn.model_selection import train_test_split
