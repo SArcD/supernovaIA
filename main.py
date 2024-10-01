@@ -1650,5 +1650,97 @@ else:
 
 ##
 
+import numpy as np
+import pandas as pd
+import streamlit as st
+import plotly.graph_objects as go
+from sklearn.tree import DecisionTreeRegressor
+from plotly.subplots import make_subplots
+from scipy.signal import savgol_filter  # Para suavizar la curva
+
+# Paso 1: Filtrar las supernovas del clúster seleccionado
+selected_cluster = st.selectbox("Please, select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
+df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
+
+# Inicializar la lista de supernovas con datos insuficientes
+insufficient_data_supernovas = []
+
+# Inicializar la figura para graficar las curvas suavizadas de todas las supernovas
+fig_all_smoothed = go.Figure()
+
+# Paso 2: Preparar los datos
+if not df_clustered_supernovae.empty:
+    # Unir todos los datos de supernovas en el clúster
+    supernova_ids = df_clustered_supernovae['SNID'].unique()
+    df_light_curves_cluster = df_light_curves[df_light_curves['snid'].isin(supernova_ids)]
+
+    # Calcular días relativos al pico de luminosidad
+    df_light_curves_cluster = calculate_days_relative_to_peak(df_light_curves_cluster)
+
+    # Filtrar para usar solo los datos desde el pico hasta el final
+    df_light_curves_cluster = df_light_curves_cluster[df_light_curves_cluster['days_relative'] >= 0]
+
+    # Calcular magnitudes corregidas
+    df_light_curves_cluster['mag_corregida'] = df_light_curves_cluster.apply(
+        lambda row: corregir_magnitud_redshift(corregir_magnitud_extincion(row['mag'], row['mwebv'], row['filter']), row['redshift']),
+        axis=1
+    )
+
+    # Normalizar los días relativos al pico
+    df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
+        lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
+    )
+
+    # Paso 3: Recorrer todas las supernovas dentro del clúster y calcular las curvas suavizadas
+    for snid in supernova_ids:
+        df_supernova_data = df_light_curves_cluster[df_light_curves_cluster['snid'] == snid]
+
+        # Verificar si hay suficientes puntos de datos para entrenar el modelo
+        if df_supernova_data.shape[0] < 2:
+            insufficient_data_supernovas.append(snid)  # Agregar a la lista de supernovas con datos insuficientes
+        else:
+            # Entrenar el modelo de árbol de regresión para la supernova
+            X = df_supernova_data[['days_relative_normalized']]
+            y = df_supernova_data['mag_corregida']
+            model = DecisionTreeRegressor(random_state=42)
+            model.fit(X, y)
+
+            # Predecir las magnitudes para un rango de días relativos normalizados
+            days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
+            predicted_magnitudes = model.predict(days_range)
+
+            # Aplicar el filtro de Savitzky-Golay para suavizar la curva ajustada
+            smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=11, polyorder=3)
+
+            # Añadir la curva suavizada al gráfico que contendrá todas las curvas
+            fig_all_smoothed.add_trace(go.Scatter(
+                x=days_range.flatten(),
+                y=smoothed_magnitudes,
+                mode='lines',
+                name=f'SNID: {snid}',
+                line=dict(width=2),
+                hoverinfo='text',
+                text=[f'SNID: {snid}']*len(days_range)  # Mostrar el SNID en el hover
+            ))
+
+    # Mostrar la lista de supernovas con datos insuficientes (si las hay)
+    if insufficient_data_supernovas:
+        st.write("Supernovas with insufficient data points:")
+        st.write(insufficient_data_supernovas)
+
+    # Mostrar todas las curvas suavizadas juntas
+    fig_all_smoothed.update_layout(
+        title='Smoothed Light Curves for Supernovae in Cluster',
+        xaxis_title='Normalized Days Relative to Peak',
+        yaxis_title='Corrected Magnitude',
+        yaxis=dict(autorange='reversed'),  # Invertir el eje Y para que las magnitudes más brillantes estén arriba
+        showlegend=True
+    )
+
+    st.plotly_chart(fig_all_smoothed, use_container_width=True)
+
+else:
+    st.write("No supernovas found in this cluster.")
+
 
 
