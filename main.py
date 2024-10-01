@@ -1533,6 +1533,9 @@ import plotly.graph_objects as go
 
 from sklearn.tree import DecisionTreeRegressor
 
+##
+import numpy as np
+import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 from sklearn.tree import DecisionTreeRegressor
@@ -1603,6 +1606,14 @@ if not df_clustered_supernovae.empty:
         days_range = np.linspace(X['days_relative_normalized'].min(), X['days_relative_normalized'].max(), 100).reshape(-1, 1)
         predicted_magnitudes = model.predict(days_range)
 
+        # Verificar si hay suficientes puntos para aplicar el filtro de Savitzky-Golay
+        window_length = 11  # Longitud de la ventana por defecto
+        if len(predicted_magnitudes) < window_length:
+            window_length = len(predicted_magnitudes) - 1  # Ajustar longitud de ventana si hay menos puntos
+
+        # Aplicar el filtro de Savitzky-Golay para suavizar la curva ajustada
+        smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=window_length, polyorder=3)
+
         # Graficar la curva de ajuste a la derecha
         fig.add_trace(go.Scatter(
             x=days_range.flatten(),
@@ -1626,9 +1637,6 @@ if not df_clustered_supernovae.empty:
     st.plotly_chart(fig, use_container_width=True)
 
     ### Paso 5: Graficar la curva suavizada debajo de las gráficas originales
-    # Aplicar el filtro de Savitzky-Golay para suavizar la curva ajustada
-    smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=11, polyorder=3)
-
     # Crear una nueva gráfica para la curva suavizada
     fig_smoothed = go.Figure()
 
@@ -1667,8 +1675,7 @@ if not df_clustered_supernovae.empty:
 else:
     st.write("No supernovas found in this cluster.")
 
-
-
+##
 import numpy as np
 import pandas as pd
 import streamlit as st
