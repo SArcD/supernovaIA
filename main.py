@@ -1863,7 +1863,7 @@ from plotly.subplots import make_subplots
 from scipy.signal import savgol_filter  # Para suavizar la curva
 
 # Paso 1: Filtrar las supernovas del clúster seleccionado
-selected_cluster = st.selectbox("Please, select the cluster to analyze:", df_supernova_clustering['cluster'].unique())
+selected_cluster = st.selectbox("Please, select the cluster:", df_supernova_clustering['cluster'].unique())
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
 
 # Inicializar la lista de supernovas con datos insuficientes
