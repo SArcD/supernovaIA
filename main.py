@@ -1263,7 +1263,6 @@ with st.expander("Supernovae in each cluster"):
         st.write(f"{cluster} (Total: {len(supernovae)} supernovae):")
         st.write(supernovae)
 
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -1314,7 +1313,7 @@ if 'Redshift' in df_parameters.columns:
 
     # Menú desplegable para seleccionar el filtro de magnitud (modificado para reflejar los nombres con '_y')
     filtro_seleccionado = st.selectbox(
-        'Seleccionar un filtro de magnitud para graficar:',
+        'Filtro de magnitud para graficar:',
         ('peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y')
     )
 
@@ -1333,32 +1332,37 @@ if 'Redshift' in df_parameters.columns:
         st.write("Distribución de tipos de supernovas después del filtrado:")
         st.write(df_filtrado['SN_type'].value_counts())
 
-        # Paso 7: Ajustar el número de bins con un deslizador
-        num_bins = st.slider('Seleccionar número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
-
-        # Paso 8: Crear el histograma con la magnitud absoluta, coloreando por clúster
-        fig = px.histogram(
+        # Paso 7: Crear el gráfico de dispersión de magnitud absoluta vs. módulo de distancia
+        fig_scatter = px.scatter(
             df_filtrado,
-            x=f'absolute_magnitude_{filtro_seleccionado}',
-            nbins=num_bins,
+            x='distance_modulus',
+            y=f'absolute_magnitude_{filtro_seleccionado}',
             color='cluster',  # Usar diferentes colores según el clúster
-            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_seleccionado}', 'count': 'Número de supernovas'},
-            title=f'Histograma de Magnitud Absoluta ({filtro_seleccionado}) para Supernovas (por Clúster)'
+            hover_data=['SNID', 'Redshift', 'SN_type', 'cluster'],
+            labels={'distance_modulus': 'Módulo de distancia', f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta ({filtro_seleccionado})'},
+            title=f'Magnitud Absoluta ({filtro_seleccionado}) vs Módulo de Distancia para Supernovas'
         )
 
-        # Invertir el eje X porque las magnitudes menores son más brillantes
-        fig.update_layout(
-            xaxis=dict(autorange='reversed'),
+        # Invertir el eje Y porque las magnitudes menores son más brillantes
+        fig_scatter.update_layout(
+            yaxis=dict(autorange='reversed'),
             legend_title="Cluster",  # Título de la leyenda
             legend=dict(itemsizing='constant')  # Ajuste para la leyenda
         )
 
-        # Mostrar el gráfico en Streamlit
-        st.plotly_chart(fig)
-    else:
-        st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
-else:
-    st.write("La columna 'Redshift' no está presente en el DataFrame.")
+        # Mostrar la gráfica de dispersión en Streamlit
+        st.plotly_chart(fig_scatter)
+
+        # Paso 8: Ajustar el número de bins con un deslizador para el histograma
+        num_bins = st.slider('Seleccionar el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
+
+        # Paso 9: Crear el histograma con la magnitud absoluta, coloreando por clúster
+        fig_hist = px.histogram(
+            df_filtrado,
+            x=f'absolute_magnitude_{filtro_seleccionado}',
+            nbins=num_bins,
+            color='cluster',  # Usar diferentes colores según el clúster
+            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_sele
 
 
 
