@@ -799,7 +799,7 @@ import plotly.express as px
 import streamlit as st  # Importar Streamlit
 
 # Supongamos que el dataframe df_parametros ya está cargado y tiene las columnas necesarias
-# Columnas: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g', 'supernova_type'
+# Columnas: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
 
 # Constantes
 c = 3e5  # Velocidad de la luz en km/s
@@ -815,28 +815,22 @@ def calcular_modulo_distancia(redshift):
     return 5 * np.log10(DL_parsecs) - 5
 
 # Verificar que el dataframe tiene la columna 'Redshift'
-if 'Redshift' in df_parameters.columns:
+if 'Redshift' in df_parametros.columns:
     # Aplicar la función para calcular el módulo de la distancia
-    df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
+    df_parametros['distance_modulus'] = df_parametros['Redshift'].apply(calcular_modulo_distancia)
 
-    # Menú desplegable para seleccionar el filtro de magnitud
-    filtro_seleccionado = st.selectbox(
-        'Seleccione el filtro de magnitud para graficar:',
-        ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
-    )
-
-    # Paso 2: Calcular la magnitud absoluta para el filtro seleccionado
-    df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[filtro_seleccionado] - df_parameters['distance_modulus']
+    # Paso 2: Calcular la magnitud absoluta para un filtro específico
+    # Supongamos que queremos usar el filtro 'r', así que utilizamos 'peak_magnitude_r'
+    df_parametros['absolute_magnitude_r'] = df_parametros['peak_magnitude_r'] - df_parametros['distance_modulus']
 
     # Paso 3: Crear el gráfico con Plotly
     fig = px.scatter(
-        df_parameters,
+        df_parametros,
         x='distance_modulus',
-        y=f'absolute_magnitude_{filtro_seleccionado}',
-        color='supernova_type',  # Usar diferentes colores según el tipo de supernova
-        hover_data=['SNID', 'Redshift', 'supernova_type'],
-        labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
-        title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
+        y='absolute_magnitude_r',
+        hover_data=['SNID', 'Redshift'],
+        labels={'distance_modulus': 'Distance Modulus', 'absolute_magnitude_r': 'Absolute Magnitude (r)'},
+        title='Absolute Magnitude (r) vs Distance Modulus for Supernovae'
     )
 
     # Invertir el eje Y porque las magnitudes menores son más brillantes
