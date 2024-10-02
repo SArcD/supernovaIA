@@ -792,6 +792,7 @@ with st.expander("Description of Columns in df_parameters"):
 
 
 ###############33
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -838,8 +839,15 @@ if 'Redshift' in df_parameters.columns:
 
     # Verificar si la columna seleccionada existe
     if filtro_seleccionado in df_parameters.columns:
+        # Verificar si hay valores nulos en la columna de magnitud seleccionada
+        st.write(f"Total de valores nulos en la magnitud {filtro_seleccionado}: {df_parameters[filtro_seleccionado].isnull().sum()}")
+
         # Filtrar las filas donde la magnitud seleccionada no sea nula
-        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado])
+        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type'])
+
+        # Verificar cuántas supernovas de cada tipo hay
+        st.write("Distribución de tipos de supernovas después del filtrado:")
+        st.write(df_filtrado['SN_type'].value_counts())
 
         # Paso 4: Calcular la magnitud absoluta para el filtro seleccionado
         df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado] - df_filtrado['distance_modulus']
@@ -872,7 +880,6 @@ if 'Redshift' in df_parameters.columns:
         st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
 else:
     st.write("La columna 'Redshift' no está presente en el DataFrame.")
-
 
 
 
