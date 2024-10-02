@@ -1362,8 +1362,23 @@ if 'Redshift' in df_parameters.columns:
             x=f'absolute_magnitude_{filtro_seleccionado}',
             nbins=num_bins,
             color='cluster',  # Usar diferentes colores según el clúster
-            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_sele
+            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_seleccionado}', 'count': 'Número de supernovas'},
+            title=f'Histograma de Magnitud Absoluta ({filtro_seleccionado}) para Supernovas (por Clúster)'
+        )
 
+        # Invertir el eje X porque las magnitudes menores son más brillantes
+        fig_hist.update_layout(
+            xaxis=dict(autorange='reversed'),
+            legend_title="Cluster",  # Título de la leyenda
+            legend=dict(itemsizing='constant')  # Ajuste para la leyenda
+        )
+
+        # Mostrar el histograma en Streamlit
+        st.plotly_chart(fig_hist)
+    else:
+        st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
+else:
+    st.write("La columna 'Redshift' no está presente en el DataFrame.")
 
 
 st.write("""
