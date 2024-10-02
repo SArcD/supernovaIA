@@ -819,18 +819,27 @@ if 'Redshift' in df_parameters.columns:
     # Aplicar la función para calcular el módulo de la distancia
     df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
+
+        # Menú desplegable para seleccionar el filtro de magnitud
+    filtro_seleccionado = st.selectbox(
+        'Seleccione el filtro de magnitud para graficar:',
+        ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
+    )
+
+
+    
     # Paso 2: Calcular la magnitud absoluta para un filtro específico
     # Supongamos que queremos usar el filtro 'r', así que utilizamos 'peak_magnitude_r'
-    df_parameters['absolute_magnitude_r'] = df_parameters['peak_magnitude_r'] - df_parameters['distance_modulus']
+    df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] - df_parameters['distance_modulus']
 
     # Paso 3: Crear el gráfico con Plotly
     fig = px.scatter(
         df_parameters,
         x='distance_modulus',
-        y='absolute_magnitude_r',
+        y=f'absolute_magnitude_{filtro_seleccionado}',
         hover_data=['SNID', 'Redshift'],
-        labels={'distance_modulus': 'Distance Modulus', 'absolute_magnitude_r': 'Absolute Magnitude (r)'},
-        title='Absolute Magnitude (r) vs Distance Modulus for Supernovae'
+        labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
+        title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
     )
 
     # Invertir el eje Y porque las magnitudes menores son más brillantes
