@@ -798,7 +798,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st  # Importar Streamlit
 
-# Supongamos que el dataframe df_parametros ya está cargado y tiene las columnas necesarias
+# Supongamos que el dataframe df_parameters ya está cargado y tiene las columnas necesarias
 # Columnas: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
 
 # Constantes
@@ -819,39 +819,36 @@ if 'Redshift' in df_parameters.columns:
     # Aplicar la función para calcular el módulo de la distancia
     df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
-
-        # Menú desplegable para seleccionar el filtro de magnitud
+    # Menú desplegable para seleccionar el filtro de magnitud
     filtro_seleccionado = st.selectbox(
         'Seleccione el filtro de magnitud para graficar:',
         ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
     )
 
+    # Verificar si la columna seleccionada existe
+    if filtro_seleccionado in df_parameters.columns:
+        # Paso 2: Calcular la magnitud absoluta para el filtro seleccionado
+        df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[filtro_seleccionado] - df_parameters['distance_modulus']
 
-    
-    # Paso 2: Calcular la magnitud absoluta para un filtro específico
-    # Supongamos que queremos usar el filtro 'r', así que utilizamos 'peak_magnitude_r'
-    df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] - df_parameters['distance_modulus']
+        # Paso 3: Crear el gráfico con Plotly
+        fig = px.scatter(
+            df_parameters,
+            x='distance_modulus',
+            y=f'absolute_magnitude_{filtro_seleccionado}',
+            hover_data=['SNID', 'Redshift'],
+            labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
+            title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
+        )
 
-    # Paso 3: Crear el gráfico con Plotly
-    fig = px.scatter(
-        df_parameters,
-        x='distance_modulus',
-        y=f'absolute_magnitude_{filtro_seleccionado}',
-        hover_data=['SNID', 'Redshift'],
-        labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
-        title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
-    )
+        # Invertir el eje Y porque las magnitudes menores son más brillantes
+        fig.update_layout(yaxis=dict(autorange='reversed'))
 
-    # Invertir el eje Y porque las magnitudes menores son más brillantes
-    fig.update_layout(yaxis=dict(autorange='reversed'))
-
-    # Mostrar el gráfico en Streamlit
-    st.plotly_chart(fig)
-
+        # Mostrar el gráfico en Streamlit
+        st.plotly_chart(fig)
+    else:
+        st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
 else:
     st.write("La columna 'Redshift' no está presente en el DataFrame.")
-
-
 
 
 
