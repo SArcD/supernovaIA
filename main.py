@@ -1314,7 +1314,7 @@ if 'Redshift' in df_parameters.columns:
 
     # Menú desplegable para seleccionar el filtro de magnitud (modificado para reflejar los nombres con '_y')
     filtro_seleccionado = st.selectbox(
-        'Seleccione el filtro de magnitud para graficar:',
+        'Seleccionar un filtro de magnitud para graficar:',
         ('peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y')
     )
 
