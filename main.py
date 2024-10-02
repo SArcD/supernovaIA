@@ -1270,7 +1270,7 @@ import plotly.express as px
 import streamlit as st  # Importar Streamlit
 
 # Supongamos que los dataframes df_parameters, df_light_curves y df_supernova_clustering ya están cargados
-# Columnas en df_parameters: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
+# Columnas en df_parameters: 'Redshift', 'SNID', 'peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y'
 # Columnas en df_light_curves: 'snid', 'parsnip_pred' (tipo de supernova)
 # Columnas en df_supernova_clustering: 'SNID', 'cluster'
 
@@ -1312,10 +1312,10 @@ if 'Redshift' in df_parameters.columns:
         st.write("Existen valores en df_parameters que no tienen un clúster asociado.")
         st.write(df_parameters[df_parameters['cluster'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
 
-    # Menú desplegable para seleccionar el filtro de magnitud
+    # Menú desplegable para seleccionar el filtro de magnitud (modificado para reflejar los nombres con '_y')
     filtro_seleccionado = st.selectbox(
-        'Seleccione algun filtro de magnitud para graficar:',
-        ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
+        'Seleccione el filtro de magnitud para graficar:',
+        ('peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y')
     )
 
     # Verificar si la columna seleccionada existe
