@@ -1326,8 +1326,10 @@ if 'Redshift' in df_parameters.columns:
         df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type', 'cluster'])
 
         # Paso 6: Calcular la magnitud absoluta para el filtro seleccionado
-        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado] - df_filtrado['distance_modulus']
+        #df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado] - df_filtrado['distance_modulus']
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado]
 
+        
         # Verificar cuántas supernovas de cada tipo hay
         st.write("Distribución de tipos de supernovas después del filtrado:")
         st.write(df_filtrado['SN_type'].value_counts())
