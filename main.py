@@ -1359,7 +1359,7 @@ if 'Redshift' in df_parameters.columns:
         )
 
         # Calcular la magnitud absoluta con la magnitud corregida
-        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}'] - df_filtrado['distance_modulus']
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}']
 
         # Verificar cuántas supernovas de cada tipo hay
         st.write("Distribución de tipos de supernovas después del filtrado:")
@@ -1370,11 +1370,12 @@ if 'Redshift' in df_parameters.columns:
             df_filtrado,
             x='distance_modulus',
             y=f'absolute_magnitude_{filtro_seleccionado}',
-            color='cluster',  # Usar diferentes colores según el clúster
+            color=df_filtrado['cluster'].astype(str),  # Convertir cluster a string para colores discretos
             hover_data=['SNID', 'Redshift', 'SN_type', 'cluster'],
             labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
             title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae (by Cluster)'
         )
+
 
         # Invertir el eje Y porque las magnitudes menores son más brillantes
         fig_magnitude_vs_modulus.update_layout(
