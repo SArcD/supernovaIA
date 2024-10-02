@@ -905,7 +905,7 @@ fig.show()
 
 # Ahora, para agregar los resultados de df_parametros a df_parameters
 df_parameters = pd.merge(df_parameters, df_parametros, on='SNID', how='left')
-
+df_parameters.head()
 # Muestra los resultados
 #st.write(df_parameters.head())
 ##############
