@@ -1129,7 +1129,7 @@ if len(supernovae_in_cluster) > 0:
     st.write(f"Found {len(supernovae_in_cluster)} supernovae in {selected_cluster}.")
     
     # Horizontal slider to select a specific supernova in the cluster
-    selected_index = st.slider('Select a supernova to view its light curve:',
+    selected_index = st.slider('Select one supernova to view its light curve:',
                                min_value=0, max_value=len(supernovae_in_cluster)-1, step=1)
     
     # Get the SNID of the selected supernova
