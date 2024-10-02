@@ -923,10 +923,10 @@ if 'Redshift' in df_parameters.columns:
         st.write(df_parameters[df_parameters['SN_type'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
 
     # Menú desplegable para seleccionar el filtro de magnitud
-    #filtro_seleccionado = st.selectbox(
-    #    'Seleccione el filtro de magnitud para graficar:',
-    #    ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
-    #)
+    filtro_seleccionado = st.selectbox(
+        'Seleccione el filtro de magnitud para graficar:',
+        ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
+    )
 
     # Verificar si la columna seleccionada existe
     if filtro_seleccionado in df_parameters.columns:
@@ -936,21 +936,24 @@ if 'Redshift' in df_parameters.columns:
         # Filtrar las filas donde la magnitud seleccionada no sea nula
         df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type'])
 
+        # Paso 4: Calcular la magnitud absoluta para el filtro seleccionado
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado] - df_filtrado['distance_modulus']
+
         # Verificar cuántas supernovas de cada tipo hay
         st.write("Distribución de tipos de supernovas después del filtrado:")
         st.write(df_filtrado['SN_type'].value_counts())
 
-        # Paso 4: Ajustar el número de bins con un deslizador
+        # Paso 5: Ajustar el número de bins con un deslizador
         num_bins = st.slider('Selecciona el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
 
-        # Paso 5: Crear el histograma con Plotly
+        # Paso 6: Crear el histograma con la magnitud absoluta
         fig = px.histogram(
             df_filtrado,
-            x=filtro_seleccionado,
+            x=f'absolute_magnitude_{filtro_seleccionado}',
             nbins=num_bins,
             color='SN_type',  # Usar diferentes colores según el tipo de supernova
-            labels={filtro_seleccionado: f'Magnitud {filtro_seleccionado}', 'count': 'Número de supernovas'},
-            title=f'Histograma de Magnitud ({filtro_seleccionado}) para Supernovas'
+            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_seleccionado}', 'count': 'Número de supernovas'},
+            title=f'Histograma de Magnitud Absoluta ({filtro_seleccionado}) para Supernovas'
         )
 
         # Invertir el eje X porque las magnitudes menores son más brillantes
