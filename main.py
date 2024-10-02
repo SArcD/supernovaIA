@@ -815,7 +815,7 @@ def calcular_modulo_distancia(redshift):
     return 5 * np.log10(DL_parsecs) - 5
 
 # Verificar que el dataframe tiene la columna 'Redshift'
-if 'Redshift' in df_parametros.columns:
+if 'Redshift' in df_parameters.columns:
     # Aplicar la función para calcular el módulo de la distancia
     df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
