@@ -1141,7 +1141,7 @@ if len(supernovae_in_cluster) > 0:
     # Verify that the supernova has data to plot
     if not df_selected_supernova.empty:
         # Plot the light curve of the selected supernova
-        st.plotly_chart(plot_light_curve(df_selected_supernova))
+        st.plotly_chart(plot_light_curve(df_selected_supernova), key="light_curve_plot")
     else:
         st.write(f"No light curve data found for supernova {selected_snid}.")
 else:
