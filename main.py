@@ -1117,7 +1117,7 @@ else:
 
 # Show a dropdown menu for the user to choose the cluster
 selected_cluster = st.selectbox(
-    "Select the cluster to view supernovae:",
+    "Select the cluster to view a list of supernovae:",
     list(supernova_names_clusters.keys())  # Show available clusters
 )
 
