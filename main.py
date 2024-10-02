@@ -793,6 +793,53 @@ with st.expander("Description of Columns in df_parameters"):
 
 ###############33
 
+import numpy as np
+import pandas as pd
+import plotly.express as px
+
+# Supongamos que el dataframe df_parameters ya está cargado y tiene las columnas necesarias
+# Columnas: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
+
+# Constantes
+c = 3e5  # Velocidad de la luz en km/s
+H0 = 70  # Constante de Hubble en km/s/Mpc
+
+# Paso 1: Calcular el módulo de la distancia para cada supernova
+def calcular_modulo_distancia(redshift):
+    # Calcular la distancia de luminosidad en Mpc
+    DL_mpc = (c * redshift / H0) * (1 + redshift)
+    # Convertir a parsecs
+    DL_parsecs = DL_mpc * 1e6
+    # Calcular el módulo de la distancia
+    return 5 * np.log10(DL_parsecs) - 5
+
+# Aplicar la función para calcular el módulo de la distancia
+df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
+
+# Paso 2: Calcular la magnitud absoluta para un filtro específico
+# Supongamos que queremos usar el filtro 'r', así que utilizamos 'peak_magnitude_r'
+df_parameters['absolute_magnitude_r'] = df_parameters['peak_magnitude_r'] - df_parameters['distance_modulus']
+
+# Paso 3: Crear el gráfico con Plotly
+fig = px.scatter(
+    df_parameters,
+    x='distance_modulus',
+    y='absolute_magnitude_r',
+    hover_data=['SNID', 'Redshift'],
+    labels={'distance_modulus': 'Distance Modulus', 'absolute_magnitude_r': 'Absolute Magnitude (r)'},
+    title='Absolute Magnitude (r) vs Distance Modulus for Supernovae'
+)
+
+# Invertir el eje Y porque las magnitudes menores son más brillantes
+fig.update_layout(yaxis=dict(autorange='reversed'))
+
+# Mostrar el gráfico en Streamlit (o fuera de Streamlit con plotly.graph_objects)
+fig.show()
+
+
+
+
+##---------------------------------
 import pandas as pd
 import numpy as np
 
@@ -856,48 +903,6 @@ df_parametros = calcular_picos_y_magnitudes_absolutas(df_light_curves, df_parame
 st.write(df_parametros.head())
 
 
-import numpy as np
-import pandas as pd
-import plotly.express as px
-
-# Supongamos que el dataframe df_parametros ya está cargado y tiene las columnas necesarias
-# Columnas: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
-
-# Constantes
-c = 3e5  # Velocidad de la luz en km/s
-H0 = 70  # Constante de Hubble en km/s/Mpc
-
-# Paso 1: Calcular el módulo de la distancia para cada supernova
-def calcular_modulo_distancia(redshift):
-    # Calcular la distancia de luminosidad en Mpc
-    DL_mpc = (c * redshift / H0) * (1 + redshift)
-    # Convertir a parsecs
-    DL_parsecs = DL_mpc * 1e6
-    # Calcular el módulo de la distancia
-    return 5 * np.log10(DL_parsecs) - 5
-
-# Aplicar la función para calcular el módulo de la distancia
-df_parametros['distance_modulus'] = df_parametros['Redshift'].apply(calcular_modulo_distancia)
-
-# Paso 2: Calcular la magnitud absoluta para un filtro específico
-# Supongamos que queremos usar el filtro 'r', así que utilizamos 'peak_magnitude_r'
-df_parametros['absolute_magnitude_r'] = df_parametros['peak_magnitude_r'] - df_parametros['distance_modulus']
-
-# Paso 3: Crear el gráfico con Plotly
-fig = px.scatter(
-    df_parametros,
-    x='distance_modulus',
-    y='absolute_magnitude_r',
-    hover_data=['SNID', 'Redshift'],
-    labels={'distance_modulus': 'Distance Modulus', 'absolute_magnitude_r': 'Absolute Magnitude (r)'},
-    title='Absolute Magnitude (r) vs Distance Modulus for Supernovae'
-)
-
-# Invertir el eje Y porque las magnitudes menores son más brillantes
-fig.update_layout(yaxis=dict(autorange='reversed'))
-
-# Mostrar el gráfico
-fig.show()
 
 
 ###############
