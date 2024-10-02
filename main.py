@@ -798,8 +798,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st  # Importar Streamlit
 
-# Supongamos que el dataframe df_parameters ya está cargado y tiene las columnas necesarias
-# Columnas: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
+# Supongamos que los dataframes df_parameters y df_light_curves ya están cargados
+# Columnas en df_parameters: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
+# Columnas en df_light_curves: 'snid', 'supernova_type'
 
 # Constantes
 c = 3e5  # Velocidad de la luz en km/s
@@ -819,6 +820,9 @@ if 'Redshift' in df_parameters.columns:
     # Aplicar la función para calcular el módulo de la distancia
     df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
+    # Unir df_parameters con df_light_curves para agregar el tipo de supernova
+    df_merged = pd.merge(df_parameters, df_light_curves, left_on='SNID', right_on='snid')
+
     # Menú desplegable para seleccionar el filtro de magnitud
     filtro_seleccionado = st.selectbox(
         'Seleccione el filtro de magnitud para graficar:',
@@ -826,22 +830,30 @@ if 'Redshift' in df_parameters.columns:
     )
 
     # Verificar si la columna seleccionada existe
-    if filtro_seleccionado in df_parameters.columns:
+    if filtro_seleccionado in df_merged.columns:
         # Paso 2: Calcular la magnitud absoluta para el filtro seleccionado
-        df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[filtro_seleccionado] - df_parameters['distance_modulus']
+        df_merged[f'absolute_magnitude_{filtro_seleccionado}'] = df_merged[filtro_seleccionado] - df_merged['distance_modulus']
 
         # Paso 3: Crear el gráfico con Plotly
         fig = px.scatter(
-            df_parameters,
+            df_merged,
             x='distance_modulus',
             y=f'absolute_magnitude_{filtro_seleccionado}',
-            hover_data=['SNID', 'Redshift'],
+            color='supernova_type',  # Usar diferentes colores según el tipo de supernova
+            hover_data=['SNID', 'Redshift', 'supernova_type'],
             labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
             title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
         )
 
         # Invertir el eje Y porque las magnitudes menores son más brillantes
-        fig.update_layout(yaxis=dict(autorange='reversed'))
+        fig.update_layout(
+            yaxis=dict(autorange='reversed'),
+            legend_title="Supernova Type",  # Título de la leyenda
+            legend=dict(itemsizing='constant')  # Ajuste para la leyenda
+        )
+
+        # Habilitar la opción de ocultar o mostrar las categorías de supernovas al hacer clic en los labels
+        fig.update_traces(marker=dict(size=8), selector=dict(mode='markers'))
 
         # Mostrar el gráfico en Streamlit
         st.plotly_chart(fig)
