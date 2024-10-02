@@ -853,8 +853,7 @@ df_parametros = calcular_picos_y_magnitudes_absolutas(df_light_curves, df_parame
 
 # Mostrar el DataFrame de parámetros
 #st.write("PI")
-#st.write(df_parametros.head())
-st.write(df_parametros.columns)
+st.write(df_parametros.head())
 
 
 import numpy as np
