@@ -1277,6 +1277,26 @@ import streamlit as st  # Importar Streamlit
 c = 3e5  # Velocidad de la luz en km/s
 H0 = 70  # Constante de Hubble en km/s/Mpc
 
+# Función para corregir la magnitud por extinción
+def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
+    # Constantes de extinción para diferentes filtros
+    extincion_filtros = {
+        'g': 3.303,
+        'r': 2.285,
+        'i': 1.698,
+        'z': 1.263,
+        'X': 2.000,  # Valor ajustado para el filtro 'x'
+        'Y': 1.000   # Valor ajustado para el filtro 'Y'
+    }
+    
+    if filtro in extincion_filtros:
+        A_lambda = extincion_filtros[filtro] * MWEBV
+        m_corregida = m - A_lambda
+    else:
+        raise ValueError("Filtro no válido. Usa 'g', 'r', 'i' o 'z', 'X', 'Y'.")
+    
+    return m_corregida
+
 # Paso 1: Calcular el módulo de la distancia para cada supernova
 def calcular_modulo_distancia(redshift):
     # Calcular la distancia de luminosidad en Mpc
@@ -1313,7 +1333,7 @@ if 'Redshift' in df_parameters.columns:
 
     # Menú desplegable para seleccionar el filtro de magnitud (modificado para reflejar los nombres con '_y')
     filtro_seleccionado = st.selectbox(
-        'Filtro de magnitud para graficar:',
+        'Seleccione el filtro de magnitud para graficar:',
         ('peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y')
     )
 
@@ -1323,64 +1343,48 @@ if 'Redshift' in df_parameters.columns:
         st.write(f"Total de valores nulos en la magnitud {filtro_seleccionado}: {df_parameters[filtro_seleccionado].isnull().sum()}")
 
         # Filtrar las filas donde la magnitud seleccionada no sea nula
-        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type', 'cluster'])
+        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type', 'cluster', 'mwebv'])
 
-        # Paso 6: Calcular la magnitud absoluta para el filtro seleccionado
-        #df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado] - df_filtrado['distance_modulus']
-        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado]
+        # Paso 6: Corregir la magnitud por extinción antes de calcular la magnitud absoluta
+        df_filtrado[f'mag_corregida_{filtro_seleccionado}'] = df_filtrado.apply(
+            lambda row: corregir_magnitud_extincion(row[filtro_seleccionado], row['mwebv'], filtro=filtro_seleccionado.split('_')[2]),
+            axis=1
+        )
 
-        
+        # Calcular la magnitud absoluta con la magnitud corregida
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}'] - df_filtrado['distance_modulus']
+
         # Verificar cuántas supernovas de cada tipo hay
         st.write("Distribución de tipos de supernovas después del filtrado:")
         st.write(df_filtrado['SN_type'].value_counts())
 
-        # Paso 7: Crear el gráfico de dispersión de magnitud absoluta vs. módulo de distancia
-        fig_scatter = px.scatter(
-            df_filtrado,
-            x='distance_modulus',
-            y=f'absolute_magnitude_{filtro_seleccionado}',
-            color='cluster',  # Usar diferentes colores según el clúster
-            hover_data=['SNID', 'Redshift', 'SN_type', 'cluster'],
-            labels={'distance_modulus': 'Módulo de distancia', f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta ({filtro_seleccionado})'},
-            title=f'Magnitud Absoluta ({filtro_seleccionado}) vs Módulo de Distancia para Supernovas'
-        )
+        # Paso 7: Ajustar el número de bins con un deslizador
+        num_bins = st.slider('Selecciona el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
 
-        # Invertir el eje Y porque las magnitudes menores son más brillantes
-        fig_scatter.update_layout(
-            yaxis=dict(autorange='reversed'),
-            legend_title="Cluster",  # Título de la leyenda
-            legend=dict(itemsizing='constant')  # Ajuste para la leyenda
-        )
-
-        # Mostrar la gráfica de dispersión en Streamlit
-        st.plotly_chart(fig_scatter)
-
-        # Paso 8: Ajustar el número de bins con un deslizador para el histograma
-        num_bins = st.slider('Seleccionar el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
-
-        # Paso 9: Crear el histograma con la magnitud absoluta, coloreando por clúster
-        fig_hist = px.histogram(
+        # Paso 8: Crear el histograma con la magnitud absoluta corregida, coloreando por clúster
+        fig = px.histogram(
             df_filtrado,
             x=f'absolute_magnitude_{filtro_seleccionado}',
             nbins=num_bins,
             color='cluster',  # Usar diferentes colores según el clúster
             labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_seleccionado}', 'count': 'Número de supernovas'},
-            title=f'Histograma de Magnitud Absoluta ({filtro_seleccionado}) para Supernovas (por Clúster)'
+            title=f'Histograma de Magnitud Absoluta Corregida ({filtro_seleccionado}) para Supernovas (por Clúster)'
         )
 
         # Invertir el eje X porque las magnitudes menores son más brillantes
-        fig_hist.update_layout(
+        fig.update_layout(
             xaxis=dict(autorange='reversed'),
             legend_title="Cluster",  # Título de la leyenda
             legend=dict(itemsizing='constant')  # Ajuste para la leyenda
         )
 
-        # Mostrar el histograma en Streamlit
-        st.plotly_chart(fig_hist)
+        # Mostrar el gráfico en Streamlit
+        st.plotly_chart(fig)
     else:
         st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
 else:
     st.write("La columna 'Redshift' no está presente en el DataFrame.")
+
 
 
 st.write("""
