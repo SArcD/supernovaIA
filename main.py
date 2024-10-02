@@ -817,15 +817,15 @@ def calcular_modulo_distancia(redshift):
 # Verificar que el dataframe tiene la columna 'Redshift'
 if 'Redshift' in df_parametros.columns:
     # Aplicar la función para calcular el módulo de la distancia
-    df_parametros['distance_modulus'] = df_parametros['Redshift'].apply(calcular_modulo_distancia)
+    df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
     # Paso 2: Calcular la magnitud absoluta para un filtro específico
     # Supongamos que queremos usar el filtro 'r', así que utilizamos 'peak_magnitude_r'
-    df_parametros['absolute_magnitude_r'] = df_parametros['peak_magnitude_r'] - df_parametros['distance_modulus']
+    df_parameters['absolute_magnitude_r'] = df_parameters['peak_magnitude_r'] - df_parameters['distance_modulus']
 
     # Paso 3: Crear el gráfico con Plotly
     fig = px.scatter(
-        df_parametros,
+        df_parameters,
         x='distance_modulus',
         y='absolute_magnitude_r',
         hover_data=['SNID', 'Redshift'],
