@@ -792,7 +792,6 @@ with st.expander("Description of Columns in df_parameters"):
 
 
 ###############33
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -839,16 +838,19 @@ if 'Redshift' in df_parameters.columns:
 
     # Verificar si la columna seleccionada existe
     if filtro_seleccionado in df_parameters.columns:
+        # Filtrar las filas donde la magnitud seleccionada no sea nula
+        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado])
+
         # Paso 4: Calcular la magnitud absoluta para el filtro seleccionado
-        df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[filtro_seleccionado] - df_parameters['distance_modulus']
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[filtro_seleccionado] - df_filtrado['distance_modulus']
 
         # Verificar si hay valores nulos en la magnitud absoluta
-        if df_parameters[f'absolute_magnitude_{filtro_seleccionado}'].isnull().any():
+        if df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'].isnull().any():
             st.write(f"Hay valores nulos en la columna de magnitud absoluta '{f'absolute_magnitude_{filtro_seleccionado}'}'.")
         else:
             # Paso 5: Crear el gráfico con Plotly
             fig = px.scatter(
-                df_parameters,
+                df_filtrado,
                 x='distance_modulus',
                 y=f'absolute_magnitude_{filtro_seleccionado}',
                 color='SN_type',  # Usar diferentes colores según el tipo de supernova
@@ -870,6 +872,7 @@ if 'Redshift' in df_parameters.columns:
         st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
 else:
     st.write("La columna 'Redshift' no está presente en el DataFrame.")
+
 
 
 
