@@ -1334,7 +1334,7 @@ if 'Redshift' in df_parameters.columns:
         st.write(df_filtrado['SN_type'].value_counts())
 
         # Paso 7: Ajustar el número de bins con un deslizador
-        num_bins = st.slider('Selecciona el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
+        num_bins = st.slider('Seleccionar número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
 
         # Paso 8: Crear el histograma con la magnitud absoluta, coloreando por clúster
         fig = px.histogram(
