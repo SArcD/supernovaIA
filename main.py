@@ -800,7 +800,7 @@ import streamlit as st  # Importar Streamlit
 
 # Supongamos que los dataframes df_parameters y df_light_curves ya están cargados
 # Columnas en df_parameters: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
-# Columnas en df_light_curves: 'snid', 'supernova_type'
+# Columnas en df_light_curves: 'snid', 'parsnip_pred' (tipo de supernova)
 
 # Constantes
 c = 3e5  # Velocidad de la luz en km/s
@@ -820,8 +820,16 @@ if 'Redshift' in df_parameters.columns:
     # Aplicar la función para calcular el módulo de la distancia
     df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
-    # Unir df_parameters con df_light_curves para agregar el tipo de supernova
-    df_merged = pd.merge(df_parameters, df_light_curves, left_on='SNID', right_on='snid')
+    # Paso 2: Crear un diccionario que relacione 'snid' con 'parsnip_pred' en df_light_curves
+    snid_to_type = dict(zip(df_light_curves['snid'], df_light_curves['parsnip_pred']))
+
+    # Paso 3: Crear la columna SN_type en df_parameters usando el diccionario
+    df_parameters['SN_type'] = df_parameters['SNID'].map(snid_to_type)
+
+    # Verificar si hay valores nulos en la nueva columna SN_type
+    if df_parameters['SN_type'].isnull().sum() > 0:
+        st.write("Existen valores en df_parameters que no tienen un tipo de supernova asociado.")
+        st.write(df_parameters[df_parameters['SN_type'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
 
     # Menú desplegable para seleccionar el filtro de magnitud
     filtro_seleccionado = st.selectbox(
@@ -830,33 +838,34 @@ if 'Redshift' in df_parameters.columns:
     )
 
     # Verificar si la columna seleccionada existe
-    if filtro_seleccionado in df_merged.columns:
-        # Paso 2: Calcular la magnitud absoluta para el filtro seleccionado
-        df_merged[f'absolute_magnitude_{filtro_seleccionado}'] = df_merged[filtro_seleccionado] - df_merged['distance_modulus']
+    if filtro_seleccionado in df_parameters.columns:
+        # Paso 4: Calcular la magnitud absoluta para el filtro seleccionado
+        df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[filtro_seleccionado] - df_parameters['distance_modulus']
 
-        # Paso 3: Crear el gráfico con Plotly
-        fig = px.scatter(
-            df_merged,
-            x='distance_modulus',
-            y=f'absolute_magnitude_{filtro_seleccionado}',
-            color='supernova_type',  # Usar diferentes colores según el tipo de supernova
-            hover_data=['SNID', 'Redshift', 'supernova_type'],
-            labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
-            title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
-        )
+        # Verificar si hay valores nulos en la magnitud absoluta
+        if df_parameters[f'absolute_magnitude_{filtro_seleccionado}'].isnull().any():
+            st.write(f"Hay valores nulos en la columna de magnitud absoluta '{f'absolute_magnitude_{filtro_seleccionado}'}'.")
+        else:
+            # Paso 5: Crear el gráfico con Plotly
+            fig = px.scatter(
+                df_parameters,
+                x='distance_modulus',
+                y=f'absolute_magnitude_{filtro_seleccionado}',
+                color='SN_type',  # Usar diferentes colores según el tipo de supernova
+                hover_data=['SNID', 'Redshift', 'SN_type'],
+                labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
+                title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae'
+            )
 
-        # Invertir el eje Y porque las magnitudes menores son más brillantes
-        fig.update_layout(
-            yaxis=dict(autorange='reversed'),
-            legend_title="Supernova Type",  # Título de la leyenda
-            legend=dict(itemsizing='constant')  # Ajuste para la leyenda
-        )
+            # Invertir el eje Y porque las magnitudes menores son más brillantes
+            fig.update_layout(
+                yaxis=dict(autorange='reversed'),
+                legend_title="Supernova Type",  # Título de la leyenda
+                legend=dict(itemsizing='constant')  # Ajuste para la leyenda
+            )
 
-        # Habilitar la opción de ocultar o mostrar las categorías de supernovas al hacer clic en los labels
-        fig.update_traces(marker=dict(size=8), selector=dict(mode='markers'))
-
-        # Mostrar el gráfico en Streamlit
-        st.plotly_chart(fig)
+            # Mostrar el gráfico en Streamlit
+            st.plotly_chart(fig)
     else:
         st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
 else:
