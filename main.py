@@ -923,10 +923,10 @@ if 'Redshift' in df_parameters.columns:
         st.write(df_parameters[df_parameters['SN_type'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
 
     # Menú desplegable para seleccionar el filtro de magnitud
-    filtro_seleccionado = st.selectbox(
-        'Seleccione el filtro de magnitud para graficar:',
-        ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
-    )
+    #filtro_seleccionado = st.selectbox(
+    #    'Seleccione el filtro de magnitud para graficar:',
+    #    ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
+    #)
 
     # Verificar si la columna seleccionada existe
     if filtro_seleccionado in df_parameters.columns:
