@@ -1270,7 +1270,7 @@ import streamlit as st  # Importar Streamlit
 
 # Supongamos que los dataframes df_parameters, df_light_curves y df_supernova_clustering ya están cargados
 # Columnas en df_parameters: 'Redshift', 'SNID', 'peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y'
-# Columnas en df_light_curves: 'snid', 'parsnip_pred' (tipo de supernova)
+# Columnas en df_light_curves: 'snid', 'parsnip_pred', 'mwebv' (valor de extinción)
 # Columnas en df_supernova_clustering: 'SNID', 'cluster'
 
 # Constantes
@@ -1323,46 +1323,73 @@ if 'Redshift' in df_parameters.columns:
     # Paso 5: Crear la columna 'cluster' en df_parameters usando el diccionario de clústeres
     df_parameters['cluster'] = df_parameters['SNID'].map(snid_to_cluster)
 
-    # Verificar si hay valores nulos en la nueva columna SN_type o cluster
+    # Paso 6: Extraer el valor de mwebv de df_light_curves y mapearlo a df_parameters usando 'SNID'
+    snid_to_mwebv = dict(zip(df_light_curves['snid'], df_light_curves['mwebv']))
+    df_parameters['mwebv'] = df_parameters['SNID'].map(snid_to_mwebv)
+
+    # Verificar si hay valores nulos en la nueva columna SN_type, cluster o mwebv
     if df_parameters['SN_type'].isnull().sum() > 0:
         st.write("Existen valores en df_parameters que no tienen un tipo de supernova asociado.")
         st.write(df_parameters[df_parameters['SN_type'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
     if df_parameters['cluster'].isnull().sum() > 0:
         st.write("Existen valores en df_parameters que no tienen un clúster asociado.")
         st.write(df_parameters[df_parameters['cluster'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
+    if df_parameters['mwebv'].isnull().sum() > 0:
+        st.write("Existen valores en df_parameters que no tienen un valor de extinción mwebv asociado.")
+        st.write(df_parameters[df_parameters['mwebv'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
 
     # Menú desplegable para seleccionar el filtro de magnitud (modificado para reflejar los nombres con '_y')
     filtro_seleccionado = st.selectbox(
-        'Seleccione el filtro de magnitud para graficar:',
+        'Filtro de magnitud para graficar:',
         ('peak_magnitude_r_y', 'peak_magnitude_z_y', 'peak_magnitude_X_y', 'peak_magnitude_Y_y', 'peak_magnitude_g_y')
     )
 
-    # Verificar si la columna seleccionada existe
-    if filtro_seleccionado in df_parameters.columns:
-        # Verificar si hay valores nulos en la columna de magnitud seleccionada
-        st.write(f"Total de valores nulos en la magnitud {filtro_seleccionado}: {df_parameters[filtro_seleccionado].isnull().sum()}")
+    # Verificar si la columna seleccionada y otras necesarias existen en el DataFrame
+    columnas_necesarias = [filtro_seleccionado, 'SN_type', 'cluster', 'mwebv']
+    columnas_faltantes = [col for col in columnas_necesarias if col not in df_parameters.columns]
 
-        # Filtrar las filas donde la magnitud seleccionada no sea nula
-        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type', 'cluster', 'mwebv'])
+    if len(columnas_faltantes) == 0:
+        # Filtrar las filas donde no haya nulos en las columnas necesarias
+        df_filtrado = df_parameters.dropna(subset=columnas_necesarias)
 
-        # Paso 6: Corregir la magnitud por extinción antes de calcular la magnitud absoluta
+        # Paso 7: Corregir la magnitud por extinción antes de calcular la magnitud absoluta
         df_filtrado[f'mag_corregida_{filtro_seleccionado}'] = df_filtrado.apply(
             lambda row: corregir_magnitud_extincion(row[filtro_seleccionado], row['mwebv'], filtro=filtro_seleccionado.split('_')[2]),
             axis=1
         )
 
         # Calcular la magnitud absoluta con la magnitud corregida
-        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}'] - df_filtrado['distance_modulus']
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}']
 
         # Verificar cuántas supernovas de cada tipo hay
         st.write("Distribución de tipos de supernovas después del filtrado:")
         st.write(df_filtrado['SN_type'].value_counts())
 
-        # Paso 7: Ajustar el número de bins con un deslizador
-        num_bins = st.slider('Selecciona el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
+        # Crear el gráfico de magnitud absoluta vs. módulo de distancia (coloreado por clúster)
+        fig_magnitude_vs_modulus = px.scatter(
+            df_filtrado,
+            x='distance_modulus',
+            y=f'absolute_magnitude_{filtro_seleccionado}',
+            color='cluster',  # Usar diferentes colores según el clúster
+            hover_data=['SNID', 'Redshift', 'SN_type', 'cluster'],
+            labels={'distance_modulus': 'Distance Modulus', f'absolute_magnitude_{filtro_seleccionado}': f'Absolute Magnitude ({filtro_seleccionado})'},
+            title=f'Absolute Magnitude ({filtro_seleccionado}) vs Distance Modulus for Supernovae (by Cluster)'
+        )
 
-        # Paso 8: Crear el histograma con la magnitud absoluta corregida, coloreando por clúster
-        fig = px.histogram(
+        # Invertir el eje Y porque las magnitudes menores son más brillantes
+        fig_magnitude_vs_modulus.update_layout(
+            yaxis=dict(autorange='reversed'),
+            legend_title="Cluster"
+        )
+
+        # Mostrar el gráfico en Streamlit
+        st.plotly_chart(fig_magnitude_vs_modulus)
+
+        # Paso 8: Ajustar el número de bins con un deslizador
+        num_bins = st.slider('Número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
+
+        # Paso 9: Crear el histograma con la magnitud absoluta corregida, coloreando por clúster
+        fig_histogram = px.histogram(
             df_filtrado,
             x=f'absolute_magnitude_{filtro_seleccionado}',
             nbins=num_bins,
@@ -1372,19 +1399,18 @@ if 'Redshift' in df_parameters.columns:
         )
 
         # Invertir el eje X porque las magnitudes menores son más brillantes
-        fig.update_layout(
+        fig_histogram.update_layout(
             xaxis=dict(autorange='reversed'),
-            legend_title="Cluster",  # Título de la leyenda
-            legend=dict(itemsizing='constant')  # Ajuste para la leyenda
+            legend_title="Cluster"
         )
 
         # Mostrar el gráfico en Streamlit
-        st.plotly_chart(fig)
+        st.plotly_chart(fig_histogram)
+
     else:
-        st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
+        st.write(f"Faltan las siguientes columnas necesarias en el DataFrame: {', '.join(columnas_faltantes)}")
 else:
     st.write("La columna 'Redshift' no está presente en el DataFrame.")
-
 
 
 st.write("""
