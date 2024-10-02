@@ -1359,7 +1359,7 @@ if 'Redshift' in df_parameters.columns:
         )
 
         # Calcular la magnitud absoluta con la magnitud corregida
-        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}']
+        df_filtrado[f'absolute_magnitude_{filtro_seleccionado}'] = df_filtrado[f'mag_corregida_{filtro_seleccionado}'] - df_filtrado['distance_modulus']
 
         # Verificar cuántas supernovas de cada tipo hay
         st.write("Distribución de tipos de supernovas después del filtrado:")
@@ -1379,14 +1379,24 @@ if 'Redshift' in df_parameters.columns:
         # Invertir el eje Y porque las magnitudes menores son más brillantes
         fig_magnitude_vs_modulus.update_layout(
             yaxis=dict(autorange='reversed'),
-            legend_title="Cluster"
+            legend_title="Cluster",  # Título de la leyenda
+            showlegend=True  # Mostrar leyenda
+        )
+
+        # Hacer clic en los labels para mostrar u ocultar
+        fig_magnitude_vs_modulus.update_traces(marker=dict(size=8), selector=dict(mode='markers'))
+        fig_magnitude_vs_modulus.update_layout(
+            legend=dict(
+                itemclick="toggle",  # Permitir mostrar/ocultar al hacer clic
+                itemdoubleclick="toggleothers"  # Doble clic para mostrar solo un grupo
+            )
         )
 
         # Mostrar el gráfico en Streamlit
         st.plotly_chart(fig_magnitude_vs_modulus)
 
         # Paso 8: Ajustar el número de bins con un deslizador
-        num_bins = st.slider('Número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
+        num_bins = st.slider('Bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
 
         # Paso 9: Crear el histograma con la magnitud absoluta corregida, coloreando por clúster
         fig_histogram = px.histogram(
@@ -1394,7 +1404,7 @@ if 'Redshift' in df_parameters.columns:
             x=f'absolute_magnitude_{filtro_seleccionado}',
             nbins=num_bins,
             color='cluster',  # Usar diferentes colores según el clúster
-            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta {filtro_seleccionado}', 'count': 'Número de supernovas'},
+            labels={f'absolute_magnitude_{filtro_seleccionado}': f'Magnitud Absoluta Corregida {filtro_seleccionado}', 'count': 'Número de supernovas'},
             title=f'Histograma de Magnitud Absoluta Corregida ({filtro_seleccionado}) para Supernovas (por Clúster)'
         )
 
