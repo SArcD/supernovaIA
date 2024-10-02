@@ -882,6 +882,92 @@ else:
     st.write("La columna 'Redshift' no está presente en el DataFrame.")
 
 
+##---------------------------------
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import streamlit as st  # Importar Streamlit
+
+# Supongamos que los dataframes df_parameters y df_light_curves ya están cargados
+# Columnas en df_parameters: 'Redshift', 'SNID', 'peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g'
+# Columnas en df_light_curves: 'snid', 'parsnip_pred' (tipo de supernova)
+
+# Constantes
+c = 3e5  # Velocidad de la luz en km/s
+H0 = 70  # Constante de Hubble en km/s/Mpc
+
+# Paso 1: Calcular el módulo de la distancia para cada supernova
+def calcular_modulo_distancia(redshift):
+    # Calcular la distancia de luminosidad en Mpc
+    DL_mpc = (c * redshift / H0) * (1 + redshift)
+    # Convertir a parsecs
+    DL_parsecs = DL_mpc * 1e6
+    # Calcular el módulo de la distancia
+    return 5 * np.log10(DL_parsecs) - 5
+
+# Verificar que el dataframe tiene la columna 'Redshift'
+if 'Redshift' in df_parameters.columns:
+    # Aplicar la función para calcular el módulo de la distancia
+    df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
+
+    # Paso 2: Crear un diccionario que relacione 'snid' con 'parsnip_pred' en df_light_curves
+    snid_to_type = dict(zip(df_light_curves['snid'], df_light_curves['parsnip_pred']))
+
+    # Paso 3: Crear la columna SN_type en df_parameters usando el diccionario
+    df_parameters['SN_type'] = df_parameters['SNID'].map(snid_to_type)
+
+    # Verificar si hay valores nulos en la nueva columna SN_type
+    if df_parameters['SN_type'].isnull().sum() > 0:
+        st.write("Existen valores en df_parameters que no tienen un tipo de supernova asociado.")
+        st.write(df_parameters[df_parameters['SN_type'].isnull()][['SNID']].head())  # Muestra algunas filas problemáticas
+
+    # Menú desplegable para seleccionar el filtro de magnitud
+    #filtro_seleccionado = st.selectbox(
+    #    'Seleccione el filtro de magnitud para graficar:',
+    #    ('peak_magnitude_r', 'peak_magnitude_z', 'peak_magnitude_X', 'peak_magnitude_Y', 'peak_magnitude_g')
+    #)
+
+    # Verificar si la columna seleccionada existe
+    if filtro_seleccionado in df_parameters.columns:
+        # Verificar si hay valores nulos en la columna de magnitud seleccionada
+        st.write(f"Total de valores nulos en la magnitud {filtro_seleccionado}: {df_parameters[filtro_seleccionado].isnull().sum()}")
+
+        # Filtrar las filas donde la magnitud seleccionada no sea nula
+        df_filtrado = df_parameters.dropna(subset=[filtro_seleccionado, 'SN_type'])
+
+        # Verificar cuántas supernovas de cada tipo hay
+        st.write("Distribución de tipos de supernovas después del filtrado:")
+        st.write(df_filtrado['SN_type'].value_counts())
+
+        # Paso 4: Ajustar el número de bins con un deslizador
+        num_bins = st.slider('Selecciona el número de bins para el histograma:', min_value=5, max_value=100, value=20, step=1)
+
+        # Paso 5: Crear el histograma con Plotly
+        fig = px.histogram(
+            df_filtrado,
+            x=filtro_seleccionado,
+            nbins=num_bins,
+            color='SN_type',  # Usar diferentes colores según el tipo de supernova
+            labels={filtro_seleccionado: f'Magnitud {filtro_seleccionado}', 'count': 'Número de supernovas'},
+            title=f'Histograma de Magnitud ({filtro_seleccionado}) para Supernovas'
+        )
+
+        # Invertir el eje X porque las magnitudes menores son más brillantes
+        fig.update_layout(
+            xaxis=dict(autorange='reversed'),
+            legend_title="Supernova Type",  # Título de la leyenda
+            legend=dict(itemsizing='constant')  # Ajuste para la leyenda
+        )
+
+        # Mostrar el gráfico en Streamlit
+        st.plotly_chart(fig)
+    else:
+        st.write(f"La columna seleccionada '{filtro_seleccionado}' no existe en el DataFrame.")
+else:
+    st.write("La columna 'Redshift' no está presente en el DataFrame.")
+
+
 
 ##---------------------------------
 import pandas as pd
