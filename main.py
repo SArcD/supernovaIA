@@ -815,9 +815,9 @@ def calcular_modulo_distancia(redshift):
     return 5 * np.log10(DL_parsecs) - 5
 
 # Verificar que el dataframe tiene la columna 'Redshift'
-if 'Redshift' in df_parametros.columns:
+if 'Redshift' in df_parameters.columns:
     # Aplicar la función para calcular el módulo de la distancia
-    df_parametros['distance_modulus'] = df_parametros['Redshift'].apply(calcular_modulo_distancia)
+    df_parameters['distance_modulus'] = df_parameters['Redshift'].apply(calcular_modulo_distancia)
 
     # Menú desplegable para seleccionar el filtro de magnitud
     filtro_seleccionado = st.selectbox(
@@ -826,11 +826,11 @@ if 'Redshift' in df_parametros.columns:
     )
 
     # Paso 2: Calcular la magnitud absoluta para el filtro seleccionado
-    df_parametros[f'absolute_magnitude_{filtro_seleccionado}'] = df_parametros[filtro_seleccionado] - df_parametros['distance_modulus']
+    df_parameters[f'absolute_magnitude_{filtro_seleccionado}'] = df_parameters[filtro_seleccionado] - df_parameters['distance_modulus']
 
     # Paso 3: Crear el gráfico con Plotly
     fig = px.scatter(
-        df_parametros,
+        df_parameters,
         x='distance_modulus',
         y=f'absolute_magnitude_{filtro_seleccionado}',
         color='supernova_type',  # Usar diferentes colores según el tipo de supernova
