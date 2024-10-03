@@ -279,6 +279,83 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
+# Crear el gráfico de posiciones con un deslizador de MJD y un botón para controlar la velocidad
+def crear_grafico_posiciones_rectangulares_con_deslizador():
+    # Filtrar los tipos de supernovas (asegúrate de que se incluyan todos)
+    df_filtrado = df_curvas_luz[df_curvas_luz['parsnip_pred'].isin(['SN Ia', 'SN Ib', 'SN II'])]
+
+    # Crear la gráfica usando los tipos de supernovas seleccionados
+    fig = px.scatter(df_filtrado,
+                     x='ra',
+                     y='decl',
+                     animation_frame='mjd',  # Crear la animación basada en MJD
+                     animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
+                     size_max=10,
+                     range_x=[df_filtrado['ra'].min() - 10, df_filtrado['ra'].max() + 10],
+                     range_y=[df_filtrado['decl'].min() - 10, df_filtrado['decl'].max() + 10],
+                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED para mostrar todos los tipos
+                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
+                     title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
+                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)', 'parsnip_pred': 'Tipo de Supernova'}
+                     )
+
+    # Configurar el deslizador de MJD
+    min_mjd = df_filtrado['mjd'].min()
+    max_mjd = df_filtrado['mjd'].max()
+    
+    fig.update_layout(
+        sliders=[{
+            "currentvalue": {"prefix": "MJD: "},
+            "pad": {"b": 10},
+            "steps": [{"args": [[f"{frame}"], {"frame": {"duration": 500, "redraw": True},
+                                               "mode": "immediate", "fromcurrent": True}],
+                       "label": f"{frame}", "method": "animate"}
+                      for frame in range(int(min_mjd), int(max_mjd) + 1)]
+        }],
+        xaxis_title="Ascensión Recta (RA)",
+        yaxis_title="Declinación (Dec)"
+    )
+
+    # Añadir botones para controlar la velocidad de la animación
+    fig.update_layout(
+        updatemenus=[{
+            "buttons": [
+                {
+                    "args": [None, {"frame": {"duration": 1000, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "Velocidad Normal",
+                    "method": "animate"
+                },
+                {
+                    "args": [None, {"frame": {"duration": 500, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "2x Velocidad",
+                    "method": "animate"
+                },
+                {
+                    "args": [None, {"frame": {"duration": 250, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "4x Velocidad",
+                    "method": "animate"
+                },
+                {
+                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
+                    "label": "8x Velocidad",
+                    "method": "animate"
+                }
+            ],
+            "direction": "left",
+            "pad": {"r": 10, "t": 87},
+            "showactive": True,
+            "type": "buttons",
+            "x": 0.1,
+            "xanchor": "right",
+            "y": 0,
+            "yanchor": "top"
+        }]
+    )
+
+    return fig
+
+
+##########______#############
 
 st.write("""
 ### **Types of Supernovae as a Function of Redshift with extintion (MWEB)**
