@@ -354,50 +354,25 @@ if not filtered_data.empty:
         st.plotly_chart(fig, use_container_width=True)
 
     elif view_option == "Heatmap":
-        # Definir los límites para RA y Dec
-        ra_min, ra_max = filtered_data['ra'].min(), filtered_data['ra'].max()
-        decl_min, decl_max = filtered_data['decl'].min(), filtered_data['decl'].max()
+        # Crear un mapa de calor utilizando los datos filtrados
+        fig_density = go.Figure(data=go.Histogram2d(
+            x=filtered_data['ra'],
+            y=filtered_data['decl'],
+            colorscale='Viridis',
+            z=filtered_data['parsnip_pred'],  # Usar el tipo de supernova para contar
+            colorbar=dict(title='Count'),
+        ))
 
-        # Definir la cantidad de bins para RA y Dec
-        num_ra_bins = 50  # Puedes ajustar el número de bins
-        num_decl_bins = 50  # Puedes ajustar el número de bins
+        fig_density.update_layout(
+            title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
+            xaxis_title='Right Ascension (RA)',
+            yaxis_title='Declination (Dec)',
+            showlegend=False,
+        )
 
-        # Crear los límites de los bins
-        ra_bins = np.linspace(ra_min, ra_max, num_ra_bins + 1)
-        decl_bins = np.linspace(decl_min, decl_max, num_decl_bins + 1)
+        # Mostrar el gráfico de densidad
+        st.plotly_chart(fig_density, use_container_width=True)
 
-        # Crear una tabla de conteo de supernovas únicas en cada celda del grid
-        heatmap_counts = np.zeros((len(ra_bins) - 1, len(decl_bins) - 1))
-
-        # Usar un conjunto para rastrear las SNID ya contadas
-        counted_snids_heatmap = set()
-
-        # Contar supernovas únicas en cada celda
-        for _, row in filtered_data.iterrows():
-            ra = row['ra']
-            decl = row['decl']
-            snid = row['snid']
-    
-            # Contar solo si no se ha contado antes
-            if snid not in counted_snids_heatmap:  
-                ra_index = np.digitize(ra, ra_bins) - 1
-                decl_index = np.digitize(decl, decl_bins) - 1
-        
-                # Asegurarse de que los índices estén dentro de los límites
-                if 0 <= ra_index < heatmap_counts.shape[0] and 0 <= decl_index < heatmap_counts.shape[1]:
-                    heatmap_counts[ra_index, decl_index] += 1
-            
-                counted_snids_heatmap.add(snid)
-
-        # Graficar el mapa de calor
-        plt.figure(figsize=(10, 8))
-        plt.imshow(heatmap_counts.T, origin='lower', cmap='hot', aspect='auto',
-                   extent=[ra_bins[0], ra_bins[-1], decl_bins[0], decl_bins[-1]])
-        plt.colorbar(label='Número de Supernovas Únicas')
-        plt.xlabel('Ascensión Recta (RA)')
-        plt.ylabel('Declinación (Dec)')
-        plt.title('Mapa de Calor de Supernovas')
-        plt.show()
     elif view_option == "Line Chart":
         # Crear un gráfico de líneas
         mjd_counts = filtered_data['mjd'].value_counts().sort_index()
