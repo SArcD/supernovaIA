@@ -2183,6 +2183,9 @@ if not df_clustered_supernovae.empty:
     df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
         lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
     )
+    # Input boxes para los parámetros del filtro Savitzky-Golay
+    window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
+    polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
 
     # Paso 3: Recorrer todas las supernovas dentro del clúster y calcular las curvas suavizadas
     for snid in supernova_ids:
@@ -2203,7 +2206,8 @@ if not df_clustered_supernovae.empty:
             predicted_magnitudes = model.predict(days_range)
 
             # Aplicar el filtro de Savitzky-Golay para suavizar la curva ajustada
-            smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=11, polyorder=3)
+            #smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=11, polyorder=3)
+            smoothed_magnitudes = savgol_filter(predicted_magnitudes, window_length=window_length, polyorder=polyorder)
 
             # Añadir la curva suavizada al gráfico que contendrá todas las curvas
             fig_all_smoothed.add_trace(go.Scatter(
