@@ -280,22 +280,15 @@ elif plot_option == "Declination vs Redshift" :
 ##########-----#############
 
 # Ensure parsnip_pred exists in the DataFrame
-if 'parsnip_pred' not in df_light_curves.columns:
-    st.write("Warning: 'parsnip_pred' column is missing from the data.")
-
-# Flatten the MJD values to calculate min and max
-# Check if 'mjd' is a list and flatten it
-all_mjd_values = [item for sublist in df_light_curves['mjd'] for item in sublist]
-
-min_mjd = min(all_mjd_values)
-max_mjd = max(all_mjd_values)
+# Filter the MJD values for the slider
+min_mjd = df_light_curves['mjd'].min()
+max_mjd = df_light_curves['mjd'].max()
 
 # Create a slider to select the Julian date
 selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd)
 
 # Prepare data for plotting
-# Using a list comprehension to filter rows where selected_mjd is in the mjd list
-filtered_data = df_light_curves[df_light_curves['mjd'].apply(lambda x: selected_mjd in x)]
+filtered_data = df_light_curves[df_light_curves['mjd'] == selected_mjd]
 
 # Plotting with asterisks for supernova positions
 if not filtered_data.empty:
@@ -325,7 +318,6 @@ if not filtered_data.empty:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.write("No supernovae found for the selected MJD.")
-
 
 ##########______#############
 
