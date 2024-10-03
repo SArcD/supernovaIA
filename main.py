@@ -282,7 +282,7 @@ elif plot_option == "Declination vs Redshift" :
 # Crear el gráfico de posiciones con un deslizador de MJD y un botón para controlar la velocidad
 def crear_grafico_posiciones_rectangulares_con_deslizador():
     # Filtrar los tipos de supernovas (asegúrate de que se incluyan todos)
-    df_filtrado = df_curvas_luz[df_curvas_luz['parsnip_pred'].isin(['SN Ia', 'SN Ib', 'SN II'])]
+    df_filtrado = df_light_curves[df_light_curves['parsnip_pred'].isin(['SN Ia', 'SN Ib', 'SN II'])]
 
     # Crear la gráfica usando los tipos de supernovas seleccionados
     fig = px.scatter(df_filtrado,
