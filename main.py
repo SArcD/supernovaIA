@@ -319,13 +319,33 @@ if not filtered_data.empty:
                       showlegend=False)
 
     st.plotly_chart(fig, use_container_width=True)
-    # Create a histogram of the counts of each supernova type
-    counts = filtered_data['parsnip_pred'].value_counts()
-    histogram_fig = px.bar(x=counts.index, y=counts.values, labels={'x': 'Supernova Type', 'y': 'Count'},
-                            title='Count of Supernovae by Type')
-    st.plotly_chart(histogram_fig)
-else:
-    st.write("No supernovae found for the selected range.")
+    # Agregar la sección del histograma después de graficar las posiciones de las supernovas
+    if not filtered_data.empty:
+        # Crea un histograma para contar las supernovas por tipo hasta la fecha seleccionada
+        type_counts = filtered_data['parsnip_pred'].value_counts().reset_index()
+        type_counts.columns = ['Supernova Type', 'Count']
+    
+        # Definir el mapa de colores
+        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
+    
+        # Crear el histograma
+        fig_hist = go.Figure(data=[go.Bar(
+            x=type_counts['Supernova Type'],
+            y=type_counts['Count'],
+            marker=dict(color=[color_map.get(t, 'black') for t in type_counts['Supernova Type']])
+        )])
+
+        fig_hist.update_layout(title='Count of Supernovae by Type (up to selected MJD)',
+                           xaxis_title='Supernova Type',
+                           yaxis_title='Count')
+
+        # Mostrar el histograma
+        st.plotly_chart(fig_hist, use_container_width=True)
+    else:
+    st.write("No supernovae found for the selected MJD.")
+
+
+
 ##########______#############
 
 st.write("""
