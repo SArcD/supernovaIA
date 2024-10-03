@@ -294,16 +294,16 @@ filtered_data = df_light_curves[df_light_curves['mjd'] <= selected_mjd]
 
 # Preparar datos para el gráfico de dispersión
 # Calcular años a partir de MJD
+# Calcular años a partir de MJD
 def mjd_to_years(mjd):
-    base_mjd = 2400000.5  # Base MJD (17 Nov 1858)
-    return (mjd - base_mjd) / 365.25 + 1858  # Convertir a años
+    return (mjd + 2400000) / 365 - 4713  # Convertir a años
 
 # Preparar datos para el gráfico de dispersión
 if not filtered_data.empty:
     fig = go.Figure()
     
     # Inicializar un diccionario para contar las supernovas por tipo
-    type_counts = {'Type Ia': 0, 'Type II': 0, 'Type Ibc': 0}
+    type_counts = {'SN Ia': 0, 'SN II': 0, 'SN Ibc': 0}
     
     # Usar un conjunto para rastrear las SNID ya contadas
     counted_snids = set()
@@ -320,7 +320,7 @@ if not filtered_data.empty:
                 type_counts[supernova_type] += 1
             counted_snids.add(snid)  # Agregar el SNID al conjunto de contados
         
-        color_map = {'Type Ia': 'blue', 'Type II': 'red', 'Type Ibc': 'green'}
+        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
         color = color_map.get(supernova_type, 'black')  # Default to black if type not found
         
         # Convertir MJD a años para el eje X
