@@ -345,30 +345,37 @@ if not filtered_data.empty:
         st.plotly_chart(fig, use_container_width=True)
 
     elif view_option == "Heatmap":
-        # Crear un grid para el mapa de calor
-        heatmap_data = np.zeros((3, 3))  # Suponiendo que hay 3 tipos de supernovas y 3 posiciones en el grid
+        # Definir los límites del grid
+        ra_bins = np.linspace(filtered_data['ra'].min(), filtered_data['ra'].max(), num=30)  # Ajusta el número de píxeles
+        decl_bins = np.linspace(filtered_data['decl'].min(), filtered_data['decl'].max(), num=30)  # Ajusta el número de píxeles
 
-        for supernova_type, count in type_counts.items():
-            if supernova_type == 'SN Ia':
-                heatmap_data[0, 0] = count
-            elif supernova_type == 'SN II':
-                heatmap_data[0, 1] = count
-            elif supernova_type == 'SN Ibc':
-                heatmap_data[0, 2] = count
+        # Crear una tabla de conteo de supernovas únicas en cada celda del grid
+        heatmap_counts = np.zeros((len(ra_bins)-1, len(decl_bins)-1))
+
+        # Contar supernovas únicas en cada celda
+        for _, row in filtered_data.iterrows():
+            ra = row['ra']
+            decl = row['decl']
+            if row['snid'] not in counted_snids:  # Contar solo si no se ha contado antes
+                ra_index = np.digitize(ra, ra_bins) - 1
+                decl_index = np.digitize(decl, decl_bins) - 1
+                if 0 <= ra_index < heatmap_counts.shape[0] and 0 <= decl_index < heatmap_counts.shape[1]:
+                    heatmap_counts[ra_index, decl_index] += 1
+                counted_snids.add(row['snid'])
 
         # Crear un mapa de calor utilizando los datos del grid
         fig_density = go.Figure(data=go.Heatmap(
-            z=heatmap_data,
-            x=['Position 1', 'Position 2', 'Position 3'],  # Ajusta según la cantidad de posiciones que necesites
-            y=['Supernova Types'],
+            z=heatmap_counts,
+            x=ra_bins[:-1],
+            y=decl_bins[:-1],
             colorscale='Viridis',
             colorbar=dict(title='Count'),
         ))
 
         fig_density.update_layout(
-            title='Densidad de Supernovas por Tipo (hasta MJD seleccionada)',
-            xaxis_title='Supernova Types',
-            yaxis_title='Counts',
+            title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
+            xaxis_title='Right Ascension (RA)',
+            yaxis_title='Declination (Dec)',
         )
 
         # Mostrar el gráfico de densidad
