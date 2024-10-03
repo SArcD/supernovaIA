@@ -689,7 +689,14 @@ def plot_light_curve(df_supernova):
 
 
 # Select the supernova type and minimum number of observations with a slider
-supernova_type = st.text_input("Enter the supernova type (e.g., 'SN Ia', 'SN Ib', 'SN II'):")
+#supernova_type = st.text_input("Enter the supernova type (e.g., 'SN Ia', 'SN Ib', 'SN II'):")
+# Cambiar el input de texto a un menú desplegable para seleccionar el tipo de supernova
+supernova_type = st.selectbox(
+    "Select the supernova type:",
+    options=['SN Ia', 'SN Ibc', 'SN II'],  # Lista de tipos de supernova
+    index=0  # Índice por defecto seleccionado (SN Ia)
+)
+
 min_observations = st.number_input("Specify the minimum number of observations:", min_value=1, value=5)
 
 # Function to filter supernovae by type and minimum number of observations
