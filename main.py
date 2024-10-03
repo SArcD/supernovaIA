@@ -297,9 +297,9 @@ if not filtered_data.empty:
         ra = row['ra']
         decl = row['decl']
         snid = row['snid']
-        #color_map = {'Type Ia': 'blue', 'Type II': 'red', 'Type Ibc': 'green'}
-        color='parsnip_pred'
-        #color = color_map.get(row['parsnip_pred'], 'black')  # Default to black if type not found
+        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
+        #color='parsnip_pred'
+        color = color_map.get(row['parsnip_pred'], 'black')  # Default to black if type not found
         
         fig.add_trace(go.Scatter(
             x=[ra],
