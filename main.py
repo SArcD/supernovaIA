@@ -364,12 +364,22 @@ if not filtered_data.empty:
             labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
         )
 
-        fig_density.update_layout(
-            title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
-            xaxis_title='Right Ascension (RA)',
-            yaxis_title='Declination (Dec)',
-        )
+        #fig_density.update_layout(
+        #    title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
+        #    xaxis_title='Right Ascension (RA)',
+        #    yaxis_title='Declination (Dec)',
+        #)
 
+        fig_density = px.density_heatmap(
+            filtered_data,
+            x='ra',
+            y='decl',
+            color_continuous_scale='Viridis',
+            title='Densidad de Supernovas en RA y Dec',
+            labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'},
+            histnorm='probability'  # Normalizar los conteos
+        )
+        
         st.plotly_chart(fig_density, use_container_width=True)
 
     elif view_option == "Line Chart":
