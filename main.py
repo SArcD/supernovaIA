@@ -300,7 +300,7 @@ if not filtered_data.empty:
     fig = go.Figure()
     
     # Inicializar un diccionario para contar las supernovas por tipo
-    type_counts = {'Type Ia': 0, 'Type II': 0, 'Type Ibc': 0}
+    type_counts = {'SN Ia': 0, 'SN II': 0, 'SN Ibc': 0}
     
     # Usar un conjunto para rastrear las SNID ya contadas
     counted_snids = set()
@@ -317,7 +317,7 @@ if not filtered_data.empty:
                 type_counts[supernova_type] += 1
             counted_snids.add(snid)  # Agregar el SNID al conjunto de contados
         
-        color_map = {'Type Ia': 'blue', 'Type II': 'red', 'Type Ibc': 'green'}
+        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
         color = color_map.get(supernova_type, 'black')  # Default to black if type not found
         
         fig.add_trace(go.Scatter(
