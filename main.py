@@ -2249,6 +2249,7 @@ else:
     st.write("No supernovas found in this cluster.")
 
 ###########
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -2292,8 +2293,8 @@ if not df_clustered_supernovae.empty:
     )
     
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    window_length = st.number_input("Ventana (debe ser impar)", value=11, min_value=3, step=2)
-    polyorder = st.number_input("Orden", value=3, min_value=1)
+    #window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
+    #polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
     features = []
@@ -2371,7 +2372,7 @@ if not df_clustered_supernovae.empty:
         scaled_features = scaler.fit_transform(df_features)
 
         # Aplicar K-Means para clasificar las supernovas en perfiles comunes
-        k = st.number_input("Número de perfiles (clusters)", value=3, min_value=1, step=1)
+        k = st.number_input("Núm de perfiles (clusters)", value=3, min_value=1, step=1)
         kmeans = KMeans(n_clusters=k, random_state=42)
         df_features['cluster'] = kmeans.fit_predict(scaled_features)
 
@@ -2379,17 +2380,12 @@ if not df_clustered_supernovae.empty:
         st.write("Clasificación de supernovas en perfiles comunes:")
         for cluster in range(k):
             st.write(f"Cluster {cluster}:")
-    
-            # Encontrar los índices de las supernovas en el cluster
-            cluster_indices = df_features.index[df_features['cluster'] == cluster].tolist()
-    
-            # Obtener los SNID de las supernovas en el cluster
-            cluster_ids = df_light_curves_cluster['snid'].unique()[cluster_indices]
+            cluster_ids = df_clustered_supernovae['SNID'][df_features['cluster'] == cluster].tolist()
             st.write(cluster_ids)
 
             # Promediar las curvas suavizadas de las supernovas en el cluster
             avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
-    
+            
             # Graficar la curva promedio para cada cluster
             st.plotly_chart(go.Figure(data=go.Scatter(
                 x=days_range.flatten(),
@@ -2398,3 +2394,6 @@ if not df_clustered_supernovae.empty:
                 name=f'Average Curve for Cluster {cluster}',
                 line=dict(width=2)
             )), use_container_width=True)
+
+    else:
+        st.write("No se encontraron supernovas suficientes para clasificar.")
