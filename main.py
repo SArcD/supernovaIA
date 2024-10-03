@@ -286,49 +286,127 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-# (Código anterior para cargar y procesar los datos)
+# Function to obtain the list of files from a GitHub repository using the API
+@st.cache_data
+def get_github_file_list(repo_url, subdirectory=""):
+    api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectory}"
+    response = requests.get(api_url)
+    if response.status_code == 200:
+        files = [file['download_url'] for file in response.json() if file['name'].endswith(".snana.dat")]
+        return files
+    else:
+        return []
 
-# Función para crear un gráfico interactivo basado en el MJD seleccionado
-def create_interactive_plot(df):
-    # Obtener el rango máximo y mínimo de MJD
-    min_mjd = df['mjd'].min()
-    max_mjd = df['mjd'].max()
+# Function to download and read the content of a file from GitHub
+@st.cache_data
+def download_file_from_github(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
 
-    # Deslizador para seleccionar el MJD
-    selected_mjd = st.slider("Select the Modified Julian Date (MJD):", 
-                              min_value=int(min_mjd), 
-                              max_value=int(max_mjd), 
-                              value=int(min_mjd))
+# Function to safely convert a value to float
+def convert_to_float(value, default_value=None):
+    try:
+        return float(value)
+    except ValueError:
+        return default_value
 
-    # Filtrar el DataFrame basado en el MJD seleccionado
-    filtered_df = df[df['mjd'] <= selected_mjd]
+# Function to read the downloaded supernova file and extract relevant data
+def read_supernova_file_content(content):
+    # Variables and lists to store data
+    mjd, mag, magerr, flx, flxerr, filters = [], [], [], [], [], []
+    snid, ra, decl, redshift, mwebv = None, None, None, None, None
 
-    # Crear el gráfico de dispersión usando asteriscos
+    for line in content.splitlines():
+        if line.startswith("SNID:"):
+            snid = line.split()[1]
+        elif line.startswith("RA:"):
+            ra = convert_to_float(line.split()[1])
+        elif line.startswith("DECL:"):
+            decl = convert_to_float(line.split()[1])
+        elif line.startswith("REDSHIFT_FINAL:"):
+            redshift = convert_to_float(line.split()[1])
+        elif line.startswith("MWEBV:"):
+            mwebv = convert_to_float(line.split()[1])
+        elif line.startswith("OBS:"):  # Extract observations
+            data = line.split()
+            mjd.append(convert_to_float(data[1]))  # MJD (Modified Julian Date)
+            flx.append(convert_to_float(data[4]))  # Flux (FLUXCAL)
+            mag.append(convert_to_float(data[6]))  # Magnitude (MAG)
+
+    return mjd, mag, snid, ra, decl, redshift, mwebv
+
+# Download and process supernova files from GitHub
+@st.cache_data
+def download_and_process_supernovas(repo_url, subdirectory=""):
+    file_list = get_github_file_list(repo_url, subdirectory)
+    vector_list = []
+
+    for file_url in file_list:
+        content = download_file_from_github(file_url)
+        if content:
+            mjd, mag, snid, ra, decl, redshift, mwebv = read_supernova_file_content(content)
+            vector_list.append({
+                'mjd': mjd,
+                'mag': mag,
+                'snid': snid,
+                'ra': ra,
+                'decl': decl,
+                'redshift': redshift,
+                'mwebv': mwebv
+            })
+
+    return pd.DataFrame(vector_list)
+
+# Load supernova data from GitHub
+st.write("Downloading and processing supernova files...")
+repo_url = "https://github.com/SArcD/supernovaIA"
+df_light_curves = download_and_process_supernovas(repo_url)
+
+# Define a color map for different types of supernovae
+color_map = {
+    'Type Ia': 'blue',
+    'Type II': 'red',
+    'Type Ibc': 'green'
+}
+
+# Create a slider to select the Julian date
+min_mjd = df_light_curves['mjd'].apply(lambda x: min(x)).min()
+max_mjd = df_light_curves['mjd'].apply(lambda x: max(x)).max()
+selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd)
+
+# Prepare data for plotting
+filtered_data = df_light_curves[df_light_curves['mjd'].apply(lambda x: selected_mjd in x)]
+
+# Plotting with asterisks for supernova positions
+if not filtered_data.empty:
     fig = go.Figure()
+    for _, row in filtered_data.iterrows():
+        ra = row['ra']
+        decl = row['decl']
+        snid = row['snid']
+        color = color_map.get(row['parsnip_pred'], 'black')  # Default to black if type not found
+        fig.add_trace(go.Scatter(
+            x=[ra],
+            y=[decl],
+            mode='markers',
+            marker=dict(size=10, color=color, symbol='star'),  # Use asterisks
+            name=snid,
+            hoverinfo='text',
+            text=f'SNID: {snid}, MJD: {selected_mjd}'  # Show SNID on hover
+        ))
 
-    fig.add_trace(go.Scatter(
-        x=filtered_df['ra'],
-        y=filtered_df['decl'],
-        mode='markers+text',
-        marker=dict(size=10, color='blue'),  # Tamaño y color de los asteriscos
-        text=['*'] * len(filtered_df),  # Asteriscos como etiquetas
-        textposition='middle center',
-        hoverinfo='text',
-        name='Supernovae'
-    ))
+    fig.update_layout(title='Positions of Supernovae (RA vs Declination)',
+                      xaxis_title='Right Ascension (RA)',
+                      yaxis_title='Declination (Dec)',
+                      showlegend=False)
 
-    # Actualizar el layout del gráfico
-    fig.update_layout(
-        title='Position of Supernovae in the Sky (RA vs Dec) at MJD {}'.format(selected_mjd),
-        xaxis_title='Right Ascension (RA)',
-        yaxis_title='Declination (Dec)',
-        showlegend=False
-    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.write("No supernovae found for the selected MJD.")
 
-    return fig
-
-# Mostrar el gráfico interactivo
-st.plotly_chart(create_interactive_plot(df_light_curves))
 
 
 ##########______#############
