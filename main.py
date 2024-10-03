@@ -393,7 +393,6 @@ if not filtered_data.empty:
 
         # Mostrar el gráfico de densidad
         st.plotly_chart(fig_density, use_container_width=True)
-
     elif view_option == "Line Chart":
         # Crear un gráfico de líneas
         mjd_counts = filtered_data['mjd'].value_counts().sort_index()
