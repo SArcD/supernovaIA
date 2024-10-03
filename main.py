@@ -285,10 +285,7 @@ if 'parsnip_pred' not in df_light_curves.columns:
 
 # Flatten the MJD values to calculate min and max
 # Check if 'mjd' is a list and flatten it
-if df_light_curves['mjd'].apply(lambda x: isinstance(x, list)).all():
-    all_mjd_values = [item for sublist in df_light_curves['mjd'] for item in sublist]
-else:
-    all_mjd_values = df_light_curves['mjd'].tolist()  # Convert to a flat list
+all_mjd_values = [item for sublist in df_light_curves['mjd'] for item in sublist]
 
 min_mjd = min(all_mjd_values)
 max_mjd = max(all_mjd_values)
@@ -297,6 +294,7 @@ max_mjd = max(all_mjd_values)
 selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd)
 
 # Prepare data for plotting
+# Using a list comprehension to filter rows where selected_mjd is in the mjd list
 filtered_data = df_light_curves[df_light_curves['mjd'].apply(lambda x: selected_mjd in x)]
 
 # Plotting with asterisks for supernova positions
@@ -306,12 +304,8 @@ if not filtered_data.empty:
         ra = row['ra']
         decl = row['decl']
         snid = row['snid']
-        # Check if 'parsnip_pred' exists before using it
-        if 'parsnip_pred' in row:
-            color_map = {'Type Ia': 'blue', 'Type II': 'red', 'Type Ibc': 'green'}
-            color = color_map.get(row['parsnip_pred'], 'black')  # Default to black if type not found
-        else:
-            color = 'black'  # Fallback color
+        color_map = {'Type Ia': 'blue', 'Type II': 'red', 'Type Ibc': 'green'}
+        color = color_map.get(row['parsnip_pred'], 'black')  # Default to black if type not found
         
         fig.add_trace(go.Scatter(
             x=[ra],
@@ -331,7 +325,6 @@ if not filtered_data.empty:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.write("No supernovae found for the selected MJD.")
-
 
 
 ##########______#############
