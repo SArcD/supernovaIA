@@ -292,12 +292,15 @@ selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd
 # Filter all supernovae from the minimum MJD to the selected MJD
 filtered_data = df_light_curves[df_light_curves['mjd'] <= selected_mjd]
 
-
+# Preparar datos para el gráfico de dispersión
 if not filtered_data.empty:
     fig = go.Figure()
     
     # Inicializar un diccionario para contar las supernovas por tipo
     type_counts = {'SN Ia': 0, 'SN II': 0, 'SN Ibc': 0}
+    
+    # Usar un conjunto para rastrear las SNID ya contadas
+    counted_snids = set()
 
     for _, row in filtered_data.iterrows():
         ra = row['ra']
@@ -305,9 +308,11 @@ if not filtered_data.empty:
         snid = row['snid']
         supernova_type = row['parsnip_pred']
         
-        # Contar la supernova por tipo
-        if supernova_type in type_counts:
-            type_counts[supernova_type] += 1
+        # Contar la supernova por tipo solo si no ha sido contada previamente
+        if snid not in counted_snids:
+            if supernova_type in type_counts:
+                type_counts[supernova_type] += 1
+            counted_snids.add(snid)  # Agregar el SNID al conjunto de contados
         
         color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
         color = color_map.get(supernova_type, 'black')  # Default to black if type not found
