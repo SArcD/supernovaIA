@@ -2408,5 +2408,5 @@ if not df_clustered_supernovae.empty:
             )
 
             # Mostrar el gráfico en Streamlit
-            st.plotly_chart(avg_curve_fig, use_container_width=True)
+            st.plotly_chart(avg_curve_fig, use_container_width=True, key="ww")
 
