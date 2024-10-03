@@ -342,7 +342,7 @@ if not filtered_data.empty:
         # Mostrar el histograma
         st.plotly_chart(fig_hist, use_container_width=True)
     else:
-    st.write("No supernovae found for the selected MJD.")
+        st.write("No supernovae found for the selected MJD.")
 
 
 
