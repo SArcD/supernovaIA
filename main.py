@@ -354,23 +354,22 @@ if not filtered_data.empty:
         st.plotly_chart(fig, use_container_width=True)
 
     elif view_option == "Heatmap":
-        # Crear un mapa de calor utilizando los datos filtrados
-        fig_density = go.Figure(data=go.Histogram2d(
-            x=filtered_data['ra'],
-            y=filtered_data['decl'],
-            colorscale='Viridis',
-            z=filtered_data['parsnip_pred'],  # Usar el tipo de supernova para contar
-            colorbar=dict(title='Count'),
-        ))
+        # Crear un mapa de calor
+        fig_density = px.density_heatmap(
+            filtered_data,
+            x='ra',
+            y='decl',
+            color_continuous_scale='Viridis',
+            title='Densidad de Supernovas en RA y Dec',
+            labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
+        )
 
         fig_density.update_layout(
             title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
             xaxis_title='Right Ascension (RA)',
             yaxis_title='Declination (Dec)',
-            showlegend=False,
         )
 
-        # Mostrar el gráfico de densidad
         st.plotly_chart(fig_density, use_container_width=True)
 
     elif view_option == "Line Chart":
