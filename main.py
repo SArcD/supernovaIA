@@ -2360,7 +2360,7 @@ if not df_clustered_supernovae.empty:
         showlegend=True
     )
 
-    st.plotly_chart(fig_all_smoothed, use_container_width=True)
+    st.plotly_chart(fig_all_smoothed, use_container_width=True, key="curvas")
 
     # Clasificación de perfiles comunes mediante clustering
     if len(features) > 1:  # Asegurarse de que hay suficientes supernovas para el clustering
