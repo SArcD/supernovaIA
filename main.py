@@ -356,7 +356,7 @@ if not filtered_data.empty:
     #        color_continuous_scale='Viridis',
     #        title='Densidad de Supernovas en RA y Dec',
     #        labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
-        )
+    #    )
 
     elif view_option == "Heatmap":
         # Crear un histograma 2D
