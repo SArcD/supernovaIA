@@ -362,7 +362,24 @@ else:
 view_option = st.selectbox("Select visualization type:", ["Heatmap", "Line Chart"])
 
 if view_option == "Heatmap":
-    # Crear un mapa de calor
+    # Filtrar datos hasta la fecha MJD seleccionada
+    #filtered_data = df_light_curves[df_light_curves['mjd'] <= selected_mjd]
+
+    # Inicializar un diccionario para contar las supernovas por tipo
+    type_counts = {'SN Ia': 0, 'Type SNII': 0, 'SN Ibc': 0}
+    counted_snids = set()
+
+    # Contar supernovas visibles y registrar coordenadas para el mapa de calor
+    for _, row in filtered_data.iterrows():
+        snid = row['snid']
+        supernova_type = row['parsnip_pred']
+    
+        if snid not in counted_snids:
+            if supernova_type in type_counts:
+                type_counts[supernova_type] += 1
+            counted_snids.add(snid)
+
+    # Crear un mapa de calor utilizando los datos filtrados
     fig_density = px.density_heatmap(
         filtered_data,
         x='ra',
@@ -371,6 +388,15 @@ if view_option == "Heatmap":
         title='Densidad de Supernovas en RA y Dec',
         labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
     )
+
+    # Actualizar el layout del gráfico de densidad
+    fig_density.update_layout(
+        title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
+        xaxis_title='Right Ascension (RA)',
+        yaxis_title='Declination (Dec)',
+    )
+
+    # Mostrar el gráfico de densidad
     st.plotly_chart(fig_density, use_container_width=True)
 
 elif view_option == "Line Chart":
