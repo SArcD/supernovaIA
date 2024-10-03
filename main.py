@@ -285,9 +285,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-# Load your DataFrame (df_light_curves) here
-# df_light_curves = ...
-
 # Filter the MJD values for the slider
 min_mjd = df_light_curves['mjd'].min()
 max_mjd = df_light_curves['mjd'].max()
@@ -347,39 +344,31 @@ if not filtered_data.empty:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    #elif view_option == "Heatmap":
-    #    # Crear un mapa de calor
-    #    fig_density = px.density_heatmap(
-    #        filtered_data,
-    #        x='ra',
-    #        y='decl',
-    #        color_continuous_scale='Viridis',
-    #        title='Densidad de Supernovas en RA y Dec',
-    #        labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
-    #    )
-
     elif view_option == "Heatmap":
-        # Crear un histograma 2D
-        hist, xedges, yedges = np.histogram2d(
-            filtered_data['ra'],
-            filtered_data['decl'],
-            bins=[30, 30]  # Ajusta el número de bins según sea necesario
-        )
+        # Crear un grid para el mapa de calor
+        heatmap_data = np.zeros((3, 3))  # Suponiendo que hay 3 tipos de supernovas y 3 posiciones en el grid
 
-        # Crear un mapa de calor utilizando los datos del histograma
+        for supernova_type, count in type_counts.items():
+            if supernova_type == 'SN Ia':
+                heatmap_data[0, 0] = count
+            elif supernova_type == 'SN II':
+                heatmap_data[0, 1] = count
+            elif supernova_type == 'SN Ibc':
+                heatmap_data[0, 2] = count
+
+        # Crear un mapa de calor utilizando los datos del grid
         fig_density = go.Figure(data=go.Heatmap(
-            z=hist.T,  # Transponer para que coincida con la matriz de histograma
-            x=xedges,
-            y=yedges,
+            z=heatmap_data,
+            x=['Position 1', 'Position 2', 'Position 3'],  # Ajusta según la cantidad de posiciones que necesites
+            y=['Supernova Types'],
             colorscale='Viridis',
             colorbar=dict(title='Count'),
         ))
 
         fig_density.update_layout(
-            title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
-            xaxis_title='Right Ascension (RA)',
-            yaxis_title='Declination (Dec)',
-            showlegend=False,
+            title='Densidad de Supernovas por Tipo (hasta MJD seleccionada)',
+            xaxis_title='Supernova Types',
+            yaxis_title='Counts',
         )
 
         # Mostrar el gráfico de densidad
@@ -420,7 +409,6 @@ if not filtered_data.empty:
     st.plotly_chart(fig_hist, use_container_width=True)
 else:
     st.write("No supernovae found for the selected MJD.")
-
 
 ##########______#############
 
