@@ -1777,7 +1777,7 @@ from sklearn.model_selection import train_test_split
 import streamlit as st
 
 # Select numerical columns, excluding 'RA' and 'Dec'
-numerical_columns = df_supernova_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec'])
+numerical_columns = df_supernova_clustering.select_dtypes(include=['number']).drop(columns=['RA', 'Dec', 'cluster', 'peak_magnitude_X_x', 'peak_magnitude_Y_x', 'peak_magnitude_z_x', 'peak_magnitude_g_x', 'peak_magnitude_r_x', 'peak_magnitude_i_x'])
 
 # Show a dropdown menu for the user to select the variables to use
 selected_variables = st.multiselect(
