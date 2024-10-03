@@ -279,53 +279,85 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
-import pandas as pd
-import plotly.express as px
-import streamlit as st
+# Función para crear una animación de supernovas en coordenadas RA y Dec
+def create_supernova_animation(df):
+    fig = go.Figure()
 
-# Cargar el archivo CSV que contiene las coordenadas RA, Dec, y otros datos
-#df_curvas_luz =  df_light_curves
+    # Agrupar por tipo de supernova (por ejemplo, por 'parsnip_pred')
+    for sn_type in df['parsnip_pred'].unique():
+        df_type = df[df['parsnip_pred'] == sn_type]
 
+        # Agregar trazas para cada tipo de supernova
+        fig.add_trace(go.Scatter(
+            x=[],  # Inicialmente vacío para la animación
+            y=[],  # Inicialmente vacío para la animación
+            mode='markers',
+            marker=dict(size=10),
+            name=sn_type,
+            hoverinfo='text',
+            text=df_type['snid']
+        ))
 
-# Obtener el rango de MJD en el dataset para configurar el deslizador
-min_mjd = df_light_curves['mjd'].min()
-max_mjd = df_light_curves['mjd'].max()
+    # Crear un marco para la animación
+    frames = []
+    max_mjd = df['mjd'].max()
 
-# Crear el gráfico de posiciones con un deslizador de MJD
-def crear_grafico_posiciones_rectangulares_con_deslizador():
-    fig = px.scatter(df_light_curves,
-                     x='ra',
-                     y='decl',
-                     animation_frame='mjd',  # Crear la animación basada en MJD
-                     animation_group='snid',  # Asegurarse de que cada supernova se anime independientemente
-                     size_max=10,
-                     range_x=[df_light_curves['ra'].min() - 10, df_light_curves['ra'].max() + 10],
-                     range_y=[df_light_curves['decl'].min() - 10, df_light_curves['decl'].max() + 10],
-                     color='parsnip_pred',  # Colorear por el valor de PARSNIP_PRED
-                     hover_data=['snid', 'redshift', 'superraenn_pred'],  # Mostrar SNID, Redshift y SUPERRAENN al pasar el cursor
-                     title='Aparición de las Supernovas en el Cielo (RA vs Dec)',
-                     labels={'ra': 'Ascensión Recta (RA)', 'decl': 'Declinación (Dec)'}
-                     )
+    for time in np.linspace(0, max_mjd, num=100):  # Animar desde el MJD más bajo al más alto
+        frame_data = []
+        for sn_type in df['parsnip_pred'].unique():
+            df_type = df[(df['parsnip_pred'] == sn_type) & (df['mjd'] <= time)]
+            frame_data.append(go.Scatter(
+                x=df_type['ra'],
+                y=df_type['decl'],
+                mode='markers',
+                marker=dict(size=10),
+                name=sn_type,
+                hoverinfo='text',
+                text=df_type['snid'],
+                visible=True
+            ))
+        frames.append(go.Frame(data=frame_data, name=str(time)))
 
-    # Configurar el deslizador de MJD
+    # Actualizar la figura con las trazas y las opciones de animación
+    fig.frames = frames
     fig.update_layout(
-        sliders=[{
-            "currentvalue": {"prefix": "MJD: "},
-            "pad": {"b": 10},
-            "steps": [{"args": [[f"{frame}"], {"frame": {"duration": 500, "redraw": True},
-                                               "mode": "immediate", "fromcurrent": True}],
-                       "label": f"{frame}", "method": "animate"}
-                      for frame in range(int(min_mjd), int(max_mjd) + 1)]
-        }],
-        xaxis_title="Ascensión Recta (RA)",
-        yaxis_title="Declinación (Dec)"
+        title='Supernovae Positions (RA vs Dec) Over Time',
+        xaxis_title='Right Ascension (RA)',
+        yaxis_title='Declination (Dec)',
+        showlegend=True,
+        updatemenus=[{
+            'buttons': [
+                {
+                    'args': [None, {'frame': {'duration': 100, 'redraw': True}, 'mode': 'immediate'}],
+                    'label': 'Play',
+                    'method': 'animate'
+                },
+                {
+                    'args': [[None], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate'}],
+                    'label': 'Pause',
+                    'method': 'animate'
+                }
+            ],
+            'direction': 'left',
+            'pad': {'r': 10, 't': 10},
+            'showactive': False,
+            'type': 'buttons',
+            'x': 0.1,
+            'xanchor': 'right',
+            'y': 1.1,
+            'yanchor': 'top'
+        }]
     )
+
+    # Agregar los datos iniciales a la figura
+    for trace in fig.data:
+        trace.visible = False  # Ocultar las trazas iniciales
+    fig.data[0].visible = True  # Hacer visible la primera traza
 
     return fig
 
-# Mostrar el gráfico de posiciones en Streamlit con el deslizador
-st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
-
+# Mostrar la animación de supernovas
+st.plotly_chart(create_supernova_animation(df_light_curves))
 
 
 ##########______#############
