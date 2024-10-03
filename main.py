@@ -319,6 +319,11 @@ if not filtered_data.empty:
                       showlegend=False)
 
     st.plotly_chart(fig, use_container_width=True)
+    # Create a histogram of the counts of each supernova type
+    counts = filtered_data['parsnip_pred'].value_counts()
+    histogram_fig = px.bar(x=counts.index, y=counts.values, labels={'x': 'Supernova Type', 'y': 'Count'},
+                            title='Count of Supernovae by Type')
+    st.plotly_chart(histogram_fig)
 else:
     st.write("No supernovae found for the selected range.")
 ##########______#############
