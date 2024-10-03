@@ -292,16 +292,25 @@ selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd
 # Filter all supernovae from the minimum MJD to the selected MJD
 filtered_data = df_light_curves[df_light_curves['mjd'] <= selected_mjd]
 
-# Plotting with asterisks for supernova positions
+
 if not filtered_data.empty:
     fig = go.Figure()
+    
+    # Inicializar un diccionario para contar las supernovas por tipo
+    type_counts = {'Type Ia': 0, 'Type II': 0, 'Type Ibc': 0}
+
     for _, row in filtered_data.iterrows():
         ra = row['ra']
         decl = row['decl']
         snid = row['snid']
-        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
-        #color='parsnip_pred'
-        color = color_map.get(row['parsnip_pred'], 'black')  # Default to black if type not found
+        supernova_type = row['parsnip_pred']
+        
+        # Contar la supernova por tipo
+        if supernova_type in type_counts:
+            type_counts[supernova_type] += 1
+        
+        color_map = {'Type Ia': 'blue', 'Type II': 'red', 'Type Ibc': 'green'}
+        color = color_map.get(supernova_type, 'black')  # Default to black if type not found
         
         fig.add_trace(go.Scatter(
             x=[ra],
@@ -319,32 +328,26 @@ if not filtered_data.empty:
                       showlegend=False)
 
     st.plotly_chart(fig, use_container_width=True)
-    # Agregar la sección del histograma después de graficar las posiciones de las supernovas
-    if not filtered_data.empty:
-        # Crea un histograma para contar las supernovas por tipo hasta la fecha seleccionada
-        type_counts = filtered_data['parsnip_pred'].value_counts().reset_index()
-        type_counts.columns = ['Supernova Type', 'Count']
-    
-        # Definir el mapa de colores
-        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
-    
-        # Crear el histograma
-        fig_hist = go.Figure(data=[go.Bar(
-            x=type_counts['Supernova Type'],
-            y=type_counts['Count'],
-            marker=dict(color=[color_map.get(t, 'black') for t in type_counts['Supernova Type']])
-        )])
 
-        fig_hist.update_layout(title='Count of Supernovae by Type (up to selected MJD)',
+    # Crear el histograma de conteo de supernovas por tipo hasta la fecha seleccionada
+    # Convertir el diccionario en un DataFrame para el histograma
+    type_counts_df = pd.DataFrame(list(type_counts.items()), columns=['Supernova Type', 'Count'])
+
+    # Crear el histograma
+    fig_hist = go.Figure(data=[go.Bar(
+        x=type_counts_df['Supernova Type'],
+        y=type_counts_df['Count'],
+        marker=dict(color=[color_map.get(t, 'black') for t in type_counts_df['Supernova Type']])
+    )])
+
+    fig_hist.update_layout(title='Count of Supernovae by Type (up to selected MJD)',
                            xaxis_title='Supernova Type',
                            yaxis_title='Count')
 
-        # Mostrar el histograma
-        st.plotly_chart(fig_hist, use_container_width=True)
-    else:
-        st.write("No supernovae found for the selected MJD.")
-
-
+    # Mostrar el histograma
+    st.plotly_chart(fig_hist, use_container_width=True)
+else:
+    st.write("No supernovae found for the selected MJD.")
 
 ##########______#############
 
