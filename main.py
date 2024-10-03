@@ -279,8 +279,17 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
+# Ensure parsnip_pred exists in the DataFrame
+if 'parsnip_pred' not in df_light_curves.columns:
+    st.write("Warning: 'parsnip_pred' column is missing from the data.")
+
 # Flatten the MJD values to calculate min and max
-all_mjd_values = [item for sublist in df_light_curves['mjd'] for item in sublist]
+# Check if 'mjd' is a list and flatten it
+if df_light_curves['mjd'].apply(lambda x: isinstance(x, list)).all():
+    all_mjd_values = [item for sublist in df_light_curves['mjd'] for item in sublist]
+else:
+    all_mjd_values = df_light_curves['mjd'].tolist()  # Convert to a flat list
+
 min_mjd = min(all_mjd_values)
 max_mjd = max(all_mjd_values)
 
@@ -322,6 +331,9 @@ if not filtered_data.empty:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.write("No supernovae found for the selected MJD.")
+
+
+
 ##########______#############
 
 st.write("""
