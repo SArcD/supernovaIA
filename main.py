@@ -1219,12 +1219,21 @@ import streamlit as st
 # Elimina las filas con valores NaN en df_parameters
 df_supernova_clustering = df_parameters.dropna()
 
+# Lista de columnas que deseas filtrar
+columns_to_exclude = ['SNID', 'peak_magnitude_X_x', 'peak_magnitude_Y_x', 'peak_magnitude_r_x', 'peak_magnitude_z_x', 'peak_magnitude_g_x', 'peak_magnitude_i_x', 'distance_modulus']  # Especifica las columnas a excluir
+
+# Filtrar las columnas para excluir las no deseadas
+filtered_columns = [col for col in df_supernova_clustering.columns if col not in columns_to_exclude]
+
 # Permitir que el usuario seleccione columnas específicas para el clustering
 selected_columns = st.multiselect(
     'Select columns for clustering:',
-    options=df_supernova_clustering.columns.tolist(),  # Todas las columnas del DataFrame
-    default=df_supernova_clustering.columns.tolist()    # Por defecto, selecciona todas las columnas
+    options=filtered_columns,  # Columnas filtradas
+    default=filtered_columns     # Por defecto, selecciona todas las columnas filtradas
 )
+
+# Mostrar las columnas seleccionadas
+st.write("Selected columns for clustering:", selected_columns)
 
 # Verificar que al menos una columna esté seleccionada
 if selected_columns:
