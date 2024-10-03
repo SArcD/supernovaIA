@@ -2257,6 +2257,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from scipy.signal import savgol_filter  # Para suavizar la curva
+from plotly.subplots import make_subplots  # Para crear subgráficas
 
 # Paso 1: Filtrar las supernovas del clúster seleccionado
 df_clustered_supernovae = df_supernova_clustering[df_supernova_clustering['cluster'] == selected_cluster]
@@ -2401,7 +2402,7 @@ if not df_clustered_supernovae.empty:
                 line=dict(width=2)
             ), row=1, col=1)
 
-            # Graficar las curvas individuales en lap segunda subgráfica
+            # Graficar las curvas individuales en la segunda subgráfica
             for i in cluster_indices:
                 fig_cluster.add_trace(go.Scatter(
                     x=days_range.flatten(),
@@ -2419,8 +2420,11 @@ if not df_clustered_supernovae.empty:
                 showlegend=True
             )
 
-            # Mostrar la subgráfica en Streamlit
+            # Mostrar la subgráfica en Streamlit con un identificador único
             st.plotly_chart(fig_cluster, key=f'cluster_plot_{cluster}', use_container_width=True)
+
+    else:
+        st.write("No se encontraron supernovas suficientes para clasificar.")
 
    
 
