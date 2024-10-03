@@ -347,23 +347,42 @@ if not filtered_data.empty:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    elif view_option == "Heatmap":
-        # Crear un mapa de calor
-        fig_density = px.density_heatmap(
-            filtered_data,
-            x='ra',
-            y='decl',
-            color_continuous_scale='Viridis',
-            title='Densidad de Supernovas en RA y Dec',
-            labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
+    #elif view_option == "Heatmap":
+    #    # Crear un mapa de calor
+    #    fig_density = px.density_heatmap(
+    #        filtered_data,
+    #        x='ra',
+    #        y='decl',
+    #        color_continuous_scale='Viridis',
+    #        title='Densidad de Supernovas en RA y Dec',
+    #        labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
         )
+
+    elif view_option == "Heatmap":
+        # Crear un histograma 2D
+        hist, xedges, yedges = np.histogram2d(
+            filtered_data['ra'],
+            filtered_data['decl'],
+            bins=[30, 30]  # Ajusta el número de bins según sea necesario
+        )
+
+        # Crear un mapa de calor utilizando los datos del histograma
+        fig_density = go.Figure(data=go.Heatmap(
+            z=hist.T,  # Transponer para que coincida con la matriz de histograma
+            x=xedges,
+            y=yedges,
+            colorscale='Viridis',
+            colorbar=dict(title='Count'),
+        ))
 
         fig_density.update_layout(
             title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
             xaxis_title='Right Ascension (RA)',
             yaxis_title='Declination (Dec)',
+            showlegend=False,
         )
 
+        # Mostrar el gráfico de densidad
         st.plotly_chart(fig_density, use_container_width=True)
 
     elif view_option == "Line Chart":
