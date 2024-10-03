@@ -285,7 +285,8 @@ max_mjd = df_light_curves['mjd'].max()
 
 # Create a slider to select the Julian date
 #selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd)
-selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd, step=10)
+#selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd, step=10)
+selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd, step=5)
 
 # Prepare data for plotting
 # Filter all supernovae from the minimum MJD to the selected MJD
