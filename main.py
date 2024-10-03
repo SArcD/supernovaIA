@@ -285,6 +285,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+# Load your DataFrame (df_light_curves) here
+# df_light_curves = ...
+
 # Filter the MJD values for the slider
 min_mjd = df_light_curves['mjd'].min()
 max_mjd = df_light_curves['mjd'].max()
@@ -352,20 +361,24 @@ if not filtered_data.empty:
         # Crear una tabla de conteo de supernovas únicas en cada celda del grid
         heatmap_counts = np.zeros((len(ra_bins)-1, len(decl_bins)-1))
 
+        # Usar un conjunto para rastrear las SNID ya contadas
+        counted_snids_heatmap = set()
+
         # Contar supernovas únicas en cada celda
         for _, row in filtered_data.iterrows():
             ra = row['ra']
             decl = row['decl']
-            if row['snid'] not in counted_snids:  # Contar solo si no se ha contado antes
+            snid = row['snid']
+            if snid not in counted_snids_heatmap:  # Contar solo si no se ha contado antes
                 ra_index = np.digitize(ra, ra_bins) - 1
                 decl_index = np.digitize(decl, decl_bins) - 1
                 if 0 <= ra_index < heatmap_counts.shape[0] and 0 <= decl_index < heatmap_counts.shape[1]:
                     heatmap_counts[ra_index, decl_index] += 1
-                counted_snids.add(row['snid'])
+                counted_snids_heatmap.add(snid)
 
         # Crear un mapa de calor utilizando los datos del grid
         fig_density = go.Figure(data=go.Heatmap(
-            z=heatmap_counts,
+            z=heatmap_counts.T,  # Transponer para que el eje x y y sean correctos
             x=ra_bins[:-1],
             y=decl_bins[:-1],
             colorscale='Viridis',
