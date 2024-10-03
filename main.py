@@ -2420,7 +2420,7 @@ if not df_clustered_supernovae.empty:
             )
 
             # Mostrar la subgráfica en Streamlit
-            st.plotly_chart(fig_cluster, use_container_width=True, key="curva filtrada")
+            st.plotly_chart(fig_cluster, key=f'cluster_plot_{cluster}', use_container_width=True)
 
    
 
