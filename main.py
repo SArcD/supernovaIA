@@ -2292,8 +2292,8 @@ if not df_clustered_supernovae.empty:
     )
     
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    #window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
-    #polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
+    window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
+    polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
     features = []
@@ -2359,7 +2359,7 @@ if not df_clustered_supernovae.empty:
         showlegend=True
     )
 
-    st.plotly_chart(fig_all_smoothed, use_container_width=True)
+    st.plotly_chart(fig_all_smoothed, key='all_smoothed_curves', use_container_width=True)  # Usar un key único
 
     # Clasificación de perfiles comunes mediante clustering
     if len(features) > 1:  # Asegurarse de que hay suficientes supernovas para el clustering
@@ -2425,6 +2425,3 @@ if not df_clustered_supernovae.empty:
 
     else:
         st.write("No se encontraron supernovas suficientes para clasificar.")
-
-   
-
