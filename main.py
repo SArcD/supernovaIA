@@ -279,147 +279,128 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+# Load your DataFrame (df_light_curves) here
+# df_light_curves = ...
+
 # Filter the MJD values for the slider
 min_mjd = df_light_curves['mjd'].min()
 max_mjd = df_light_curves['mjd'].max()
 
 # Create a slider to select the Julian date
 selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd)
-#selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=min_mjd, max_value=max_mjd, step=10)
-#selected_mjd = st.slider("Select Modified Julian Date (MJD):", min_value=int(min_mjd), max_value=int(max_mjd), step=5)
 
 # Prepare data for plotting
-# Filter all supernovae from the minimum MJD to the selected MJD
 filtered_data = df_light_curves[df_light_curves['mjd'] <= selected_mjd]
 
-# Preparar datos para el gráfico de dispersión
-# Calcular años a partir de MJD
-# Calcular años a partir de MJD
-# Preparar datos para el gráfico de dispersión
-if not filtered_data.empty:
-    fig = go.Figure()
-    
-    # Inicializar un diccionario para contar las supernovas por tipo
-    type_counts = {'SN Ia': 0, 'SN II': 0, 'SN Ibc': 0}
-    
-    # Usar un conjunto para rastrear las SNID ya contadas
-    counted_snids = set()
+# Visualización del gráfico
+view_option = st.selectbox("Select visualization type:", ["Positions", "Heatmap", "Line Chart"])
 
+# Inicializar un diccionario para contar las supernovas por tipo
+type_counts = {'SN Ia': 0, 'SN II': 0, 'SN Ibc': 0}
+counted_snids = set()
+
+if not filtered_data.empty:
+    # Conteo de supernovas por tipo
     for _, row in filtered_data.iterrows():
-        ra = row['ra']
-        decl = row['decl']
         snid = row['snid']
         supernova_type = row['parsnip_pred']
-        
-        # Contar la supernova por tipo solo si no ha sido contada previamente
+
         if snid not in counted_snids:
             if supernova_type in type_counts:
                 type_counts[supernova_type] += 1
-            counted_snids.add(snid)  # Agregar el SNID al conjunto de contados
-        
-        color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
-        color = color_map.get(supernova_type, 'black')  # Default to black if type not found
-        
-        fig.add_trace(go.Scatter(
-            x=[ra],
-            y=[decl],
-            mode='markers',
-            marker=dict(size=10, color=color, symbol='star'),  # Use asterisks
-            name=snid,
-            hoverinfo='text',
-            text=f'SNID: {snid}, MJD: {selected_mjd}'  # Show SNID on hover
-        ))
+            counted_snids.add(snid)
 
-    fig.update_layout(title='Positions of Supernovae (RA vs Declination)',
-                      xaxis_title='Right Ascension (RA)',
-                      yaxis_title='Declination (Dec)',
-                      showlegend=False)
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Crear el histograma de conteo de supernovas por tipo hasta la fecha seleccionada
-    # Convertir el diccionario en un DataFrame para el histograma
+    # Histogram Data
     type_counts_df = pd.DataFrame(list(type_counts.items()), columns=['Supernova Type', 'Count'])
 
-    # Crear el histograma
+    if view_option == "Positions":
+        # Crear gráfico de posiciones
+        fig = go.Figure()
+
+        for _, row in filtered_data.iterrows():
+            ra = row['ra']
+            decl = row['decl']
+            supernova_type = row['parsnip_pred']
+            color_map = {'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}
+            color = color_map.get(supernova_type, 'black')
+
+            fig.add_trace(go.Scatter(
+                x=[ra],
+                y=[decl],
+                mode='markers',
+                marker=dict(size=10, color=color, symbol='star'),  # Use asterisks
+                name=row['snid'],
+                hoverinfo='text',
+                text=f'SNID: {row["snid"]}, MJD: {selected_mjd}'  # Show SNID on hover
+            ))
+
+        fig.update_layout(title='Positions of Supernovae (RA vs Declination)',
+                          xaxis_title='Right Ascension (RA)',
+                          yaxis_title='Declination (Dec)',
+                          showlegend=False)
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif view_option == "Heatmap":
+        # Crear un mapa de calor
+        fig_density = px.density_heatmap(
+            filtered_data,
+            x='ra',
+            y='decl',
+            color_continuous_scale='Viridis',
+            title='Densidad de Supernovas en RA y Dec',
+            labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
+        )
+
+        fig_density.update_layout(
+            title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
+            xaxis_title='Right Ascension (RA)',
+            yaxis_title='Declination (Dec)',
+        )
+
+        st.plotly_chart(fig_density, use_container_width=True)
+
+    elif view_option == "Line Chart":
+        # Crear un gráfico de líneas
+        mjd_counts = filtered_data['mjd'].value_counts().sort_index()
+
+        fig_lines = go.Figure()
+        fig_lines.add_trace(go.Scatter(
+            x=mjd_counts.index,
+            y=mjd_counts.values,
+            mode='lines',
+            name='Cantidad de Supernovas',
+            line=dict(color='blue')
+        ))
+
+        fig_lines.update_layout(
+            title='Evolución de Supernovas a lo Largo del Tiempo',
+            xaxis_title='MJD',
+            yaxis_title='Cantidad de Supernovas',
+        )
+
+        st.plotly_chart(fig_lines, use_container_width=True)
+
+    # Mostrar el histograma
     fig_hist = go.Figure(data=[go.Bar(
         x=type_counts_df['Supernova Type'],
         y=type_counts_df['Count'],
-        marker=dict(color=[color_map.get(t, 'black') for t in type_counts_df['Supernova Type']])
+        marker=dict(color=[{'SN Ia': 'blue', 'SN II': 'red', 'SN Ibc': 'green'}.get(t, 'black') for t in type_counts_df['Supernova Type']])
     )])
 
     fig_hist.update_layout(title='Count of Supernovae by Type (up to selected MJD)',
                            xaxis_title='Supernova Type',
                            yaxis_title='Count')
 
-    # Mostrar el histograma
     st.plotly_chart(fig_hist, use_container_width=True)
 else:
     st.write("No supernovae found for the selected MJD.")
-
-
-# Selección de visualización
-view_option = st.selectbox("Select visualization type:", ["Heatmap", "Line Chart"])
-
-if view_option == "Heatmap":
-    # Filtrar datos hasta la fecha MJD seleccionada
-    #filtered_data = df_light_curves[df_light_curves['mjd'] <= selected_mjd]
-
-    # Inicializar un diccionario para contar las supernovas por tipo
-    type_counts = {'SN Ia': 0, 'Type SNII': 0, 'SN Ibc': 0}
-    counted_snids = set()
-
-    # Contar supernovas visibles y registrar coordenadas para el mapa de calor
-    for _, row in filtered_data.iterrows():
-        snid = row['snid']
-        supernova_type = row['parsnip_pred']
-    
-        if snid not in counted_snids:
-            if supernova_type in type_counts:
-                type_counts[supernova_type] += 1
-            counted_snids.add(snid)
-
-    # Crear un mapa de calor utilizando los datos filtrados
-    fig_density = px.density_heatmap(
-        filtered_data,
-        x='ra',
-        y='decl',
-        color_continuous_scale='Viridis',
-        title='Densidad de Supernovas en RA y Dec',
-        labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
-    )
-
-    # Actualizar el layout del gráfico de densidad
-    fig_density.update_layout(
-        title='Densidad de Supernovas en RA y Dec (hasta MJD seleccionada)',
-        xaxis_title='Right Ascension (RA)',
-        yaxis_title='Declination (Dec)',
-    )
-
-    # Mostrar el gráfico de densidad
-    st.plotly_chart(fig_density, use_container_width=True)
-
-elif view_option == "Line Chart":
-    # Contar supernovas visibles en cada MJD
-    mjd_counts = filtered_data['mjd'].value_counts().sort_index()
-
-    # Crear un gráfico de líneas
-    fig_lines = go.Figure()
-    fig_lines.add_trace(go.Scatter(
-        x=mjd_counts.index,
-        y=mjd_counts.values,
-        mode='lines',
-        name='Cantidad de Supernovas',
-        line=dict(color='blue')
-    ))
-
-    fig_lines.update_layout(
-        title='Evolución de Supernovas a lo Largo del Tiempo',
-        xaxis_title='MJD',
-        yaxis_title='Cantidad de Supernovas',
-    )
-
-    st.plotly_chart(fig_lines, use_container_width=True)
 
 
 ##########______#############
