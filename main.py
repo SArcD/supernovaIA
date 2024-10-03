@@ -357,6 +357,45 @@ if not filtered_data.empty:
 else:
     st.write("No supernovae found for the selected MJD.")
 
+
+# Selección de visualización
+view_option = st.selectbox("Select visualization type:", ["Heatmap", "Line Chart"])
+
+if view_option == "Heatmap":
+    # Crear un mapa de calor
+    fig_density = px.density_heatmap(
+        filtered_data,
+        x='ra',
+        y='decl',
+        color_continuous_scale='Viridis',
+        title='Densidad de Supernovas en RA y Dec',
+        labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
+    )
+    st.plotly_chart(fig_density, use_container_width=True)
+
+elif view_option == "Line Chart":
+    # Contar supernovas visibles en cada MJD
+    mjd_counts = filtered_data['mjd'].value_counts().sort_index()
+
+    # Crear un gráfico de líneas
+    fig_lines = go.Figure()
+    fig_lines.add_trace(go.Scatter(
+        x=mjd_counts.index,
+        y=mjd_counts.values,
+        mode='lines',
+        name='Cantidad de Supernovas',
+        line=dict(color='blue')
+    ))
+
+    fig_lines.update_layout(
+        title='Evolución de Supernovas a lo Largo del Tiempo',
+        xaxis_title='MJD',
+        yaxis_title='Cantidad de Supernovas',
+    )
+
+    st.plotly_chart(fig_lines, use_container_width=True)
+
+
 ##########______#############
 
 st.write("""
