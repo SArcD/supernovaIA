@@ -354,6 +354,8 @@ def crear_grafico_posiciones_rectangulares_con_deslizador():
 
     return fig
 
+st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
+
 
 ##########______#############
 
