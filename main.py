@@ -279,92 +279,6 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
-import numpy as np
-import requests
-import pandas as pd
-import streamlit as st
-import plotly.express as px
-import plotly.graph_objects as go
-
-# Function to obtain the list of files from a GitHub repository using the API
-@st.cache_data
-def get_github_file_list(repo_url, subdirectory=""):
-    api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectory}"
-    response = requests.get(api_url)
-    if response.status_code == 200:
-        files = [file['download_url'] for file in response.json() if file['name'].endswith(".snana.dat")]
-        return files
-    else:
-        return []
-
-# Function to download and read the content of a file from GitHub
-@st.cache_data
-def download_file_from_github(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
-
-# Function to safely convert a value to float
-def convert_to_float(value, default_value=None):
-    try:
-        return float(value)
-    except ValueError:
-        return default_value
-
-# Function to read the downloaded supernova file and extract relevant data
-def read_supernova_file_content(content):
-    # Variables and lists to store data
-    mjd, mag, magerr, flx, flxerr, filters = [], [], [], [], [], []
-    snid, ra, decl, redshift, mwebv = None, None, None, None, None
-
-    for line in content.splitlines():
-        if line.startswith("SNID:"):
-            snid = line.split()[1]
-        elif line.startswith("RA:"):
-            ra = convert_to_float(line.split()[1])
-        elif line.startswith("DECL:"):
-            decl = convert_to_float(line.split()[1])
-        elif line.startswith("REDSHIFT_FINAL:"):
-            redshift = convert_to_float(line.split()[1])
-        elif line.startswith("MWEBV:"):
-            mwebv = convert_to_float(line.split()[1])
-        elif line.startswith("OBS:"):  # Extract observations
-            data = line.split()
-            mjd.append(convert_to_float(data[1]))  # MJD (Modified Julian Date)
-            flx.append(convert_to_float(data[4]))  # Flux (FLUXCAL)
-            mag.append(convert_to_float(data[6]))  # Magnitude (MAG)
-
-    return mjd, mag, snid, ra, decl, redshift, mwebv
-
-# Download and process supernova files from GitHub
-@st.cache_data
-def download_and_process_supernovas(repo_url, subdirectory=""):
-    file_list = get_github_file_list(repo_url, subdirectory)
-    vector_list = []
-
-    for file_url in file_list:
-        content = download_file_from_github(file_url)
-        if content:
-            mjd, mag, snid, ra, decl, redshift, mwebv = read_supernova_file_content(content)
-            vector_list.append({
-                'mjd': mjd,
-                'mag': mag,
-                'snid': snid,
-                'ra': ra,
-                'decl': decl,
-                'redshift': redshift,
-                'mwebv': mwebv
-            })
-
-    return pd.DataFrame(vector_list)
-
-# Load supernova data from GitHub
-st.write("Downloading and processing supernova files...")
-repo_url = "https://github.com/SArcD/supernovaIA"
-df_light_curves = download_and_process_supernovas(repo_url)
-
 # Define a color map for different types of supernovae
 color_map = {
     'Type Ia': 'blue',
@@ -406,8 +320,6 @@ if not filtered_data.empty:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.write("No supernovae found for the selected MJD.")
-
-
 
 ##########______#############
 
