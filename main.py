@@ -279,7 +279,7 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
-# Crear el gráfico de posiciones con un deslizador de MJD y un botón para controlar la velocidad
+# Crear el gráfico de posiciones con un deslizador de MJD para todos los tipos de supernovas
 def crear_grafico_posiciones_rectangulares_con_deslizador():
     # Filtrar los tipos de supernovas (asegúrate de que se incluyan todos)
     df_filtrado = df_light_curves[df_light_curves['parsnip_pred'].isin(['SN Ia', 'SN Ibc', 'SN II'])]
@@ -316,43 +316,8 @@ def crear_grafico_posiciones_rectangulares_con_deslizador():
         yaxis_title="Declinación (Dec)"
     )
 
-    # Añadir botones para controlar la velocidad de la animación
-    fig.update_layout(
-        updatemenus=[{
-            "buttons": [
-                {
-                    "args": [None, {"frame": {"duration": 1000, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "Velocidad Normal",
-                    "method": "animate"
-                },
-                {
-                    "args": [None, {"frame": {"duration": 500, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "2x Velocidad",
-                    "method": "animate"
-                },
-                {
-                    "args": [None, {"frame": {"duration": 250, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "4x Velocidad",
-                    "method": "animate"
-                },
-                {
-                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "mode": "immediate"}],
-                    "label": "8x Velocidad",
-                    "method": "animate"
-                }
-            ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": True,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
-        }]
-    )
-
     return fig
+
 
 st.plotly_chart(crear_grafico_posiciones_rectangulares_con_deslizador())
 
