@@ -279,85 +279,56 @@ elif plot_option == "Declination vs Redshift" :
 
 ##########-----#############
 
-# Función para crear una animación de supernovas en coordenadas RA y Dec
-def create_supernova_animation(df):
-    fig = go.Figure()
+import numpy as np
+import requests
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
 
-    # Agrupar por tipo de supernova (por ejemplo, por 'parsnip_pred')
-    for sn_type in df['parsnip_pred'].unique():
-        df_type = df[df['parsnip_pred'] == sn_type]
+# (Código anterior para cargar y procesar los datos)
 
-        # Agregar trazas para cada tipo de supernova
-        fig.add_trace(go.Scatter(
-            x=[],  # Inicialmente vacío para la animación
-            y=[],  # Inicialmente vacío para la animación
-            mode='markers',
-            marker=dict(size=10),
-            name=sn_type,
-            hoverinfo='text',
-            text=df_type['snid']
-        ))
-
-    # Crear un marco para la animación
-    frames = []
+# Función para crear un gráfico interactivo basado en el MJD seleccionado
+def create_interactive_plot(df):
+    # Obtener el rango máximo y mínimo de MJD
+    min_mjd = df['mjd'].min()
     max_mjd = df['mjd'].max()
 
-    for time in np.linspace(0, max_mjd, num=100):  # Animar desde el MJD más bajo al más alto
-        frame_data = []
-        for sn_type in df['parsnip_pred'].unique():
-            df_type = df[(df['parsnip_pred'] == sn_type) & (df['mjd'] <= time)]
-            frame_data.append(go.Scatter(
-                x=df_type['ra'],
-                y=df_type['decl'],
-                mode='markers',
-                marker=dict(size=10),
-                name=sn_type,
-                hoverinfo='text',
-                text=df_type['snid'],
-                visible=True
-            ))
-        frames.append(go.Frame(data=frame_data, name=str(time)))
+    # Deslizador para seleccionar el MJD
+    selected_mjd = st.slider("Select the Modified Julian Date (MJD):", 
+                              min_value=int(min_mjd), 
+                              max_value=int(max_mjd), 
+                              value=int(min_mjd))
 
-    # Actualizar la figura con las trazas y las opciones de animación
-    fig.frames = frames
+    # Filtrar el DataFrame basado en el MJD seleccionado
+    filtered_df = df[df['mjd'] <= selected_mjd]
+
+    # Crear el gráfico de dispersión usando asteriscos
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=filtered_df['ra'],
+        y=filtered_df['decl'],
+        mode='markers+text',
+        marker=dict(size=10, color='blue'),  # Tamaño y color de los asteriscos
+        text=['*'] * len(filtered_df),  # Asteriscos como etiquetas
+        textposition='middle center',
+        hoverinfo='text',
+        name='Supernovae'
+    ))
+
+    # Actualizar el layout del gráfico
     fig.update_layout(
-        title='Supernovae Positions (RA vs Dec) Over Time',
+        title='Position of Supernovae in the Sky (RA vs Dec) at MJD {}'.format(selected_mjd),
         xaxis_title='Right Ascension (RA)',
         yaxis_title='Declination (Dec)',
-        showlegend=True,
-        updatemenus=[{
-            'buttons': [
-                {
-                    'args': [None, {'frame': {'duration': 100, 'redraw': True}, 'mode': 'immediate'}],
-                    'label': 'Play',
-                    'method': 'animate'
-                },
-                {
-                    'args': [[None], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate'}],
-                    'label': 'Pause',
-                    'method': 'animate'
-                }
-            ],
-            'direction': 'left',
-            'pad': {'r': 10, 't': 10},
-            'showactive': False,
-            'type': 'buttons',
-            'x': 0.1,
-            'xanchor': 'right',
-            'y': 1.1,
-            'yanchor': 'top'
-        }]
+        showlegend=False
     )
-
-    # Agregar los datos iniciales a la figura
-    for trace in fig.data:
-        trace.visible = False  # Ocultar las trazas iniciales
-    fig.data[0].visible = True  # Hacer visible la primera traza
 
     return fig
 
-# Mostrar la animación de supernovas
-st.plotly_chart(create_supernova_animation(df_light_curves))
+# Mostrar el gráfico interactivo
+st.plotly_chart(create_interactive_plot(df_light_curves))
 
 
 ##########______#############
