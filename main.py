@@ -2291,10 +2291,10 @@ if not df_clustered_supernovae.empty:
     df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
         lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
     )
-    
+
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    #window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
-    #polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
+    window_length = st.number_input("Ventana (debe ser impar)", value=11, min_value=3, step=2)
+    polyorder = st.number_input("Orden", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
     features = []
@@ -2342,8 +2342,16 @@ if not df_clustered_supernovae.empty:
             
             area_under_curve = np.trapz(smoothed_magnitudes, days_range.flatten())  # Área bajo la curva
 
+            # Calcular la pendiente de la curva de luz
+            # Suponiendo que el pico se encuentra en el primer índice y que calculamos la pendiente
+            peak_index = np.argmax(smoothed_magnitudes)  # Encuentra el índice del pico
+            if peak_index < len(smoothed_magnitudes) - 1:  # Asegúrate de que no esté fuera de rango
+                slope = (smoothed_magnitudes[peak_index + 1] - smoothed_magnitudes[peak_index]) / (days_range[peak_index + 1] - days_range[peak_index])
+            else:
+                slope = None  # Si no hay un siguiente punto, no se puede calcular la pendiente
+            
             # Almacenar las características en la lista
-            features.append([peak_magnitude, time_to_half_peak, area_under_curve])
+            features.append([peak_magnitude, time_to_half_peak, area_under_curve, slope])
             all_smoothed_data.append(smoothed_magnitudes)  # Almacenar las curvas suavizadas
 
     # Mostrar la lista de supernovas con datos insuficientes (si las hay)
@@ -2365,7 +2373,7 @@ if not df_clustered_supernovae.empty:
     # Clasificación de perfiles comunes mediante clustering
     if len(features) > 1:  # Asegurarse de que hay suficientes supernovas para el clustering
         # Convertir la lista de características a un DataFrame
-        df_features = pd.DataFrame(features, columns=['peak_magnitude', 'time_to_half_peak', 'area_under_curve'])
+        df_features = pd.DataFrame(features, columns=['peak_magnitude', 'time_to_half_peak', 'area_under_curve', 'slope'])
 
         # Escalar las características
         scaler = StandardScaler()
