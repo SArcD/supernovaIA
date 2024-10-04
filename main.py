@@ -2356,7 +2356,7 @@ if not df_clustered_supernovae.empty:
         title='Smoothed Light Curves for Supernovae in Cluster',
         xaxis_title='Normalized Days Relative to Peak',
         yaxis_title='Corrected Magnitude',
-        #yaxis=dict(autorange='reversed'),  # Invertir el eje Y para que las magnitudes más brillantes estén arriba
+        yaxis=dict(autorange='reversed'),  # Invertir el eje Y para que las magnitudes más brillantes estén arriba
         showlegend=True
     )
 
@@ -2391,11 +2391,32 @@ if not df_clustered_supernovae.empty:
             # Promediar las curvas suavizadas de las supernovas en el cluster
             avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
     
+            ## Graficar la curva promedio para cada cluster
+            #st.plotly_chart(go.Figure(data=go.Scatter(
+            #    x=days_range.flatten(),
+            #    y=avg_smoothed_curve,
+            #    mode='lines',
+            #    name=f'Average Curve for Cluster {cluster}',
+            #    line=dict(width=2)
+            #)), use_container_width=True)
+
+
+
             # Graficar la curva promedio para cada cluster
-            st.plotly_chart(go.Figure(data=go.Scatter(
+            fig_average = go.Figure(data=go.Scatter(
                 x=days_range.flatten(),
                 y=avg_smoothed_curve,
                 mode='lines',
                 name=f'Average Curve for Cluster {cluster}',
                 line=dict(width=2)
-            )), use_container_width=True)
+            ))
+
+            # Invertir el eje Y
+            fig_average.update_layout(
+                title=f'Average Curve for Cluster {cluster}',
+                yaxis_title='Corrected Magnitude',
+                yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+            )
+
+            # Mostrar la gráfica en Streamlit
+            st.plotly_chart(fig_average, use_container_width=True)
