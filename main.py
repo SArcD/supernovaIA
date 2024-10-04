@@ -2412,6 +2412,10 @@ if not df_clustered_supernovae.empty:
                     line=dict(width=1, dash='dot')  # Línea punteada para curvas individuales
                 ), row=1, col=2)
 
+            # Invertir el eje Y para la gráfica de curvas individuales
+            fig_cluster.update_yaxes(autorange='reversed', row=1, col=2)
+
+            
             # Configurar la visualización de la subgráfica
             fig_cluster.update_layout(
                 title=f'Supernovae Cluster {cluster}',
