@@ -2291,10 +2291,10 @@ if not df_clustered_supernovae.empty:
     df_light_curves_cluster['days_relative_normalized'] = df_light_curves_cluster.groupby('snid')['days_relative'].transform(
         lambda x: (x - x.min()) / (x.max() - x.min())  # Normalización entre 0 y 1
     )
-
+    
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    window_length = st.number_input("Ventana (debe ser impar)", value=11, min_value=3, step=2)
-    polyorder = st.number_input("Orden", value=3, min_value=1)
+    #window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
+    #polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
     features = []
@@ -2342,16 +2342,8 @@ if not df_clustered_supernovae.empty:
             
             area_under_curve = np.trapz(smoothed_magnitudes, days_range.flatten())  # Área bajo la curva
 
-            # Calcular la pendiente de la curva de luz
-            # Suponiendo que el pico se encuentra en el primer índice y que calculamos la pendiente
-            peak_index = np.argmax(smoothed_magnitudes)  # Encuentra el índice del pico
-            if peak_index < len(smoothed_magnitudes) - 1:  # Asegúrate de que no esté fuera de rango
-                slope = (smoothed_magnitudes[peak_index + 1] - smoothed_magnitudes[peak_index]) / (days_range[peak_index + 1] - days_range[peak_index])
-            else:
-                slope = None  # Si no hay un siguiente punto, no se puede calcular la pendiente
-            
             # Almacenar las características en la lista
-            features.append([peak_magnitude, time_to_half_peak, area_under_curve, slope])
+            features.append([peak_magnitude, time_to_half_peak, area_under_curve])
             all_smoothed_data.append(smoothed_magnitudes)  # Almacenar las curvas suavizadas
 
     # Mostrar la lista de supernovas con datos insuficientes (si las hay)
@@ -2373,53 +2365,37 @@ if not df_clustered_supernovae.empty:
     # Clasificación de perfiles comunes mediante clustering
     if len(features) > 1:  # Asegurarse de que hay suficientes supernovas para el clustering
         # Convertir la lista de características a un DataFrame
-        df_features = pd.DataFrame(features, columns=['peak_magnitude', 'time_to_half_peak', 'area_under_curve', 'slope'])
+        df_features = pd.DataFrame(features, columns=['peak_magnitude', 'time_to_half_peak', 'area_under_curve'])
 
-        # Comprobar si hay valores nulos
-        if df_features.isnull().values.any():
-            st.error("Los datos contienen valores nulos. No se puede realizar el clustering.")
-        else:
-            # Escalar las características
-            scaler = StandardScaler()
-            scaled_features = scaler.fit_transform(df_features)
+        # Escalar las características
+        scaler = StandardScaler()
+        scaled_features = scaler.fit_transform(df_features)
 
-            # Verifica las dimensiones de scaled_features
-            st.write(f"Scaled features shape: {scaled_features.shape}")
+        # Aplicar K-Means para clasificar las supernovas en perfiles comunes
+        k = st.number_input("Núm de perfiles (clusters)", value=3, min_value=1, step=1)
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        df_features['cluster'] = kmeans.fit_predict(scaled_features)
 
-            # Comprobar si hay valores infinitos
-            if np.isinf(scaled_features).any():
-                st.error("Los datos contienen valores infinitos. No se puede realizar el clustering.")
-            else:
-                # Aplicar K-Means para clasificar las supernovas en perfiles comunes
-                k = st.number_input("Núm de perfiles (clusters)", value=3, min_value=1, step=1)
-                if k <= len(features):
-                    kmeans = KMeans(n_clusters=k, random_state=42)
-                    df_features['cluster'] = kmeans.fit_predict(scaled_features)
+        # Mostrar los resultados de clasificación
+        st.write("Clasificación de supernovas en perfiles comunes:")
+        for cluster in range(k):
+            st.write(f"Cluster {cluster}:")
+    
+            # Encontrar los índices de las supernovas en el cluster
+            cluster_indices = df_features.index[df_features['cluster'] == cluster].tolist()
+    
+            # Obtener los SNID de las supernovas en el cluster
+            cluster_ids = df_light_curves_cluster['snid'].unique()[cluster_indices]
+            st.write(cluster_ids)
 
-                    # Mostrar los resultados de clasificación
-                    st.write("Clasificación de supernovas en perfiles comunes:")
-                    for cluster in range(k):
-                        st.write(f"Cluster {cluster}:")
-        
-                        # Encontrar los índices de las supernovas en el cluster
-                        cluster_indices = df_features.index[df_features['cluster'] == cluster].tolist()
-        
-                        # Obtener los SNID de las supernovas en el cluster
-                        cluster_ids = df_light_curves_cluster['snid'].unique()[cluster_indices]
-                        st.write(cluster_ids)
-
-                        # Promediar las curvas suavizadas de las supernovas en el cluster
-                        avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
-
-                        # Graficar la curva promedio para cada cluster
-                        st.plotly_chart(go.Figure(data=go.Scatter(
-                            x=days_range.flatten(),
-                            y=avg_smoothed_curve,
-                            mode='lines',
-                            name=f'Average Curve for Cluster {cluster}',
-                            line=dict(width=2)
-                        )), use_container_width=True)
-                else:
-                    st.error("El número de clusters no puede ser mayor que el número de supernovas disponibles.")
-    else:
-        st.write("No se encontraron supernovas suficientes para clasificar.")
+            # Promediar las curvas suavizadas de las supernovas en el cluster
+            avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
+    
+            # Graficar la curva promedio para cada cluster
+            st.plotly_chart(go.Figure(data=go.Scatter(
+                x=days_range.flatten(),
+                y=avg_smoothed_curve,
+                mode='lines',
+                name=f'Average Curve for Cluster {cluster}',
+                line=dict(width=2)
+            )), use_container_width=True)
