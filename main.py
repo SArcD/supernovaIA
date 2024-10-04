@@ -2293,7 +2293,7 @@ if not df_clustered_supernovae.empty:
     )
     
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    window_length = st.number_input("Ventana (debe ser impar)", value=11, min_value=3, step=2)
+    window_length = st.number_input("Vventana (debe ser impar)", value=11, min_value=3, step=2)
     polyorder = st.number_input("Orden", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
@@ -2387,8 +2387,13 @@ if not df_clustered_supernovae.empty:
             # Obtener los SNID de las supernovas en el cluster
             cluster_ids = df_light_curves_cluster['snid'].unique()[cluster_indices]
 
-            # Graficar la curva promedio para cada cluster
-            avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
+            # Comprobar si hay suficientes curvas para calcular la curva promedio
+            if len(cluster_indices) > 1:
+                # Graficar la curva promedio para cada cluster
+                avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
+            else:
+                # Si hay solo una curva, utilizarla como promedio
+                avg_smoothed_curve = all_smoothed_data[cluster_indices[0]]
 
             # Crear subgráfica para las curvas individuales y la curva promedio
             fig_cluster = make_subplots(rows=1, cols=2, subplot_titles=(f'Cluster {cluster} - Average Curve', 'Individual Curves'))
@@ -2404,9 +2409,15 @@ if not df_clustered_supernovae.empty:
 
             # Graficar las curvas individuales en la segunda subgráfica
             for i in cluster_indices:
+                individual_curve = all_smoothed_data[i]
+                # Asegurarse de que la curva no tenga valores NaN
+                if np.any(np.isnan(individual_curve)):
+                    st.warning(f"La curva para SNID: {df_light_curves_cluster['snid'].unique()[i]} contiene valores NaN y no será graficada.")
+                    continue
+
                 fig_cluster.add_trace(go.Scatter(
                     x=days_range.flatten(),
-                    y=all_smoothed_data[i],
+                    y=individual_curve,
                     mode='lines',
                     name=f'SNID: {df_light_curves_cluster["snid"].unique()[i]}',
                     line=dict(width=1, dash='dot')  # Línea punteada para curvas individuales
@@ -2415,7 +2426,6 @@ if not df_clustered_supernovae.empty:
             # Invertir el eje Y para la gráfica de curvas individuales
             fig_cluster.update_yaxes(autorange='reversed', row=1, col=2)
 
-            
             # Configurar la visualización de la subgráfica
             fig_cluster.update_layout(
                 title=f'Supernovae Cluster {cluster}',
@@ -2429,4 +2439,5 @@ if not df_clustered_supernovae.empty:
 
     else:
         st.write("No se encontraron supernovas suficientes para clasificar.")
+
 
