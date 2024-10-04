@@ -2395,8 +2395,23 @@ if not df_clustered_supernovae.empty:
 
                 # Comprobar si hay suficientes curvas para calcular la curva promedio
                 if len(cluster_indices) > 1:
-                    # Graficar la curva promedio para cada cluster
-                    avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
+                    # Filtrar solo curvas válidas (sin NaN) para calcular el promedio
+                    valid_curves = [all_smoothed_data[i] for i in cluster_indices if np.all(np.isfinite(all_smoothed_data[i]))]
+                    if valid_curves:
+                        avg_smoothed_curve = np.mean(valid_curves, axis=0)
+                        # Reemplazar valores NaN con el promedio de los puntos adyacentes
+                        avg_smoothed_curve = np.where(
+                            np.isnan(avg_smoothed_curve),
+                            np.where(
+                                np.arange(len(avg_smoothed_curve)) > 0, 
+                                (np.roll(avg_smoothed_curve, 1) + avg_smoothed_curve) / 2, 
+                                avg_smoothed_curve
+                            ),
+                            avg_smoothed_curve
+                        )
+                    else:
+                        st.warning(f"No hay curvas válidas para el cluster {cluster}.")
+                        continue  # Si no hay curvas válidas, saltar este cluster
                 else:
                     # Si hay solo una curva, utilizarla como promedio
                     avg_smoothed_curve = all_smoothed_data[cluster_indices[0]]
@@ -2447,3 +2462,4 @@ if not df_clustered_supernovae.empty:
 
     else:
         st.write("No se encontraron supernovas suficientes para clasificar.")
+
