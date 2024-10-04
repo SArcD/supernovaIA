@@ -2293,8 +2293,8 @@ if not df_clustered_supernovae.empty:
     )
     
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
-    polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
+    window_length = st.number_input("Ventana (debe ser impar)", value=11, min_value=3, step=2)
+    polyorder = st.number_input("Orden", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
     features = []
