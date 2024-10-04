@@ -2356,7 +2356,7 @@ if not df_clustered_supernovae.empty:
         title='Smoothed Light Curves for Supernovae in Cluster',
         xaxis_title='Normalized Days Relative to Peak',
         yaxis_title='Corrected Magnitude',
-        yaxis=dict(autorange='reversed'),  # Invertir el eje Y para que las magnitudes más brillantes estén arriba
+        #yaxis=dict(autorange='reversed'),  # Invertir el eje Y para que las magnitudes más brillantes estén arriba
         showlegend=True
     )
 
