@@ -2293,8 +2293,8 @@ if not df_clustered_supernovae.empty:
     )
     
     # Input boxes para los parámetros del filtro Savitzky-Golay
-    #window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
-    #polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
+    window_length = st.number_input("Tamaño de la ventana (debe ser impar)", value=11, min_value=3, step=2)
+    polyorder = st.number_input("Orden del polinomio", value=3, min_value=1)
 
     # Lista para almacenar las características de cada supernova
     features = []
@@ -2386,37 +2386,43 @@ if not df_clustered_supernovae.empty:
     
             # Obtener los SNID de las supernovas en el cluster
             cluster_ids = df_light_curves_cluster['snid'].unique()[cluster_indices]
-            st.write(cluster_ids)
-
-            # Promediar las curvas suavizadas de las supernovas en el cluster
-            avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
-    
-            ## Graficar la curva promedio para cada cluster
-            #st.plotly_chart(go.Figure(data=go.Scatter(
-            #    x=days_range.flatten(),
-            #    y=avg_smoothed_curve,
-            #    mode='lines',
-            #    name=f'Average Curve for Cluster {cluster}',
-            #    line=dict(width=2)
-            #)), use_container_width=True)
-
-
 
             # Graficar la curva promedio para cada cluster
-            fig_average = go.Figure(data=go.Scatter(
+            avg_smoothed_curve = np.mean([all_smoothed_data[i] for i in range(len(all_smoothed_data)) if df_clustered_supernovae['SNID'].iloc[i] in cluster_ids], axis=0)
+
+            # Crear subgráfica para las curvas individuales y la curva promedio
+            fig_cluster = make_subplots(rows=1, cols=2, subplot_titles=(f'Cluster {cluster} - Average Curve', 'Individual Curves'))
+            
+            # Graficar la curva promedio
+            fig_cluster.add_trace(go.Scatter(
                 x=days_range.flatten(),
                 y=avg_smoothed_curve,
                 mode='lines',
-                name=f'Average Curve for Cluster {cluster}',
+                name='Average Curve',
                 line=dict(width=2)
-            ))
+            ), row=1, col=1)
 
-            # Invertir el eje Y
-            fig_average.update_layout(
-                title=f'Average Curve for Cluster {cluster}',
+            # Graficar las curvas individuales en la segunda subgráfica
+            for i in cluster_indices:
+                fig_cluster.add_trace(go.Scatter(
+                    x=days_range.flatten(),
+                    y=all_smoothed_data[i],
+                    mode='lines',
+                    name=f'SNID: {df_light_curves_cluster["snid"].unique()[i]}',
+                    line=dict(width=1, dash='dot')  # Línea punteada para curvas individuales
+                ), row=1, col=2)
+
+            # Configurar la visualización de la subgráfica
+            fig_cluster.update_layout(
+                title=f'Supernovae Cluster {cluster}',
                 yaxis_title='Corrected Magnitude',
                 yaxis=dict(autorange='reversed'),  # Invertir el eje Y
+                showlegend=True
             )
 
-            # Mostrar la gráfica en Streamlit
-            st.plotly_chart(fig_average, use_container_width=True)
+            # Mostrar la subgráfica en Streamlit
+            st.plotly_chart(fig_cluster, use_container_width=True, key=f'cluster_plot_{cluster}')
+
+    else:
+        st.write("No se encontraron supernovas suficientes para clasificar.")
+
