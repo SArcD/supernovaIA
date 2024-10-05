@@ -2578,19 +2578,27 @@ def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
         A_lambda = extincion_filtros[filtro] * MWEBV
         m_corregida = m - A_lambda
     else:
-        raise ValueError("Filtro no válido. Usa 'g', 'r', 'i', 'z', 'X', 'Y'.")
+        raise ValueError("Filtro no válido. Usa 'g', 'r', 'i', o 'z'.")
     
     return m_corregida
 
-# Aplicar corrección por extinción para cada supernova
+# Paso 3: Aplicar corrección por redshift
+def corregir_magnitud_redshift(m_corregida, z):
+    # Corrección por redshift (corrimiento al rojo)
+    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
+    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
+    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+    
+    return m_redshift_corregida
+
+# Aplicar correcciones de extinción y redshift a las magnitudes aparentes
 df_flux['mag_corr_ext'] = df_flux.apply(
     lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g'), axis=1)
 
-# Paso 3: Aplicar la corrección por redshift después de la corrección por extinción
 df_flux['mag_corr'] = df_flux.apply(
     lambda row: corregir_magnitud_redshift(row['mag_corr_ext'], row['redshift']), axis=1)
 
-# Paso 4: Calcular la magnitud absoluta (usando la magnitud corregida por redshift y el módulo de la distancia)
+# Paso 4: Calcular la magnitud absoluta (después de aplicar las correcciones)
 df_flux['mag_abs'] = df_flux['mag_corr'] - df_flux['distance_modulus']  # Magnitud absoluta
 
 # Función para aplicar la corrección bolométrica según el tipo de supernova
@@ -2662,49 +2670,6 @@ df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='
 # Mostrar el DataFrame con la energía total radiada y otros datos
 st.write(df_total_energy)
 
-# Calcular la energía en neutrinos para cada tipo de supernova
-def calculate_neutrino_energy(df):
-    neutrino_energies = []
-    
-    for index, row in df.iterrows():
-        energy_total = row['total_radiated_energy']  # Energía total radiada
-        sn_type = row['parsnip_pred']  # Columna que define el tipo de supernova
-        
-        # Determinar la energía en neutrinos según el tipo de supernova
-        if sn_type == 'SN Ia':
-            # Entre 1% y 2% de la energía total se libera en neutrinos
-            E_nu = 0.01 * energy_total  # Ajuste: 0.01 a 0.02
-        elif sn_type == 'SN II':
-            # Aproximadamente 99% de la energía total se libera en neutrinos
-            E_nu = 0.99 * energy_total
-        elif sn_type == 'SN Ibc':
-            # Entre 90% y 99% de la energía total se libera en neutrinos
-            E_nu = 0.95 * energy_total  # Ajuste: 0.90 a 0.99
-        else:
-            # Si no se conoce el tipo, se asume que la energía en neutrinos es 0
-            E_nu = 0
-        
-        neutrino_energies.append(E_nu)
-    
-    df['neutrino_energy'] = neutrino_energies  # Añadir la columna con la energía de neutrinos
-    return df
-
-# Aplicar la función para calcular la energía de neutrinos
-df_total_energy = calculate_neutrino_energy(df_total_energy)
-
-# Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
-E_neutrino_individual = 1.6e-5  # en erg/neutrino
-
-# Calcular el número de neutrinos para cada supernova
-df_total_energy['neutrino_count'] = df_total_energy['neutrino_energy'] / E_neutrino_individual
-
-# Paso 1: Unir los DataFrames usando 'snid' como clave
-df_flux_curves = df_flux[['snid', 'D_L_mpc']].drop_duplicates(subset='snid')
-
-# Realizar el merge con df_total_luminosity para añadir la columna 'D_L_mpc'
-df_total_energy = df_total_energy.merge(df_flux, on='snid', how='left')
-
-
 # Paso 7: Calcular cuántos neutrinos alcanzan la Tierra
 
 # Radio de la Tierra en cm
@@ -2739,6 +2704,11 @@ df_total_energy = calculate_neutrinos_reaching_earth(df_total_energy)
 
 # Mostrar el DataFrame actualizado con la columna de neutrinos que alcanzan la Tierra
 st.write(df_total_energy)
+
+# Guardar el DataFrame actualizado en un archivo CSV
+df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
+st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
+
 
 
 
