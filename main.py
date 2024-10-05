@@ -2551,40 +2551,7 @@ st.write(df_flux)
 import numpy as np
 import pandas as pd
 from astropy.cosmology import FlatLambdaCDM
-
-# Configuración de un modelo cosmológico
-cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-
-# Asumiendo que df_flux tiene las columnas necesarias, como redshift y magnitudes aparentes
-
-# Paso 1: Calcular la distancia de luminosidad (en parsecs) a partir del redshift
-df_flux['D_L_mpc'] = cosmo.luminosity_distance(df_flux['redshift']).value  # en Mpc
-df_flux['D_L_pc'] = df_flux['D_L_mpc'] * 10**6  # Convertir Mpc a parsecs
-
-# Paso 2: Calcular el módulo de la distancia
-df_flux['distance_modulus'] = 5 * np.log10(df_flux['D_L_pc']) - 5  # Modulo de la distancia
-
-# Paso 3: Calcular la magnitud absoluta (usando la magnitud aparente y el módulo de la distancia)
-df_flux['mag_abs'] = df_flux['mag'] - df_flux['distance_modulus']  # Magnitud absoluta
-
-# Paso 4: Aplicar una corrección bolométrica (ejemplo: BC = -0.1 para supernovas tipo Ia)
-# Ajusta según el tipo de supernova o datos disponibles
-BC = -0.1  # Esta corrección es solo un ejemplo
-df_flux['mag_bol'] = df_flux['mag_abs'] + BC  # Magnitud bolométrica
-
-# Paso 5: Calcular la luminosidad bolométrica
-M_solar_bol = 4.74  # Magnitud bolométrica del Sol
-L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
-
-df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
-
-# Mostrar el DataFrame con las nuevas columnas
-st.write(df_flux)
-st.write("se calculó la lumonosidad bolométrica")
-
-import numpy as np
-import pandas as pd
-from astropy.cosmology import FlatLambdaCDM
+import streamlit as st
 
 # Configuración de un modelo cosmológico
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -2598,21 +2565,6 @@ df_flux['distance_modulus'] = 5 * np.log10(df_flux['D_L_pc']) - 5  # Módulo de 
 
 # Paso 3: Calcular la magnitud absoluta (usando la magnitud aparente y el módulo de la distancia)
 df_flux['mag_abs'] = df_flux['mag'] - df_flux['distance_modulus']  # Magnitud absoluta
-
-# Paso 4: Aplicar una corrección bolométrica (ejemplo: BC = -0.1 para supernovas tipo Ia)
-# Ajusta según el tipo de supernova o datos disponibles
-#BC = -0.1  # Esta corrección es solo un ejemplo
-#df_flux['mag_bol'] = df_flux['mag_abs'] + BC  # Magnitud bolométrica
-
-# Paso 5: Calcular la luminosidad bolométrica
-#M_solar_bol = 4.74  # Magnitud bolométrica del Sol
-#L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
-
-#df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
-
-
-
-##--------------- ##
 
 # Paso 4: Aplicar una corrección bolométrica según el tipo de supernova
 def apply_bolometric_correction(df):
@@ -2636,16 +2588,15 @@ def apply_bolometric_correction(df):
 # Aplicar la corrección bolométrica en base al tipo de supernova
 df_flux = apply_bolometric_correction(df_flux)
 
-##--------------- ##
-
-
 # Paso 5: Calcular la luminosidad bolométrica
 M_solar_bol = 4.74  # Magnitud bolométrica del Sol
 L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
 
 df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
 
-#.................
+# Mostrar el DataFrame con las nuevas columnas
+st.write(df_flux)
+st.write("Se calculó la luminosidad bolométrica")
 
 # Paso 6: Calcular la energía total radiada por supernova usando la regla trapezoidal
 def calculate_total_radiated_energy(df):
@@ -2683,17 +2634,10 @@ df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='
 
 # Mostrar el DataFrame con la energía total radiada y otros datos
 st.write(df_total_energy)
-st.write("d")
+
+# No es necesario hacer otro merge ya que se hizo antes correctamente
 
 
-# Calcular la luminosidad bolométrica total para cada supernova
-#df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
-
-# Asegurarse de que ambas columnas 'snid' estén presentes y sin duplicados
-df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicates(subset='snid')
-
-# Hacer el merge en base a la columna 'snid'
-df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='left')
 
 
 # Definir los porcentajes de energía en neutrinos para cada tipo de supernova
