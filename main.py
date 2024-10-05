@@ -2732,4 +2732,17 @@ st.write(df_total_luminosity)
 df_total_luminosity.to_csv('total_luminosity_with_neutrino_energy.csv', index=False)
 st.write("Data saved in 'total_luminosity_with_neutrino_energy.csv'.")
 
+# Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
+E_neutrino_individual = 1.6e-5  # en erg/neutrino
+
+# Calcular el número de neutrinos para cada supernova
+df_total_luminosity['neutrino_count'] = df_total_luminosity['neutrino_energy'] / E_neutrino_individual
+
+# Mostrar el DataFrame actualizado con la columna del número de neutrinos
+st.write(df_total_luminosity)
+
+# Guardar el DataFrame actualizado en un archivo CSV
+df_total_luminosity.to_csv('total_luminosity_with_neutrino_count.csv', index=False)
+st.write("Data saved in 'total_luminosity_with_neutrino_count.csv'.")
+
 
