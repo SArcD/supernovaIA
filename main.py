@@ -2614,7 +2614,7 @@ df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # L
 
 # Mostrar el DataFrame con las nuevas columnas
 st.write(df_flux)
-
+st.write("se calculó la lumonosidad bolométrica")
 
 import numpy as np
 import pandas as pd
@@ -2673,25 +2673,11 @@ def calculate_total_bolometric_luminosity(df):
 # Calcular la luminosidad bolométrica total para cada supernova
 df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
 
-# Mostrar el resultado
-#st.write(df_total_luminosity)
-
-# Guardar el DataFrame en un archivo CSV
-#df_total_luminosity.to_csv('total_bolometric_luminosity.csv', index=False)
-#st.write("Data saved in 'total_bolometric_luminosity.csv'.")
-
 # Asegurarse de que ambas columnas 'snid' estén presentes y sin duplicados
 df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicates(subset='snid')
 
 # Hacer el merge en base a la columna 'snid'
 df_total_luminosity = df_total_luminosity.merge(df_light_curves_unique, on='snid', how='left')
-
-# Mostrar el DataFrame resultante
-#st.write(df_total_luminosity)
-
-# Guardar el DataFrame actualizado en un archivo CSV
-#df_total_luminosity.to_csv('total_luminosity_with_parsnip.csv', index=False)
-#st.write("Data saved in 'total_luminosity_with_parsnip.csv'.")
 
 # Definir los porcentajes de energía en neutrinos para cada tipo de supernova
 def calculate_neutrino_energy(df):
@@ -2723,25 +2709,11 @@ def calculate_neutrino_energy(df):
 # Aplicar la función para calcular la energía de neutrinos
 df_total_luminosity = calculate_neutrino_energy(df_total_luminosity)
 
-# Mostrar el DataFrame actualizado con la columna de energía en neutrinos
-#st.write(df_total_luminosity)
-
-# Guardar el DataFrame actualizado en un archivo CSV
-#df_total_luminosity.to_csv('total_luminosity_with_neutrino_energy.csv', index=False)
-#st.write("Data saved in 'total_luminosity_with_neutrino_energy.csv'.")
-
 # Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
 E_neutrino_individual = 1.6e-5  # en erg/neutrino
 
 # Calcular el número de neutrinos para cada supernova
 df_total_luminosity['neutrino_count'] = df_total_luminosity['neutrino_energy'] / E_neutrino_individual
-
-# Mostrar el DataFrame actualizado con la columna del número de neutrinos
-#st.write(df_total_luminosity)
-
-# Guardar el DataFrame actualizado en un archivo CSV
-#df_total_luminosity.to_csv('total_luminosity_with_neutrino_count.csv', index=False)
-#st.write("Data saved in 'total_luminosity_with_neutrino_count.csv'.")
 
 import numpy as np
 
@@ -2787,70 +2759,6 @@ st.write(df_total_luminosity)
 # Guardar el DataFrame actualizado en un archivo CSV
 df_total_luminosity.to_csv('neutrinos_reaching_earth.csv', index=False)
 st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
-
-
-#import numpy as np
-#import matplotlib.pyplot as plt
-
-# Parámetros del modelo
-#tau = 1  # Constante de tiempo en segundos
-#time_steps = np.linspace(0, 10, 1000)  # Tiempo en segundos (por ejemplo, de 0 a 10 segundos)
-
-# Radio de la Tierra en cm
-#R_Tierra = 6.371e8  # en cm
-#A_Tierra = np.pi * R_Tierra**2  # en cm^2
-
-# Función para calcular la tasa de emisión de neutrinos en función del tiempo
-#def neutrino_emission_rate(N_total, t, tau):
-#    return (N_total / tau) * np.exp(-t / tau)
-
-## Función para calcular cuántos neutrinos alcanzan la Tierra en función del tiempo
-#def calculate_neutrinos_reaching_earth_time(df, tau, time_steps):
-#    neutrinos_over_time = []
-    
-#    for index, row in df.iterrows():
-#        # Número total de neutrinos emitidos
-#        N_nu_total = row['neutrino_count']
-        
-#        # Distancia de luminosidad en Mpc y convertirla a cm
-#        D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
-#        A_esfera = 4 * np.pi * D_L_cm**2  # Área de la esfera en cm^2
-        
-#        # Inicializar lista para los neutrinos que alcanzan la Tierra en cada tiempo t
-#        neutrinos_earth_t = []
-        
-#        # Calcular la tasa de emisión de neutrinos en función del tiempo
-#        for t in time_steps:
-#            rate = neutrino_emission_rate(N_nu_total, t, tau)
-#            # Calcular cuántos neutrinos alcanzan la Tierra en este instante t
-#            N_nu_earth = rate * (A_Tierra / A_esfera)
-#            neutrinos_earth_t.append(N_nu_earth)
-        
-#        # Guardar los neutrinos que llegan en función del tiempo para esta supernova
-#        neutrinos_over_time.append(neutrinos_earth_t)
-    
-#    return neutrinos_over_time
-
-# Aplicar el cálculo para cada supernova en df_total_luminosity
-#neutrinos_time_series = calculate_neutrinos_reaching_earth_time(df_total_luminosity, tau, time_steps)
-
-#import plotly.graph_objects as go
-
-# Crear la figura con plotly
-#fig = go.Figure()
-
-## Graficar la cantidad de neutrinos que alcanzan la Tierra en función del tiempo para la primera supernova
-#fig.add_trace(go.Scatter(x=time_steps, y=neutrinos_time_series[0], mode='lines', name='Neutrinos'))
-
-## Añadir etiquetas
-#fig.update_layout(
-#    title='Número de neutrinos alcanzando la Tierra a lo largo del tiempo',
-#    xaxis_title='Tiempo (segundos)',
-#    yaxis_title='Neutrinos alcanzando la Tierra',
-#)
-
-## Mostrar la gráfica en Streamlit
-#st.plotly_chart(fig)
 
 import plotly.graph_objects as go
 
