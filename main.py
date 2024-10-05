@@ -2582,24 +2582,75 @@ def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
     
     return m_corregida
 
-# Paso 3: Aplicar corrección por redshift
-def corregir_magnitud_redshift(m_corregida, z):
-    # Corrección por redshift (corrimiento al rojo)
-    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
-    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
-    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+import numpy as np
+import pandas as pd
+import streamlit as st
+
+# Function to correct magnitude by extinction using the appropriate filter
+def corregir_magnitud_extincion(m, MWEBV, filtro):
+    # Extinction coefficients for different filters
+    extincion_filtros = {
+        'g': 3.303,
+        'r': 2.285,
+        'i': 1.698,
+        'z': 1.263,
+        'X': 2.000,  # Adjusted value for the 'X' filter
+        'Y': 1.000   # Adjusted value for the 'Y' filter
+    }
     
-    return m_redshift_corregida
+    # Apply the correct extinction based on the filter
+    if filtro in extincion_filtros:
+        A_lambda = extincion_filtros[filtro] * MWEBV
+        m_corregida = m - A_lambda
+    else:
+        raise ValueError(f"Filtro '{filtro}' no válido. Usa 'g', 'r', 'i', 'z', 'X', 'Y'.")
+    
+    return m_corregida
+
+# Apply the extinction correction and create separate columns for each filter
+df_flux['mag_corr_ext_g'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g') if row['filter'] == 'g' else None, axis=1)
+
+df_flux['mag_corr_ext_r'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'r') if row['filter'] == 'r' else None, axis=1)
+
+df_flux['mag_corr_ext_i'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'i') if row['filter'] == 'i' else None, axis=1)
+
+df_flux['mag_corr_ext_z'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'z') if row['filter'] == 'z' else None, axis=1)
+
+df_flux['mag_corr_ext_X'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'X') if row['filter'] == 'X' else None, axis=1)
+
+df_flux['mag_corr_ext_Y'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'Y') if row['filter'] == 'Y' else None, axis=1)
+
+# Display the updated DataFrame with the new columns
+st.write(df_flux[['mag', 'mwebv', 'filter', 'mag_corr_ext_g', 'mag_corr_ext_r', 'mag_corr_ext_i', 'mag_corr_ext_z', 'mag_corr_ext_X', 'mag_corr_ext_Y']])
+
+
+
+# Paso 3: Aplicar corrección por redshift
+#def corregir_magnitud_redshift(m_corregida, z):
+    # Corrección por redshift (corrimiento al rojo)
+#    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
+#    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
+#    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
+    
+#    return m_redshift_corregida
 
 # Aplicar correcciones de extinción y redshift a las magnitudes aparentes
-df_flux['mag_corr_ext'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g'), axis=1)
+#df_flux['mag_corr_ext'] = df_flux.apply(
+#    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g'), axis=1)
 
-df_flux['mag_corr'] = df_flux.apply(
-    lambda row: corregir_magnitud_redshift(row['mag_corr_ext'], row['redshift']), axis=1)
+#df_flux['mag_corr'] = df_flux.apply(
+#    lambda row: corregir_magnitud_redshift(row['mag_corr_ext'], row['redshift']), axis=1)
 
 # Paso 4: Calcular la magnitud absoluta (después de aplicar las correcciones)
-df_flux['mag_abs'] = df_flux['mag_corr'] - df_flux['distance_modulus']  # Magnitud absoluta
+#df_flux['mag_abs'] = df_flux['mag_corr'] - df_flux['distance_modulus']  # Magnitud absoluta
+
+
 
 # Función para aplicar la corrección bolométrica según el tipo de supernova
 def apply_bolometric_correction(df):
