@@ -2508,7 +2508,7 @@ def convert_to_float(value, default_value=None):
 # Function to read the downloaded supernova file and extract relevant data
 def read_supernova_file_content(content):
     # Variables and lists to store data
-    mjd, flx, flxerr, filters = [], [], [], []
+    mjd, flx, flxerr, mag, magerr, filters = [], [], [], [], [], []
     snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = None, None, None, None, None, None, None
 
     # Process the file line by line
@@ -2529,11 +2529,13 @@ def read_supernova_file_content(content):
             filters.append(data[2])     # Filter (g, r, i, z, etc.)
             flx.append(convert_to_float(data[4]))  # Flux (FLUXCAL)
             flxerr.append(convert_to_float(data[5]))  # Flux error (FLUXCALERR)
+            mag.append(convert_to_float(data[6]))  # Magnitude (MAG)
+            magerr.append(convert_to_float(data[7]))  # Magnitude error (MAGERR)
 
-    return mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv
+    return mjd, flx, flxerr, mag, magerr, filters, snid, ra, decl, redshift, mwebv
 
 # Function to store light curves as a DataFrame
-def save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv):
+def save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, mag, magerr, filters, snid, ra, decl, redshift, mwebv):
     for i in range(len(mjd)):
         curve_vector = {
             'file_name': file_name,
@@ -2542,6 +2544,8 @@ def save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, filt
             'filter': filters[i],
             'flx': flx[i],
             'flxerr': flxerr[i],
+            'mag': mag[i],
+            'magerr': magerr[i],
             'ra': ra,
             'decl': decl,
             'redshift': redshift,
@@ -2560,8 +2564,8 @@ def download_and_process_supernovas(repo_url, subdirectory=""):
         content = download_file_from_github(file_url)
 
         if content:
-            mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv = read_supernova_file_content(content)
-            save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv)
+            mjd, flx, flxerr, mag, magerr, filters, snid, ra, decl, redshift, mwebv = read_supernova_file_content(content)
+            save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, mag, magerr, filters, snid, ra, decl, redshift, mwebv)
 
     return pd.DataFrame(vector_list)
 
@@ -2574,8 +2578,9 @@ df_flux = download_and_process_supernovas(repo_url)
 st.write(df_flux)
 
 # Save data to a CSV file
-df_flux.to_csv('flux_curves_with_ra_decl_redshift_snid.csv', index=False)
-st.write("Data saved in 'flux_curves_with_ra_decl_redshift_snid.csv'.")
+df_flux.to_csv('flux_curves_with_magnitudes.csv', index=False)
+st.write("Data saved in 'flux_curves_with_magnitudes.csv'.")
+
 
 import numpy as np
 import pandas as pd
