@@ -2695,4 +2695,41 @@ st.write(df_total_luminosity)
 df_total_luminosity.to_csv('total_luminosity_with_parsnip.csv', index=False)
 st.write("Data saved in 'total_luminosity_with_parsnip.csv'.")
 
+# Definir los porcentajes de energía en neutrinos para cada tipo de supernova
+def calculate_neutrino_energy(df):
+    neutrino_energies = []
+    
+    for index, row in df.iterrows():
+        energy_total = row['total_bolometric_luminosity']  # Energía total radiada
+        sn_type = row['parsnip_pred']  # Columna que define el tipo de supernova
+        
+        # Determinar la energía en neutrinos según el tipo de supernova
+        if sn_type == 'Ia':
+            # Entre 1% y 2% de la energía total se libera en neutrinos
+            E_nu = 0.01 * energy_total  # Ajuste: 0.01 a 0.02
+        elif sn_type == 'II':
+            # Aproximadamente 99% de la energía total se libera en neutrinos
+            E_nu = 0.99 * energy_total
+        elif sn_type == 'Ibc':
+            # Entre 90% y 99% de la energía total se libera en neutrinos
+            E_nu = 0.95 * energy_total  # Ajuste: 0.90 a 0.99
+        else:
+            # Si no se conoce el tipo, se asume que la energía en neutrinos es 0
+            E_nu = 0
+        
+        neutrino_energies.append(E_nu)
+    
+    df['neutrino_energy'] = neutrino_energies  # Añadir la columna con la energía de neutrinos
+    return df
+
+# Aplicar la función para calcular la energía de neutrinos
+df_total_luminosity = calculate_neutrino_energy(df_total_luminosity)
+
+# Mostrar el DataFrame actualizado con la columna de energía en neutrinos
+st.write(df_total_luminosity)
+
+# Guardar el DataFrame actualizado en un archivo CSV
+df_total_luminosity.to_csv('total_luminosity_with_neutrino_energy.csv', index=False)
+st.write("Data saved in 'total_luminosity_with_neutrino_energy.csv'.")
+
 
