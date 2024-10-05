@@ -2647,30 +2647,28 @@ df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # L
 # Paso 6: Calcular la luminosidad bolométrica total por supernova usando la regla trapezoidal
 def calculate_total_bolometric_luminosity(df):
     total_luminosities = []
-    # Agrupar por supernova (SNID)
-    grouped = df.groupby('snid')
+    grouped = df.groupby('snid')  # Agrupar por supernova (SNID)
     
     for snid, group in grouped:
-        # Ordenar por MJD (fecha de observación)
-        group = group.sort_values('mjd')
-        
-        # Inicializar luminosidad total
+        group = group.sort_values('mjd')  # Ordenar por MJD (fecha de observación)
         total_luminosity = 0
         
-        # Iterar por las observaciones consecutivas
         for i in range(len(group) - 1):
             L_i = group.iloc[i]['L_bol']
             L_i1 = group.iloc[i + 1]['L_bol']
             t_i = group.iloc[i]['mjd']
             t_i1 = group.iloc[i + 1]['mjd']
             
+            # Convertir la diferencia de tiempo de días (MJD) a segundos
+            delta_t = (t_i1 - t_i) * 86400  # 1 día = 86400 segundos
+            
             # Calcular el área bajo la curva usando el método del trapecio
-            delta_t = t_i1 - t_i
             total_luminosity += 0.5 * (L_i + L_i1) * delta_t
         
         total_luminosities.append({'snid': snid, 'total_bolometric_luminosity': total_luminosity})
     
     return pd.DataFrame(total_luminosities)
+
 
 # Calcular la luminosidad bolométrica total para cada supernova
 df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
