@@ -2748,10 +2748,10 @@ st.write("Data saved in 'total_luminosity_with_neutrino_count.csv'.")
 import numpy as np
 
 # Paso 1: Unir los DataFrames usando 'snid' como clave
-df_flux_curves = flux_curves_with_magnitudes[['snid', 'D_L_mpc']].drop_duplicates(subset='snid')
+df_flux_curves = df_flux[['snid', 'D_L_mpc']].drop_duplicates(subset='snid')
 
 # Realizar el merge con df_total_luminosity para añadir la columna 'D_L_mpc'
-df_total_luminosity = df_total_luminosity.merge(df_flux_curves, on='snid', how='left')
+df_total_luminosity = df_total_luminosity.merge(df_flux, on='snid', how='left')
 
 # Paso 2: Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
