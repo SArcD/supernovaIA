@@ -2836,9 +2836,21 @@ def calculate_neutrinos_reaching_earth_time(df, tau, time_steps):
 # Aplicar el cálculo para cada supernova en df_total_luminosity
 neutrinos_time_series = calculate_neutrinos_reaching_earth_time(df_total_luminosity, tau, time_steps)
 
+import plotly.graph_objects as go
+
+# Crear la figura con plotly
+fig = go.Figure()
+
 # Graficar la cantidad de neutrinos que alcanzan la Tierra en función del tiempo para la primera supernova
-plt.plot(time_steps, neutrinos_time_series[0])
-plt.xlabel('Tiempo (segundos)')
-plt.ylabel('Neutrinos alcanzando la Tierra')
-plt.title('Número de neutrinos alcanzando la Tierra a lo largo del tiempo')
-plt.show()
+fig.add_trace(go.Scatter(x=time_steps, y=neutrinos_time_series[0], mode='lines', name='Neutrinos'))
+
+# Añadir etiquetas
+fig.update_layout(
+    title='Número de neutrinos alcanzando la Tierra a lo largo del tiempo',
+    xaxis_title='Tiempo (segundos)',
+    yaxis_title='Neutrinos alcanzando la Tierra',
+)
+
+# Mostrar la gráfica en Streamlit
+st.plotly_chart(fig)
+
