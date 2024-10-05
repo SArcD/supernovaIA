@@ -2881,4 +2881,30 @@ fig_lines.update_layout(
 # Mostrar la gráfica en Streamlit
 st.plotly_chart(fig_lines, use_container_width=True)
 
+import plotly.graph_objects as go
+
+# Agrupar por MJD y sumar los neutrinos alcanzando la Tierra para cada MJD
+neutrino_counts_by_mjd = df_total_luminosity.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+
+# Crear el gráfico de líneas con la cantidad de neutrinos alcanzando la Tierra en función del MJD
+fig_lines = go.Figure()
+
+# Añadir el rastro de la gráfica
+fig_lines.add_trace(go.Scatter(
+    x=neutrino_counts_by_mjd.index,
+    y=neutrino_counts_by_mjd.values,
+    mode='lines',
+    name='Cantidad de Neutrinos',
+    line=dict(color='blue')
+))
+
+# Configurar el diseño del gráfico
+fig_lines.update_layout(
+    title='Cantidad de Neutrinos alcanzando la Tierra en función del MJD',
+    xaxis_title='MJD',
+    yaxis_title='Cantidad de Neutrinos que alcanzan la Tierra',
+)
+
+# Mostrar la gráfica en Streamlit
+st.plotly_chart(fig_lines, use_container_width=True, key="2")
 
