@@ -2576,3 +2576,37 @@ st.write(df_flux)
 # Save data to a CSV file
 df_flux.to_csv('flux_curves_with_ra_decl_redshift_snid.csv', index=False)
 st.write("Data saved in 'flux_curves_with_ra_decl_redshift_snid.csv'.")
+
+import numpy as np
+import pandas as pd
+from astropy.cosmology import FlatLambdaCDM
+
+# Configuración de un modelo cosmológico
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+# Asumiendo que df_flux tiene las columnas necesarias, como redshift y magnitudes aparentes
+
+# Paso 1: Calcular la distancia de luminosidad (en parsecs) a partir del redshift
+df_flux['D_L_mpc'] = cosmo.luminosity_distance(df_flux['redshift']).value  # en Mpc
+df_flux['D_L_pc'] = df_flux['D_L_mpc'] * 10**6  # Convertir Mpc a parsecs
+
+# Paso 2: Calcular el módulo de la distancia
+df_flux['distance_modulus'] = 5 * np.log10(df_flux['D_L_pc']) - 5  # Modulo de la distancia
+
+# Paso 3: Calcular la magnitud absoluta (usando la magnitud aparente y el módulo de la distancia)
+df_flux['mag_abs'] = df_flux['mag'] - df_flux['distance_modulus']  # Magnitud absoluta
+
+# Paso 4: Aplicar una corrección bolométrica (ejemplo: BC = -0.1 para supernovas tipo Ia)
+# Ajusta según el tipo de supernova o datos disponibles
+BC = -0.1  # Esta corrección es solo un ejemplo
+df_flux['mag_bol'] = df_flux['mag_abs'] + BC  # Magnitud bolométrica
+
+# Paso 5: Calcular la luminosidad bolométrica
+M_solar_bol = 4.74  # Magnitud bolométrica del Sol
+L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
+
+df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
+
+# Mostrar el DataFrame con las nuevas columnas
+st.write(df_flux)
+
