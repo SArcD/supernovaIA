@@ -2615,3 +2615,70 @@ df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # L
 # Mostrar el DataFrame con las nuevas columnas
 st.write(df_flux)
 
+
+import numpy as np
+import pandas as pd
+from astropy.cosmology import FlatLambdaCDM
+
+# Configuración de un modelo cosmológico
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+# Paso 1: Calcular la distancia de luminosidad (en parsecs) a partir del redshift
+df_flux['D_L_mpc'] = cosmo.luminosity_distance(df_flux['redshift']).value  # en Mpc
+df_flux['D_L_pc'] = df_flux['D_L_mpc'] * 10**6  # Convertir Mpc a parsecs
+
+# Paso 2: Calcular el módulo de la distancia
+df_flux['distance_modulus'] = 5 * np.log10(df_flux['D_L_pc']) - 5  # Módulo de la distancia
+
+# Paso 3: Calcular la magnitud absoluta (usando la magnitud aparente y el módulo de la distancia)
+df_flux['mag_abs'] = df_flux['mag'] - df_flux['distance_modulus']  # Magnitud absoluta
+
+# Paso 4: Aplicar una corrección bolométrica (ejemplo: BC = -0.1 para supernovas tipo Ia)
+# Ajusta según el tipo de supernova o datos disponibles
+BC = -0.1  # Esta corrección es solo un ejemplo
+df_flux['mag_bol'] = df_flux['mag_abs'] + BC  # Magnitud bolométrica
+
+# Paso 5: Calcular la luminosidad bolométrica
+M_solar_bol = 4.74  # Magnitud bolométrica del Sol
+L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
+
+df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
+
+# Paso 6: Calcular la luminosidad bolométrica total por supernova usando la regla trapezoidal
+def calculate_total_bolometric_luminosity(df):
+    total_luminosities = []
+    # Agrupar por supernova (SNID)
+    grouped = df.groupby('snid')
+    
+    for snid, group in grouped:
+        # Ordenar por MJD (fecha de observación)
+        group = group.sort_values('mjd')
+        
+        # Inicializar luminosidad total
+        total_luminosity = 0
+        
+        # Iterar por las observaciones consecutivas
+        for i in range(len(group) - 1):
+            L_i = group.iloc[i]['L_bol']
+            L_i1 = group.iloc[i + 1]['L_bol']
+            t_i = group.iloc[i]['mjd']
+            t_i1 = group.iloc[i + 1]['mjd']
+            
+            # Calcular el área bajo la curva usando el método del trapecio
+            delta_t = t_i1 - t_i
+            total_luminosity += 0.5 * (L_i + L_i1) * delta_t
+        
+        total_luminosities.append({'snid': snid, 'total_bolometric_luminosity': total_luminosity})
+    
+    return pd.DataFrame(total_luminosities)
+
+# Calcular la luminosidad bolométrica total para cada supernova
+df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
+
+# Mostrar el resultado
+st.write(df_total_luminosity)
+
+# Guardar el DataFrame en un archivo CSV
+df_total_luminosity.to_csv('total_bolometric_luminosity.csv', index=False)
+st.write("Data saved in 'total_bolometric_luminosity.csv'.")
+
