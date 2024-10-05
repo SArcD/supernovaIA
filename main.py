@@ -2582,26 +2582,18 @@ def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
     
     return m_corregida
 
-# Función para corregir magnitud por redshift
-def corregir_magnitud_redshift(m_corregida, z):
-    # Corrección por redshift (corrimiento al rojo)
-    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
-    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
-    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
-    
-    return m_redshift_corregida
-
-# Aplicar correcciones de extinción y redshift a las magnitudes aparentes
+# Aplicar corrección por extinción para cada supernova
 df_flux['mag_corr_ext'] = df_flux.apply(
     lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g'), axis=1)
 
+# Paso 3: Aplicar la corrección por redshift después de la corrección por extinción
 df_flux['mag_corr'] = df_flux.apply(
     lambda row: corregir_magnitud_redshift(row['mag_corr_ext'], row['redshift']), axis=1)
 
-# Paso 3: Calcular la magnitud absoluta (usando la magnitud corregida y el módulo de la distancia)
+# Paso 4: Calcular la magnitud absoluta (usando la magnitud corregida por redshift y el módulo de la distancia)
 df_flux['mag_abs'] = df_flux['mag_corr'] - df_flux['distance_modulus']  # Magnitud absoluta
 
-# Paso 4: Aplicar una corrección bolométrica según el tipo de supernova
+# Función para aplicar la corrección bolométrica según el tipo de supernova
 def apply_bolometric_correction(df):
     BC_values = []
     for index, row in df.iterrows():
@@ -2706,22 +2698,22 @@ E_neutrino_individual = 1.6e-5  # en erg/neutrino
 # Calcular el número de neutrinos para cada supernova
 df_total_energy['neutrino_count'] = df_total_energy['neutrino_energy'] / E_neutrino_individual
 
-# Mostrar el DataFrame actualizado con la columna de neutrinos que alcanzan la Tierra
-st.write(df_total_energy)
-
 # Paso 1: Unir los DataFrames usando 'snid' como clave
 df_flux_curves = df_flux[['snid', 'D_L_mpc']].drop_duplicates(subset='snid')
 
 # Realizar el merge con df_total_luminosity para añadir la columna 'D_L_mpc'
 df_total_energy = df_total_energy.merge(df_flux, on='snid', how='left')
 
-# Paso 2: Radio de la Tierra en cm
+
+# Paso 7: Calcular cuántos neutrinos alcanzan la Tierra
+
+# Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
 
 # Área efectiva de la Tierra (sección transversal)
 A_Tierra = np.pi * R_Tierra**2  # en cm^2
 
-# Paso 3: Calcular el número de neutrinos que alcanzan la Tierra
+# Función para calcular cuántos neutrinos llegan a la Tierra
 def calculate_neutrinos_reaching_earth(df):
     neutrinos_reaching_earth = []
     
@@ -2748,9 +2740,8 @@ df_total_energy = calculate_neutrinos_reaching_earth(df_total_energy)
 # Mostrar el DataFrame actualizado con la columna de neutrinos que alcanzan la Tierra
 st.write(df_total_energy)
 
-# Guardar el DataFrame actualizado en un archivo CSV
-df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
-st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
+
+
 
 import plotly.graph_objects as go
 
