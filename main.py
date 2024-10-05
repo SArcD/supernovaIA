@@ -2635,8 +2635,43 @@ df_flux['mag_abs'] = df_flux['mag'] - df_flux['distance_modulus']  # Magnitud ab
 
 # Paso 4: Aplicar una corrección bolométrica (ejemplo: BC = -0.1 para supernovas tipo Ia)
 # Ajusta según el tipo de supernova o datos disponibles
-BC = -0.1  # Esta corrección es solo un ejemplo
-df_flux['mag_bol'] = df_flux['mag_abs'] + BC  # Magnitud bolométrica
+#BC = -0.1  # Esta corrección es solo un ejemplo
+#df_flux['mag_bol'] = df_flux['mag_abs'] + BC  # Magnitud bolométrica
+
+# Paso 5: Calcular la luminosidad bolométrica
+#M_solar_bol = 4.74  # Magnitud bolométrica del Sol
+#L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
+
+#df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
+
+
+
+##--------------- ##
+
+# Paso 4: Aplicar una corrección bolométrica según el tipo de supernova
+def apply_bolometric_correction(df):
+    BC_values = []
+    for index, row in df.iterrows():
+        sn_type = row['parsnip_pred']  # Obtener el tipo de supernova
+        if sn_type == 'SN Ia':
+            BC = -0.1  # Corrección para supernovas tipo Ia
+        elif sn_type == 'SN II':
+            BC = -0.5  # Corrección para supernovas tipo II
+        elif sn_type == 'SN Ibc':
+            BC = -0.3  # Corrección para supernovas tipo Ibc
+        else:
+            BC = 0  # Si no se conoce el tipo, no aplicar corrección
+        BC_values.append(BC)
+    
+    df['bolometric_correction'] = BC_values  # Añadir la columna de corrección bolométrica
+    df['mag_bol'] = df['mag_abs'] + df['bolometric_correction']  # Calcular magnitud bolométrica
+    return df
+
+# Aplicar la corrección bolométrica en base al tipo de supernova
+df_flux = apply_bolometric_correction(df_flux)
+
+##--------------- ##
+
 
 # Paso 5: Calcular la luminosidad bolométrica
 M_solar_bol = 4.74  # Magnitud bolométrica del Sol
@@ -2644,47 +2679,62 @@ L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
 
 df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
 
-# Paso 6: Calcular la luminosidad bolométrica total por supernova usando la regla trapezoidal
-def calculate_total_bolometric_luminosity(df):
-    total_luminosities = []
+#.................
+
+# Paso 6: Calcular la energía total radiada por supernova usando la regla trapezoidal
+def calculate_total_radiated_energy(df):
+    total_energies = []
     grouped = df.groupby('snid')  # Agrupar por supernova (SNID)
     
     for snid, group in grouped:
         group = group.sort_values('mjd')  # Ordenar por MJD (fecha de observación)
-        total_luminosity = 0
+        total_energy = 0
         
         for i in range(len(group) - 1):
-            L_i = group.iloc[i]['L_bol']
-            L_i1 = group.iloc[i + 1]['L_bol']
-            t_i = group.iloc[i]['mjd']
-            t_i1 = group.iloc[i + 1]['mjd']
+            L_i = group.iloc[i]['L_bol']      # Luminosidad bolométrica en erg/s en el tiempo t_i
+            L_i1 = group.iloc[i + 1]['L_bol']  # Luminosidad bolométrica en erg/s en el tiempo t_{i+1}
+            t_i = group.iloc[i]['mjd']        # Tiempo MJD en t_i
+            t_i1 = group.iloc[i + 1]['mjd']    # Tiempo MJD en t_{i+1}
             
             # Convertir la diferencia de tiempo de días (MJD) a segundos
             delta_t = (t_i1 - t_i) * 86400  # 1 día = 86400 segundos
             
             # Calcular el área bajo la curva usando el método del trapecio
-            total_luminosity += 0.5 * (L_i + L_i1) * delta_t
+            total_energy += 0.5 * (L_i + L_i1) * delta_t
         
-        total_luminosities.append({'snid': snid, 'total_bolometric_luminosity': total_luminosity})
+        total_energies.append({'snid': snid, 'total_radiated_energy': total_energy})
     
-    return pd.DataFrame(total_luminosities)
+    return pd.DataFrame(total_energies)
 
-
-# Calcular la luminosidad bolométrica total para cada supernova
-df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
+# Calcular la energía total radiada para cada supernova
+df_total_energy = calculate_total_radiated_energy(df_flux)
 
 # Asegurarse de que ambas columnas 'snid' estén presentes y sin duplicados
 df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicates(subset='snid')
 
 # Hacer el merge en base a la columna 'snid'
-df_total_luminosity = df_total_luminosity.merge(df_light_curves_unique, on='snid', how='left')
+df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='left')
+
+# Mostrar el DataFrame con la energía total radiada y otros datos
+st.write(df_total_energy)
+
+
+
+# Calcular la luminosidad bolométrica total para cada supernova
+#df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
+
+# Asegurarse de que ambas columnas 'snid' estén presentes y sin duplicados
+df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicates(subset='snid')
+
+# Hacer el merge en base a la columna 'snid'
+df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='left')
 
 # Definir los porcentajes de energía en neutrinos para cada tipo de supernova
 def calculate_neutrino_energy(df):
     neutrino_energies = []
     
     for index, row in df.iterrows():
-        energy_total = row['total_bolometric_luminosity']  # Energía total radiada
+        energy_total = row['total_radiated_energy']  # Energía total radiada
         sn_type = row['parsnip_pred']  # Columna que define el tipo de supernova
         
         # Determinar la energía en neutrinos según el tipo de supernova
@@ -2707,13 +2757,13 @@ def calculate_neutrino_energy(df):
     return df
 
 # Aplicar la función para calcular la energía de neutrinos
-df_total_luminosity = calculate_neutrino_energy(df_total_luminosity)
+df_total_energy = calculate_neutrino_energy(df_total_energy)
 
 # Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
 E_neutrino_individual = 1.6e-5  # en erg/neutrino
 
 # Calcular el número de neutrinos para cada supernova
-df_total_luminosity['neutrino_count'] = df_total_luminosity['neutrino_energy'] / E_neutrino_individual
+df_total_energy['neutrino_count'] = df_total_energy['neutrino_energy'] / E_neutrino_individual
 
 import numpy as np
 
@@ -2721,7 +2771,7 @@ import numpy as np
 df_flux_curves = df_flux[['snid', 'D_L_mpc']].drop_duplicates(subset='snid')
 
 # Realizar el merge con df_total_luminosity para añadir la columna 'D_L_mpc'
-df_total_luminosity = df_total_luminosity.merge(df_flux, on='snid', how='left')
+df_total_energy = df_total_energy.merge(df_flux, on='snid', how='left')
 
 # Paso 2: Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
@@ -2751,19 +2801,19 @@ def calculate_neutrinos_reaching_earth(df):
     return df
 
 # Aplicar la función para calcular cuántos neutrinos llegan a la Tierra
-df_total_luminosity = calculate_neutrinos_reaching_earth(df_total_luminosity)
+df_total_energy = calculate_neutrinos_reaching_earth(df_total_energy)
 
 # Mostrar el DataFrame actualizado con la columna de neutrinos que alcanzan la Tierra
-st.write(df_total_luminosity)
+st.write(df_total_energy)
 
 # Guardar el DataFrame actualizado en un archivo CSV
-df_total_luminosity.to_csv('neutrinos_reaching_earth.csv', index=False)
+df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
 st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 
 import plotly.graph_objects as go
 
 # Contar la cantidad de supernovas por MJD
-mjd_counts = df_total_luminosity['mjd'].value_counts().sort_index()
+mjd_counts = df_total_energy['mjd'].value_counts().sort_index()
 
 # Crear el gráfico de líneas con la cantidad de supernovas en función del MJD
 fig_lines = go.Figure()
@@ -2790,7 +2840,7 @@ st.plotly_chart(fig_lines, use_container_width=True)
 import plotly.graph_objects as go
 
 # Agrupar por MJD y sumar los neutrinos alcanzando la Tierra para cada MJD
-neutrino_counts_by_mjd = df_total_luminosity.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+neutrino_counts_by_mjd = df_total_energy.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
 
 # Crear el gráfico de líneas con la cantidad de neutrinos alcanzando la Tierra en función del MJD
 fig_lines = go.Figure()
