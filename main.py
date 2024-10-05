@@ -2789,3 +2789,56 @@ st.write(df_total_luminosity)
 # Guardar el DataFrame actualizado en un archivo CSV
 df_total_luminosity.to_csv('neutrinos_reaching_earth.csv', index=False)
 st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros del modelo
+tau = 1  # Constante de tiempo en segundos
+time_steps = np.linspace(0, 10, 1000)  # Tiempo en segundos (por ejemplo, de 0 a 10 segundos)
+
+# Radio de la Tierra en cm
+R_Tierra = 6.371e8  # en cm
+A_Tierra = np.pi * R_Tierra**2  # en cm^2
+
+# Función para calcular la tasa de emisión de neutrinos en función del tiempo
+def neutrino_emission_rate(N_total, t, tau):
+    return (N_total / tau) * np.exp(-t / tau)
+
+# Función para calcular cuántos neutrinos alcanzan la Tierra en función del tiempo
+def calculate_neutrinos_reaching_earth_time(df, tau, time_steps):
+    neutrinos_over_time = []
+    
+    for index, row in df.iterrows():
+        # Número total de neutrinos emitidos
+        N_nu_total = row['neutrino_count']
+        
+        # Distancia de luminosidad en Mpc y convertirla a cm
+        D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
+        A_esfera = 4 * np.pi * D_L_cm**2  # Área de la esfera en cm^2
+        
+        # Inicializar lista para los neutrinos que alcanzan la Tierra en cada tiempo t
+        neutrinos_earth_t = []
+        
+        # Calcular la tasa de emisión de neutrinos en función del tiempo
+        for t in time_steps:
+            rate = neutrino_emission_rate(N_nu_total, t, tau)
+            # Calcular cuántos neutrinos alcanzan la Tierra en este instante t
+            N_nu_earth = rate * (A_Tierra / A_esfera)
+            neutrinos_earth_t.append(N_nu_earth)
+        
+        # Guardar los neutrinos que llegan en función del tiempo para esta supernova
+        neutrinos_over_time.append(neutrinos_earth_t)
+    
+    return neutrinos_over_time
+
+# Aplicar el cálculo para cada supernova en df_total_luminosity
+neutrinos_time_series = calculate_neutrinos_reaching_earth_time(df_total_luminosity, tau, time_steps)
+
+# Graficar la cantidad de neutrinos que alcanzan la Tierra en función del tiempo para la primera supernova
+plt.plot(time_steps, neutrinos_time_series[0])
+plt.xlabel('Tiempo (segundos)')
+plt.ylabel('Neutrinos alcanzando la Tierra')
+plt.title('Número de neutrinos alcanzando la Tierra a lo largo del tiempo')
+plt.show()
