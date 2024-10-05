@@ -2575,11 +2575,11 @@ repo_url = "https://github.com/SArcD/supernovaIA"
 df_flux = download_and_process_supernovas(repo_url)
 
 # Display resulting DataFrame
-st.write(df_flux)
+#st.write(df_flux)
 
 # Save data to a CSV file
-df_flux.to_csv('flux_curves_with_magnitudes.csv', index=False)
-st.write("Data saved in 'flux_curves_with_magnitudes.csv'.")
+#df_flux.to_csv('flux_curves_with_magnitudes.csv', index=False)
+#st.write("Data saved in 'flux_curves_with_magnitudes.csv'.")
 
 
 import numpy as np
@@ -2689,11 +2689,11 @@ df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicat
 df_total_luminosity = df_total_luminosity.merge(df_light_curves_unique, on='snid', how='left')
 
 # Mostrar el DataFrame resultante
-st.write(df_total_luminosity)
+#st.write(df_total_luminosity)
 
 # Guardar el DataFrame actualizado en un archivo CSV
-df_total_luminosity.to_csv('total_luminosity_with_parsnip.csv', index=False)
-st.write("Data saved in 'total_luminosity_with_parsnip.csv'.")
+#df_total_luminosity.to_csv('total_luminosity_with_parsnip.csv', index=False)
+#st.write("Data saved in 'total_luminosity_with_parsnip.csv'.")
 
 # Definir los porcentajes de energía en neutrinos para cada tipo de supernova
 def calculate_neutrino_energy(df):
@@ -2726,11 +2726,11 @@ def calculate_neutrino_energy(df):
 df_total_luminosity = calculate_neutrino_energy(df_total_luminosity)
 
 # Mostrar el DataFrame actualizado con la columna de energía en neutrinos
-st.write(df_total_luminosity)
+#st.write(df_total_luminosity)
 
 # Guardar el DataFrame actualizado en un archivo CSV
-df_total_luminosity.to_csv('total_luminosity_with_neutrino_energy.csv', index=False)
-st.write("Data saved in 'total_luminosity_with_neutrino_energy.csv'.")
+#df_total_luminosity.to_csv('total_luminosity_with_neutrino_energy.csv', index=False)
+#st.write("Data saved in 'total_luminosity_with_neutrino_energy.csv'.")
 
 # Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
 E_neutrino_individual = 1.6e-5  # en erg/neutrino
@@ -2739,11 +2739,11 @@ E_neutrino_individual = 1.6e-5  # en erg/neutrino
 df_total_luminosity['neutrino_count'] = df_total_luminosity['neutrino_energy'] / E_neutrino_individual
 
 # Mostrar el DataFrame actualizado con la columna del número de neutrinos
-st.write(df_total_luminosity)
+#st.write(df_total_luminosity)
 
 # Guardar el DataFrame actualizado en un archivo CSV
-df_total_luminosity.to_csv('total_luminosity_with_neutrino_count.csv', index=False)
-st.write("Data saved in 'total_luminosity_with_neutrino_count.csv'.")
+#df_total_luminosity.to_csv('total_luminosity_with_neutrino_count.csv', index=False)
+#st.write("Data saved in 'total_luminosity_with_neutrino_count.csv'.")
 
 import numpy as np
 
@@ -2854,5 +2854,36 @@ st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 ## Mostrar la gráfica en Streamlit
 #st.plotly_chart(fig)
 
-st.write(df_total_luminosity.columns)
+import pandas as pd
+import plotly.graph_objects as go
+
+# Verificar si hay valores nulos o no numéricos en la columna 'mjd'
+st.write("Valores nulos en 'mjd':", df_total_luminosity['mjd'].isnull().sum())
+st.write("Valores no numéricos en 'mjd':", pd.to_numeric(df_total_luminosity['mjd'], errors='coerce').isnull().sum())
+
+# Eliminar filas con valores nulos o no numéricos en 'mjd'
+df_total_luminosity = df_total_luminosity.dropna(subset=['mjd'])
+df_total_luminosity['mjd'] = pd.to_numeric(df_total_luminosity['mjd'], errors='coerce')
+df_total_luminosity = df_total_luminosity.dropna(subset=['mjd'])
+
+# Crear una gráfica de línea usando Plotly con 'mjd' en el eje x y 'neutrino_reach_earth' en el eje y
+fig = go.Figure()
+
+# Añadir los datos de la gráfica
+fig.add_trace(go.Scatter(
+    x=df_total_luminosity['mjd'],
+    y=df_total_luminosity['neutrino_reach_earth'],
+    mode='lines+markers',
+    name='Neutrinos alcanzando la Tierra'
+))
+
+# Añadir etiquetas y título
+fig.update_layout(
+    title='Número de neutrinos alcanzando la Tierra en función del MJD del pico de cada supernova',
+    xaxis_title='MJD del pico de la supernova',
+    yaxis_title='Número de neutrinos que alcanzan la Tierra'
+)
+
+# Mostrar la gráfica en Streamlit
+st.plotly_chart(fig)
 
