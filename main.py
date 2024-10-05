@@ -2463,3 +2463,116 @@ if not df_clustered_supernovae.empty:
     else:
         st.write("No se encontraron supernovas suficientes para clasificar.")
 
+################################################################################################################################################################
+
+import numpy as np
+import requests
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import logging
+
+# Configurar logging para mostrar solo advertencias y errores
+logging.basicConfig(level=logging.WARNING)
+
+# Function to obtain the list of files from a GitHub repository using the API
+@st.cache_data
+def get_github_file_list(repo_url, subdirectory=""):
+    api_url = repo_url.replace("github.com", "api.github.com/repos") + f"/contents/{subdirectory}"
+    response = requests.get(api_url)
+    if response.status_code == 200:
+        files = [file['download_url'] for file in response.json() if file['name'].endswith(".snana.dat")]
+        return files
+    else:
+        return []
+
+# Function to download and read the content of a file from GitHub
+@st.cache_data
+def download_file_from_github(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
+
+# Function to safely convert a value to float
+def convert_to_float(value, default_value=None):
+    try:
+        return float(value)
+    except ValueError:
+        return default_value
+
+# Function to read the downloaded supernova file and extract relevant data
+def read_supernova_file_content(content):
+    # Variables and lists to store data
+    mjd, flx, flxerr, filters = [], [], [], []
+    snid, parsnip_pred, superraenn_pred, ra, decl, redshift, mwebv = None, None, None, None, None, None, None
+
+    # Process the file line by line
+    for line in content.splitlines():
+        if line.startswith("SNID:"):
+            snid = line.split()[1]
+        elif line.startswith("RA:"):
+            ra = convert_to_float(line.split()[1])
+        elif line.startswith("DECL:"):
+            decl = convert_to_float(line.split()[1])
+        elif line.startswith("REDSHIFT_FINAL:"):
+            redshift = convert_to_float(line.split()[1])
+        elif line.startswith("MWEBV:"):
+            mwebv = convert_to_float(line.split()[1])
+        elif line.startswith("OBS:"):  # Extract observations
+            data = line.split()
+            mjd.append(convert_to_float(data[1]))  # MJD (Modified Julian Date)
+            filters.append(data[2])     # Filter (g, r, i, z, etc.)
+            flx.append(convert_to_float(data[4]))  # Flux (FLUXCAL)
+            flxerr.append(convert_to_float(data[5]))  # Flux error (FLUXCALERR)
+
+    return mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv
+
+# Function to store light curves as a DataFrame
+def save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv):
+    for i in range(len(mjd)):
+        curve_vector = {
+            'file_name': file_name,
+            'snid': snid,
+            'mjd': mjd[i],
+            'filter': filters[i],
+            'flx': flx[i],
+            'flxerr': flxerr[i],
+            'ra': ra,
+            'decl': decl,
+            'redshift': redshift,
+            'mwebv': mwebv
+        }
+        vector_list.append(curve_vector)
+
+# Download and process supernova files from GitHub
+@st.cache_data
+def download_and_process_supernovas(repo_url, subdirectory=""):
+    file_list = get_github_file_list(repo_url, subdirectory)
+    vector_list = []
+
+    for file_url in file_list:
+        file_name = file_url.split("/")[-1]
+        content = download_file_from_github(file_url)
+
+        if content:
+            mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv = read_supernova_file_content(content)
+            save_flux_curves_as_dataframe(vector_list, file_name, mjd, flx, flxerr, filters, snid, ra, decl, redshift, mwebv)
+
+    return pd.DataFrame(vector_list)
+
+# Load supernova data from GitHub
+st.write("Downloading and processing supernova files...")
+repo_url = "https://github.com/SArcD/supernovaIA"
+df_flux = download_and_process_supernovas(repo_url)
+
+# Display resulting DataFrame
+st.write(df_flux)
+
+# Save data to a CSV file
+df_flux.to_csv('flux_curves_with_ra_decl_redshift_snid.csv', index=False)
+st.write("Data saved in 'flux_curves_with_ra_decl_redshift_snid.csv'.")
