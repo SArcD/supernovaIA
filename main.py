@@ -2791,66 +2791,98 @@ df_total_luminosity.to_csv('neutrinos_reaching_earth.csv', index=False)
 st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 
 
-import numpy as np
-import matplotlib.pyplot as plt
+#import numpy as np
+#import matplotlib.pyplot as plt
 
 # Parámetros del modelo
-tau = 1  # Constante de tiempo en segundos
-time_steps = np.linspace(0, 10, 1000)  # Tiempo en segundos (por ejemplo, de 0 a 10 segundos)
+#tau = 1  # Constante de tiempo en segundos
+#time_steps = np.linspace(0, 10, 1000)  # Tiempo en segundos (por ejemplo, de 0 a 10 segundos)
 
 # Radio de la Tierra en cm
-R_Tierra = 6.371e8  # en cm
-A_Tierra = np.pi * R_Tierra**2  # en cm^2
+#R_Tierra = 6.371e8  # en cm
+#A_Tierra = np.pi * R_Tierra**2  # en cm^2
 
 # Función para calcular la tasa de emisión de neutrinos en función del tiempo
-def neutrino_emission_rate(N_total, t, tau):
-    return (N_total / tau) * np.exp(-t / tau)
+#def neutrino_emission_rate(N_total, t, tau):
+#    return (N_total / tau) * np.exp(-t / tau)
 
-# Función para calcular cuántos neutrinos alcanzan la Tierra en función del tiempo
-def calculate_neutrinos_reaching_earth_time(df, tau, time_steps):
-    neutrinos_over_time = []
+## Función para calcular cuántos neutrinos alcanzan la Tierra en función del tiempo
+#def calculate_neutrinos_reaching_earth_time(df, tau, time_steps):
+#    neutrinos_over_time = []
     
-    for index, row in df.iterrows():
-        # Número total de neutrinos emitidos
-        N_nu_total = row['neutrino_count']
+#    for index, row in df.iterrows():
+#        # Número total de neutrinos emitidos
+#        N_nu_total = row['neutrino_count']
         
-        # Distancia de luminosidad en Mpc y convertirla a cm
-        D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
-        A_esfera = 4 * np.pi * D_L_cm**2  # Área de la esfera en cm^2
+#        # Distancia de luminosidad en Mpc y convertirla a cm
+#        D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
+#        A_esfera = 4 * np.pi * D_L_cm**2  # Área de la esfera en cm^2
         
-        # Inicializar lista para los neutrinos que alcanzan la Tierra en cada tiempo t
-        neutrinos_earth_t = []
+#        # Inicializar lista para los neutrinos que alcanzan la Tierra en cada tiempo t
+#        neutrinos_earth_t = []
         
-        # Calcular la tasa de emisión de neutrinos en función del tiempo
-        for t in time_steps:
-            rate = neutrino_emission_rate(N_nu_total, t, tau)
-            # Calcular cuántos neutrinos alcanzan la Tierra en este instante t
-            N_nu_earth = rate * (A_Tierra / A_esfera)
-            neutrinos_earth_t.append(N_nu_earth)
+#        # Calcular la tasa de emisión de neutrinos en función del tiempo
+#        for t in time_steps:
+#            rate = neutrino_emission_rate(N_nu_total, t, tau)
+#            # Calcular cuántos neutrinos alcanzan la Tierra en este instante t
+#            N_nu_earth = rate * (A_Tierra / A_esfera)
+#            neutrinos_earth_t.append(N_nu_earth)
         
-        # Guardar los neutrinos que llegan en función del tiempo para esta supernova
-        neutrinos_over_time.append(neutrinos_earth_t)
+#        # Guardar los neutrinos que llegan en función del tiempo para esta supernova
+#        neutrinos_over_time.append(neutrinos_earth_t)
     
-    return neutrinos_over_time
+#    return neutrinos_over_time
 
 # Aplicar el cálculo para cada supernova en df_total_luminosity
-neutrinos_time_series = calculate_neutrinos_reaching_earth_time(df_total_luminosity, tau, time_steps)
+#neutrinos_time_series = calculate_neutrinos_reaching_earth_time(df_total_luminosity, tau, time_steps)
 
-import plotly.graph_objects as go
+#import plotly.graph_objects as go
 
 # Crear la figura con plotly
+#fig = go.Figure()
+
+## Graficar la cantidad de neutrinos que alcanzan la Tierra en función del tiempo para la primera supernova
+#fig.add_trace(go.Scatter(x=time_steps, y=neutrinos_time_series[0], mode='lines', name='Neutrinos'))
+
+## Añadir etiquetas
+#fig.update_layout(
+#    title='Número de neutrinos alcanzando la Tierra a lo largo del tiempo',
+#    xaxis_title='Tiempo (segundos)',
+#    yaxis_title='Neutrinos alcanzando la Tierra',
+#)
+
+## Mostrar la gráfica en Streamlit
+#st.plotly_chart(fig)
+
+import pandas as pd
+import plotly.graph_objects as go
+
+# Suponiendo que df_flux ya tiene las columnas 'snid' y 'mjd'
+# También asumiendo que ya calculaste los neutrinos que alcanzan la Tierra ('neutrino_reach_earth')
+
+# Paso 1: Obtener el MJD del pico para cada supernova en df_flux
+df_pico = df_flux.loc[df_flux.groupby('snid')['mjd'].idxmin()]  # Esto te da el MJD del pico para cada supernova
+
+# Paso 2: Unir el MJD del pico a df_total_luminosity usando 'snid'
+df_total_luminosity = df_total_luminosity.merge(df_pico[['snid', 'mjd']], on='snid', how='left')
+
+# Paso 3: Crear una gráfica de línea usando Plotly con 'mjd' en el eje x y 'neutrino_reach_earth' en el eje y
 fig = go.Figure()
 
-# Graficar la cantidad de neutrinos que alcanzan la Tierra en función del tiempo para la primera supernova
-fig.add_trace(go.Scatter(x=time_steps, y=neutrinos_time_series[0], mode='lines', name='Neutrinos'))
+# Añadir los datos de la gráfica
+fig.add_trace(go.Scatter(
+    x=df_total_luminosity['mjd'],
+    y=df_total_luminosity['neutrino_reach_earth'],
+    mode='lines+markers',
+    name='Neutrinos alcanzando la Tierra'
+))
 
-# Añadir etiquetas
+# Añadir etiquetas y título
 fig.update_layout(
-    title='Número de neutrinos alcanzando la Tierra a lo largo del tiempo',
-    xaxis_title='Tiempo (segundos)',
-    yaxis_title='Neutrinos alcanzando la Tierra',
+    title='Número de neutrinos alcanzando la Tierra en función del MJD del pico de cada supernova',
+    xaxis_title='MJD del pico de la supernova',
+    yaxis_title='Número de neutrinos que alcanzan la Tierra'
 )
 
 # Mostrar la gráfica en Streamlit
 st.plotly_chart(fig)
-
