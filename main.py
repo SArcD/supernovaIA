@@ -2683,7 +2683,7 @@ df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='
 
 # Mostrar el DataFrame con la energía total radiada y otros datos
 st.write(df_total_energy)
-
+st.write("d")
 
 
 # Calcular la luminosidad bolométrica total para cada supernova
@@ -2694,6 +2694,7 @@ df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicat
 
 # Hacer el merge en base a la columna 'snid'
 df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='left')
+
 
 # Definir los porcentajes de energía en neutrinos para cada tipo de supernova
 def calculate_neutrino_energy(df):
