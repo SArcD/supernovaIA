@@ -2676,9 +2676,23 @@ def calculate_total_bolometric_luminosity(df):
 df_total_luminosity = calculate_total_bolometric_luminosity(df_flux)
 
 # Mostrar el resultado
-st.write(df_total_luminosity)
+#st.write(df_total_luminosity)
 
 # Guardar el DataFrame en un archivo CSV
-df_total_luminosity.to_csv('total_bolometric_luminosity.csv', index=False)
-st.write("Data saved in 'total_bolometric_luminosity.csv'.")
+#df_total_luminosity.to_csv('total_bolometric_luminosity.csv', index=False)
+#st.write("Data saved in 'total_bolometric_luminosity.csv'.")
+
+# Asegurarse de que ambas columnas 'snid' estén presentes y sin duplicados
+df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicates(subset='snid')
+
+# Hacer el merge en base a la columna 'snid'
+df_total_luminosity = df_total_luminosity.merge(df_light_curves_unique, on='snid', how='left')
+
+# Mostrar el DataFrame resultante
+st.write(df_total_luminosity)
+
+# Guardar el DataFrame actualizado en un archivo CSV
+df_total_luminosity.to_csv('total_luminosity_with_parsnip.csv', index=False)
+st.write("Data saved in 'total_luminosity_with_parsnip.csv'.")
+
 
