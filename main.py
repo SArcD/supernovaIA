@@ -2854,36 +2854,31 @@ st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 ## Mostrar la gráfica en Streamlit
 #st.plotly_chart(fig)
 
-import pandas as pd
 import plotly.graph_objects as go
 
-# Verificar si hay valores nulos o no numéricos en la columna 'mjd'
-st.write("Valores nulos en 'mjd':", df_total_luminosity['mjd'].isnull().sum())
-st.write("Valores no numéricos en 'mjd':", pd.to_numeric(df_total_luminosity['mjd'], errors='coerce').isnull().sum())
+# Contar la cantidad de supernovas por MJD
+mjd_counts = df_total_luminosity['mjd'].value_counts().sort_index()
 
-# Eliminar filas con valores nulos o no numéricos en 'mjd'
-df_total_luminosity = df_total_luminosity.dropna(subset=['mjd'])
-df_total_luminosity['mjd'] = pd.to_numeric(df_total_luminosity['mjd'], errors='coerce')
-df_total_luminosity = df_total_luminosity.dropna(subset=['mjd'])
+# Crear el gráfico de líneas con la cantidad de supernovas en función del MJD
+fig_lines = go.Figure()
 
-# Crear una gráfica de línea usando Plotly con 'mjd' en el eje x y 'neutrino_reach_earth' en el eje y
-fig = go.Figure()
-
-# Añadir los datos de la gráfica
-fig.add_trace(go.Scatter(
-    x=df_total_luminosity['mjd'],
-    y=df_total_luminosity['neutrino_reach_earth'],
-    mode='lines+markers',
-    name='Neutrinos alcanzando la Tierra'
+# Añadir el rastro de la gráfica
+fig_lines.add_trace(go.Scatter(
+    x=mjd_counts.index,
+    y=mjd_counts.values,
+    mode='lines',
+    name='Cantidad de Supernovas',
+    line=dict(color='blue')
 ))
 
-# Añadir etiquetas y título
-fig.update_layout(
-    title='Número de neutrinos alcanzando la Tierra en función del MJD del pico de cada supernova',
-    xaxis_title='MJD del pico de la supernova',
-    yaxis_title='Número de neutrinos que alcanzan la Tierra'
+# Configurar el diseño del gráfico
+fig_lines.update_layout(
+    title='Cantidad de Supernovas en función del MJD',
+    xaxis_title='MJD',
+    yaxis_title='Cantidad de Supernovas',
 )
 
 # Mostrar la gráfica en Streamlit
-st.plotly_chart(fig)
+st.plotly_chart(fig_lines, use_container_width=True)
+
 
