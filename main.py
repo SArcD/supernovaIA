@@ -2745,4 +2745,42 @@ st.write(df_total_luminosity)
 df_total_luminosity.to_csv('total_luminosity_with_neutrino_count.csv', index=False)
 st.write("Data saved in 'total_luminosity_with_neutrino_count.csv'.")
 
+import numpy as np
+
+# Radio de la Tierra en cm
+R_Tierra = 6.371e8  # en cm
+
+# Área efectiva de la Tierra (sección transversal)
+A_Tierra = np.pi * R_Tierra**2  # en cm^2
+
+# Calcular el número de neutrinos que alcanzan la Tierra
+def calculate_neutrinos_reaching_earth(df):
+    neutrinos_reaching_earth = []
+    
+    for index, row in df.iterrows():
+        # Número total de neutrinos emitidos
+        N_nu = row['neutrino_count']
+        
+        # Distancia de luminosidad en cm (convertir de parsecs a cm)
+        D_L_cm = row['D_L_pc'] * 3.086e18  # 1 parsec = 3.086e18 cm
+        
+        # Área de la esfera a la distancia D_L
+        A_esfera = 4 * np.pi * D_L_cm**2  # en cm^2
+        
+        # Calcular cuántos neutrinos alcanzan la Tierra
+        N_nu_earth = N_nu * (A_Tierra / A_esfera)
+        neutrinos_reaching_earth.append(N_nu_earth)
+    
+    df['neutrino_reach_earth'] = neutrinos_reaching_earth
+    return df
+
+# Aplicar la función para calcular cuántos neutrinos llegan a la Tierra
+df_total_luminosity = calculate_neutrinos_reaching_earth(df_total_luminosity)
+
+# Mostrar el DataFrame actualizado con la columna de neutrinos que alcanzan la Tierra
+st.write(df_total_luminosity)
+
+# Guardar el DataFrame actualizado en un archivo CSV
+df_total_luminosity.to_csv('neutrinos_reaching_earth.csv', index=False)
+st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 
