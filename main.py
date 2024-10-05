@@ -2704,13 +2704,13 @@ def calculate_neutrino_energy(df):
         sn_type = row['parsnip_pred']  # Columna que define el tipo de supernova
         
         # Determinar la energía en neutrinos según el tipo de supernova
-        if sn_type == 'Ia':
+        if sn_type == 'SN Ia':
             # Entre 1% y 2% de la energía total se libera en neutrinos
             E_nu = 0.01 * energy_total  # Ajuste: 0.01 a 0.02
-        elif sn_type == 'II':
+        elif sn_type == 'SN II':
             # Aproximadamente 99% de la energía total se libera en neutrinos
             E_nu = 0.99 * energy_total
-        elif sn_type == 'Ibc':
+        elif sn_type == 'SN Ibc':
             # Entre 90% y 99% de la energía total se libera en neutrinos
             E_nu = 0.95 * energy_total  # Ajuste: 0.90 a 0.99
         else:
