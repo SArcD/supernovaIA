@@ -2854,35 +2854,5 @@ st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 ## Mostrar la gráfica en Streamlit
 #st.plotly_chart(fig)
 
-import pandas as pd
-import plotly.graph_objects as go
+st.write(df_total_luminosity.columns)
 
-# Suponiendo que df_flux ya tiene las columnas 'snid' y 'mjd'
-# También asumiendo que ya calculaste los neutrinos que alcanzan la Tierra ('neutrino_reach_earth')
-
-# Paso 1: Obtener el MJD del pico para cada supernova en df_flux
-df_pico = df_flux.loc[df_flux.groupby('snid')['mjd'].idxmin()]  # Esto te da el MJD del pico para cada supernova
-
-# Paso 2: Unir el MJD del pico a df_total_luminosity usando 'snid'
-df_total_luminosity = df_total_luminosity.merge(df_pico[['snid', 'mjd']], on='snid', how='left')
-
-# Paso 3: Crear una gráfica de línea usando Plotly con 'mjd' en el eje x y 'neutrino_reach_earth' en el eje y
-fig = go.Figure()
-
-# Añadir los datos de la gráfica
-fig.add_trace(go.Scatter(
-    x=df_total_luminosity['mjd'],
-    y=df_total_luminosity['neutrino_reach_earth'],
-    mode='lines+markers',
-    name='Neutrinos alcanzando la Tierra'
-))
-
-# Añadir etiquetas y título
-fig.update_layout(
-    title='Número de neutrinos alcanzando la Tierra en función del MJD del pico de cada supernova',
-    xaxis_title='MJD del pico de la supernova',
-    yaxis_title='Número de neutrinos que alcanzan la Tierra'
-)
-
-# Mostrar la gráfica en Streamlit
-st.plotly_chart(fig)
