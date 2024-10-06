@@ -2631,7 +2631,7 @@ def calculate_luminosity_bol(mag_bol):
 df_flux['L_bol'] = df_flux['mag_bol'].apply(calculate_luminosity_bol)
 
 # Mostrar el DataFrame con las nuevas columnas
-st.write(df_flux[['MAG', 'mwebv', 'FLT', 'mag_corr_ext', 'mag_corr', 'distance_modulus', 'mag_abs', 'bolometric_correction', 'mag_bol', 'L_bol']].head())
+st.write(df_flux[['mag', 'mwebv', 'filter', 'mag_corr_ext', 'mag_corr', 'distance_modulus', 'mag_abs', 'bolometric_correction', 'mag_bol', 'L_bol']].head())
 
 # Paso 6: Calcular la energía total radiada por supernova usando la regla trapezoidal
 def calculate_total_radiated_energy(df):
