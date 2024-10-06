@@ -2619,34 +2619,35 @@ def calculate_total_radiated_energy(df):
 
 df_total_energy = calculate_total_radiated_energy(df_flux)
 
-# Paso 7: Calcular la energía en neutrinos y la cuenta de neutrinos
-def calculate_neutrino_energy(row):
-    energy_total = row['total_radiated_energy']
-    sn_type = row.get('parsnip_pred', 'Unknown')
+# Definir los porcentajes de energía en neutrinos para cada tipo de supernova
+def calculate_neutrino_energy(df):
+    neutrino_energies = []
     
-    if sn_type == 'SN Ia':
-        return 0.01 * energy_total
-    elif sn_type == 'SN II':
-        return 0.99 * energy_total
-    elif sn_type == 'SN Ibc':
-        return 0.95 * energy_total
-    else:
-        return 0
+    for index, row in df.iterrows():
+        energy_total = row['total_radiated_energy']  # Energía total radiada
+        sn_type = row.get('parsnip_pred', 'Unknown')  # Columna que define el tipo de supernova
+        
+        # Determinar la energía en neutrinos según el tipo de supernova
+        if sn_type == 'SN Ia':
+            # Entre 1% y 2% de la energía total se libera en neutrinos
+            E_nu = 0.01 * energy_total  # Ajuste: 0.01 a 0.02
+        elif sn_type == 'SN II':
+            # Aproximadamente 99% de la energía total se libera en neutrinos
+            E_nu = 0.99 * energy_total
+        elif sn_type == 'SN Ibc':
+            # Entre 90% y 99% de la energía total se libera en neutrinos
+            E_nu = 0.95 * energy_total  # Ajuste: 0.90 a 0.99
+        else:
+            # Si no se conoce el tipo, se asume que la energía en neutrinos es 0
+            E_nu = 0
+        
+        neutrino_energies.append(E_nu)
+    
+    df['neutrino_energy'] = neutrino_energies  # Añadir la columna con la energía de neutrinos
+    return df
 
-df_total_energy['neutrino_energy'] = df_total_energy.apply(calculate_neutrino_energy, axis=1)
-
-# Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
-E_neutrino_individual = 1.6e-5  # en erg/neutrino
-
-# Calcular el número de neutrinos para cada supernova
-df_total_energy['neutrino_count'] = df_total_energy['neutrino_energy'] / E_neutrino_individual
-
-# Verificar si neutrino_count se calculó correctamente antes de continuar
-if 'neutrino_count' not in df_total_energy.columns:
-    st.write("Error: No se pudo calcular 'neutrino_count'. Revisa el cálculo de neutrinos.")
-
-# Paso 8: Calcular cuántos neutrinos alcanzan la Tierra
-
+# Aplicar la función para calcular la energía de neutrinos
+df_total_energy = calculate_neutrino_energy(df_total_energy)
 # Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
 
