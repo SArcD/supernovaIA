@@ -2737,57 +2737,66 @@ st.write(df_total_energy)
 df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
 st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 
-import plotly.graph_objects as go
+import numpy as np
+import pandas as pd
 
-# Assuming df_total_energy contains MJD and neutrino_reach_earth
-# First graph: Count of supernovas by MJD
-mjd_counts = df_flux['mjd'].value_counts().sort_index()
+# Assuming df_flux contains 'snid', 'mag', 'mjd', and other necessary columns
+# Step 1: Locate the MJD of the peak (minimum magnitude) for each supernova
+peak_mjd_df = df_flux.loc[df_flux.groupby('snid')['mag'].idxmin(), ['snid', 'mjd']]
 
-# Create line plot for the count of supernovas by MJD
-fig_lines = go.Figure()
+# Step 2: Merge the peak MJD into df_total_energy
+df_total_energy = df_total_energy.merge(peak_mjd_df, on='snid', how='left', suffixes=('', '_peak'))
+
+# Step 3: Now use the peak mjd for the plots
+
+# First graph: Count of supernovas by MJD of the peak
+mjd_peak_counts = df_total_energy['mjd_peak'].value_counts().sort_index()
+
+# Create line plot for the count of supernovas by MJD (peak)
+fig_lines_peak = go.Figure()
 
 # Add trace to the plot
-fig_lines.add_trace(go.Scatter(
-    x=mjd_counts.index,
-    y=mjd_counts.values,
+fig_lines_peak.add_trace(go.Scatter(
+    x=mjd_peak_counts.index,
+    y=mjd_peak_counts.values,
     mode='lines',
-    name='Count of Supernovas',
+    name='Count of Supernovas (Peak)',
     line=dict(color='blue')
 ))
 
 # Update layout of the figure
-fig_lines.update_layout(
-    title='Count of Supernovas by MJD',
-    xaxis_title='MJD',
+fig_lines_peak.update_layout(
+    title='Count of Supernovas by MJD (Peak)',
+    xaxis_title='MJD (Peak)',
     yaxis_title='Count of Supernovas',
 )
 
 # Show the plot in Streamlit
-st.plotly_chart(fig_lines, use_container_width=True)
+st.plotly_chart(fig_lines_peak, use_container_width=True)
 
-# Second graph: Neutrinos reaching Earth by MJD
-neutrino_counts_by_mjd = df_total_energy.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+# Second graph: Neutrinos reaching Earth by peak MJD
+neutrino_counts_by_mjd_peak = df_total_energy.groupby('mjd_peak')['neutrino_reach_earth'].sum().sort_index()
 
-# Create line plot for neutrinos reaching Earth by MJD
-fig_lines_neutrino = go.Figure()
+# Create line plot for neutrinos reaching Earth by MJD (peak)
+fig_lines_neutrino_peak = go.Figure()
 
 # Add trace to the plot
-fig_lines_neutrino.add_trace(go.Scatter(
-    x=neutrino_counts_by_mjd.index,
-    y=neutrino_counts_by_mjd.values,
+fig_lines_neutrino_peak.add_trace(go.Scatter(
+    x=neutrino_counts_by_mjd_peak.index,
+    y=neutrino_counts_by_mjd_peak.values,
     mode='lines',
-    name='Neutrinos Reaching Earth',
+    name='Neutrinos Reaching Earth (Peak)',
     line=dict(color='green')
 ))
 
 # Update layout of the figure
-fig_lines_neutrino.update_layout(
-    title='Neutrinos Reaching Earth by MJD',
-    xaxis_title='MJD',
+fig_lines_neutrino_peak.update_layout(
+    title='Neutrinos Reaching Earth by MJD (Peak)',
+    xaxis_title='MJD (Peak)',
     yaxis_title='Neutrinos Reaching Earth',
 )
 
 # Show the plot in Streamlit
-st.plotly_chart(fig_lines_neutrino, use_container_width=True, key="2")
+st.plotly_chart(fig_lines_neutrino_peak, use_container_width=True, key="2")
 
 
