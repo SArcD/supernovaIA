@@ -2552,53 +2552,28 @@ import pandas as pd
 from astropy.cosmology import FlatLambdaCDM
 import streamlit as st
 
-# Configuración de un modelo cosmológico
+# Configuración del modelo cosmológico
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 # Paso 1: Calcular la distancia de luminosidad (en parsecs) a partir del redshift
 df_flux['D_L_mpc'] = cosmo.luminosity_distance(df_flux['redshift']).value  # en Mpc
-df_flux['D_L_pc'] = df_flux['D_L_mpc'] * 10**6  # Convertir Mpc a parsecs
+df_flux['D_L_pc'] = df_flux['D_L_mpc'] * 1e6  # Convertir Mpc a parsecs
 
 # Paso 2: Calcular el módulo de la distancia
 df_flux['distance_modulus'] = 5 * np.log10(df_flux['D_L_pc']) - 5  # Módulo de la distancia
 
-# Función para corregir magnitud por extinción
-def corregir_magnitud_extincion(m, MWEBV, filtro='g'):
+# Función para corregir magnitud por extinción según el filtro
+def corregir_magnitud_extincion(m, MWEBV, filtro):
     # Constantes de extinción para diferentes filtros
     extincion_filtros = {
         'g': 3.303,
         'r': 2.285,
         'i': 1.698,
         'z': 1.263,
-        'X': 2.000,  # Valor ajustado para el filtro 'x'
+        'X': 2.000,  # Valor ajustado para el filtro 'X'
         'Y': 1.000   # Valor ajustado para el filtro 'Y'
     }
     
-    if filtro in extincion_filtros:
-        A_lambda = extincion_filtros[filtro] * MWEBV
-        m_corregida = m - A_lambda
-    else:
-        raise ValueError("Filtro no válido. Usa 'g', 'r', 'i', o 'z'.")
-    
-    return m_corregida
-
-import numpy as np
-import pandas as pd
-import streamlit as st
-
-# Function to correct magnitude by extinction using the appropriate filter
-def corregir_magnitud_extincion(m, MWEBV, filtro):
-    # Extinction coefficients for different filters
-    extincion_filtros = {
-        'g': 3.303,
-        'r': 2.285,
-        'i': 1.698,
-        'z': 1.263,
-        'X': 2.000,  # Adjusted value for the 'X' filter
-        'Y': 1.000   # Adjusted value for the 'Y' filter
-    }
-    
-    # Apply the correct extinction based on the filter
     if filtro in extincion_filtros:
         A_lambda = extincion_filtros[filtro] * MWEBV
         m_corregida = m - A_lambda
@@ -2607,82 +2582,56 @@ def corregir_magnitud_extincion(m, MWEBV, filtro):
     
     return m_corregida
 
-# Apply the extinction correction and create separate columns for each filter
-df_flux['mag_corr_ext_g'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g') if row['filter'] == 'g' else None, axis=1)
+# Aplicar corrección por extinción para cada observación según el filtro
+df_flux['mag_corr_ext'] = df_flux.apply(
+    lambda row: corregir_magnitud_extincion(row['MAG'], row['mwebv'], row['FLT']),
+    axis=1
+)
 
-df_flux['mag_corr_ext_r'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'r') if row['filter'] == 'r' else None, axis=1)
+# Función para corregir magnitud por redshift
+def corregir_magnitud_redshift(m_corregida, z):
+    # K-correction simplificada: ajustar este factor según el tipo de supernova
+    K_correction = 0.1 * z  # Ejemplo simple; ajustar según sea necesario
+    m_redshift_corregida = m_corregida - K_correction
+    return m_redshift_corregida
 
-df_flux['mag_corr_ext_i'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'i') if row['filter'] == 'i' else None, axis=1)
+# Aplicar la corrección por redshift
+df_flux['mag_corr'] = df_flux.apply(
+    lambda row: corregir_magnitud_redshift(row['mag_corr_ext'], row['redshift']),
+    axis=1
+)
 
-df_flux['mag_corr_ext_z'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'z') if row['filter'] == 'z' else None, axis=1)
-
-df_flux['mag_corr_ext_X'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'X') if row['filter'] == 'X' else None, axis=1)
-
-df_flux['mag_corr_ext_Y'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'Y') if row['filter'] == 'Y' else None, axis=1)
-
-# Display the updated DataFrame with the new columns
-st.write(df_flux[['mag', 'mwebv', 'filter', 'mag_corr_ext_g', 'mag_corr_ext_r', 'mag_corr_ext_i', 'mag_corr_ext_z', 'mag_corr_ext_X', 'mag_corr_ext_Y']])
-
-
-
-# Paso 3: Aplicar corrección por redshift
-#def corregir_magnitud_redshift(m_corregida, z):
-    # Corrección por redshift (corrimiento al rojo)
-#    D_L = (3e5 * z / 70) * (1 + z)  # Distancia de luminosidad aproximada en Mpc
-#    D_L_parsecs = D_L * 1e6  # Convertir a parsecs
-#    m_redshift_corregida = m_corregida - 5 * (np.log10(D_L_parsecs) - 1)
-    
-#    return m_redshift_corregida
-
-# Aplicar correcciones de extinción y redshift a las magnitudes aparentes
-#df_flux['mag_corr_ext'] = df_flux.apply(
-#    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], 'g'), axis=1)
-
-#df_flux['mag_corr'] = df_flux.apply(
-#    lambda row: corregir_magnitud_redshift(row['mag_corr_ext'], row['redshift']), axis=1)
-
-# Paso 4: Calcular la magnitud absoluta (después de aplicar las correcciones)
-#df_flux['mag_abs'] = df_flux['mag_corr'] - df_flux['distance_modulus']  # Magnitud absoluta
-
-
+# Paso 4: Calcular la magnitud absoluta
+df_flux['mag_abs'] = df_flux['mag_corr'] - df_flux['distance_modulus']
 
 # Función para aplicar la corrección bolométrica según el tipo de supernova
-def apply_bolometric_correction(df):
-    BC_values = []
-    for index, row in df.iterrows():
-        sn_type = row['parsnip_pred']  # Obtener el tipo de supernova
-        if sn_type == 'SN Ia':
-            BC = -0.1  # Corrección para supernovas tipo Ia
-        elif sn_type == 'SN II':
-            BC = -0.5  # Corrección para supernovas tipo II
-        elif sn_type == 'SN Ibc':
-            BC = -0.3  # Corrección para supernovas tipo Ibc
-        else:
-            BC = 0  # Si no se conoce el tipo, no aplicar corrección
-        BC_values.append(BC)
-    
-    df['bolometric_correction'] = BC_values  # Añadir la columna de corrección bolométrica
-    df['mag_bol'] = df['mag_abs'] + df['bolometric_correction']  # Calcular magnitud bolométrica
-    return df
+def apply_bolometric_correction(row):
+    sn_type = row['parsnip_pred']  # Tipo de supernova
+    if sn_type == 'SN Ia':
+        BC = -0.1  # Corrección para SN Ia
+    elif sn_type == 'SN II':
+        BC = -0.5  # Corrección para SN II
+    elif sn_type == 'SN Ibc':
+        BC = -0.3  # Corrección para SN Ibc
+    else:
+        BC = 0  # Sin corrección si el tipo no está definido
+    return BC
 
-# Aplicar la corrección bolométrica en base al tipo de supernova
-df_flux = apply_bolometric_correction(df_flux)
+# Aplicar la corrección bolométrica
+df_flux['bolometric_correction'] = df_flux.apply(apply_bolometric_correction, axis=1)
+df_flux['mag_bol'] = df_flux['mag_abs'] + df_flux['bolometric_correction']
 
 # Paso 5: Calcular la luminosidad bolométrica
 M_solar_bol = 4.74  # Magnitud bolométrica del Sol
-L_solar = 3.828 * 10**33  # Luminosidad solar en erg/s
+L_solar = 3.828e33  # Luminosidad solar en erg/s
 
-df_flux['L_bol'] = L_solar * 10**((M_solar_bol - df_flux['mag_bol']) / 2.5)  # Luminosidad bolométrica en erg/s
+def calculate_luminosity_bol(mag_bol):
+    return L_solar * 10**((M_solar_bol - mag_bol) / 2.5)
+
+df_flux['L_bol'] = df_flux['mag_bol'].apply(calculate_luminosity_bol)
 
 # Mostrar el DataFrame con las nuevas columnas
-st.write(df_flux)
-st.write("Se calculó la luminosidad bolométrica")
+st.write(df_flux[['MAG', 'mwebv', 'FLT', 'mag_corr_ext', 'mag_corr', 'distance_modulus', 'mag_abs', 'bolometric_correction', 'mag_bol', 'L_bol']].head())
 
 # Paso 6: Calcular la energía total radiada por supernova usando la regla trapezoidal
 def calculate_total_radiated_energy(df):
@@ -2690,19 +2639,19 @@ def calculate_total_radiated_energy(df):
     grouped = df.groupby('snid')  # Agrupar por supernova (SNID)
     
     for snid, group in grouped:
-        group = group.sort_values('mjd')  # Ordenar por MJD (fecha de observación)
+        group = group.sort_values('MJD')  # Ordenar por MJD (fecha de observación)
         total_energy = 0
         
         for i in range(len(group) - 1):
             L_i = group.iloc[i]['L_bol']      # Luminosidad bolométrica en erg/s en el tiempo t_i
             L_i1 = group.iloc[i + 1]['L_bol']  # Luminosidad bolométrica en erg/s en el tiempo t_{i+1}
-            t_i = group.iloc[i]['mjd']        # Tiempo MJD en t_i
-            t_i1 = group.iloc[i + 1]['mjd']    # Tiempo MJD en t_{i+1}
+            t_i = group.iloc[i]['MJD']        # Tiempo MJD en t_i
+            t_i1 = group.iloc[i + 1]['MJD']    # Tiempo MJD en t_{i+1}
             
-            # Convertir la diferencia de tiempo de días (MJD) a segundos
+            # Diferencia de tiempo en segundos
             delta_t = (t_i1 - t_i) * 86400  # 1 día = 86400 segundos
             
-            # Calcular el área bajo la curva usando el método del trapecio
+            # Área bajo la curva usando el método del trapecio
             total_energy += 0.5 * (L_i + L_i1) * delta_t
         
         total_energies.append({'snid': snid, 'total_radiated_energy': total_energy})
@@ -2712,16 +2661,35 @@ def calculate_total_radiated_energy(df):
 # Calcular la energía total radiada para cada supernova
 df_total_energy = calculate_total_radiated_energy(df_flux)
 
-# Asegurarse de que ambas columnas 'snid' estén presentes y sin duplicados
-df_light_curves_unique = df_light_curves[['snid', 'parsnip_pred']].drop_duplicates(subset='snid')
+# Mostrar el DataFrame con la energía total radiada
+st.write(df_total_energy.head())
 
-# Hacer el merge en base a la columna 'snid'
-df_total_energy = df_total_energy.merge(df_light_curves_unique, on='snid', how='left')
+# Paso 7: Calcular la energía en neutrinos para cada tipo de supernova
+def calculate_neutrino_energy(row):
+    energy_total = row['total_radiated_energy']  # Energía total radiada en erg
+    sn_type = row['parsnip_pred']  # Tipo de supernova
+    
+    if sn_type == 'SN Ia':
+        E_nu = 0.01 * energy_total  # 1% de la energía total
+    elif sn_type == 'SN II':
+        E_nu = 0.99 * energy_total  # 99% de la energía total
+    elif sn_type == 'SN Ibc':
+        E_nu = 0.95 * energy_total  # 95% de la energía total
+    else:
+        E_nu = 0  # Sin energía en neutrinos si el tipo no está definido
+    
+    return E_nu
 
-# Mostrar el DataFrame con la energía total radiada y otros datos
-st.write(df_total_energy)
+# Aplicar la función para calcular la energía de neutrinos
+df_total_energy['neutrino_energy'] = df_total_energy.apply(calculate_neutrino_energy, axis=1)
 
-# Paso 7: Calcular cuántos neutrinos alcanzan la Tierra
+# Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
+E_neutrino_individual = 1.6e-5  # en erg/neutrino
+
+# Calcular el número de neutrinos para cada supernova
+df_total_energy['neutrino_count'] = df_total_energy['neutrino_energy'] / E_neutrino_individual
+
+# Paso 8: Calcular cuántos neutrinos alcanzan la Tierra
 
 # Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
@@ -2729,37 +2697,40 @@ R_Tierra = 6.371e8  # en cm
 # Área efectiva de la Tierra (sección transversal)
 A_Tierra = np.pi * R_Tierra**2  # en cm^2
 
+# Merge para obtener 'D_L_mpc' en `df_total_energy`
+df_total_energy = df_total_energy.merge(
+    df_flux[['snid', 'D_L_mpc']].drop_duplicates(),
+    on='snid',
+    how='left'
+)
+
 # Función para calcular cuántos neutrinos llegan a la Tierra
-def calculate_neutrinos_reaching_earth(df):
-    neutrinos_reaching_earth = []
+def calculate_neutrinos_reaching_earth(row):
+    # Número total de neutrinos emitidos
+    N_nu = row['neutrino_count']
     
-    for index, row in df.iterrows():
-        # Número total de neutrinos emitidos
-        N_nu = row['neutrino_count']
-        
-        # Distancia de luminosidad en Mpc y luego convertirla a cm
-        D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
-        
-        # Área de la esfera a la distancia D_L
-        A_esfera = 4 * np.pi * D_L_cm**2  # en cm^2
-        
-        # Calcular cuántos neutrinos alcanzan la Tierra
-        N_nu_earth = N_nu * (A_Tierra / A_esfera)
-        neutrinos_reaching_earth.append(N_nu_earth)
+    # Distancia de luminosidad en cm
+    D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
     
-    df['neutrino_reach_earth'] = neutrinos_reaching_earth
-    return df
+    # Área de la esfera a la distancia D_L
+    A_esfera = 4 * np.pi * D_L_cm**2  # en cm^2
+    
+    # Calcular cuántos neutrinos alcanzan la Tierra
+    N_nu_earth = N_nu * (A_Tierra / A_esfera)
+    return N_nu_earth
 
 # Aplicar la función para calcular cuántos neutrinos llegan a la Tierra
-df_total_energy = calculate_neutrinos_reaching_earth(df_total_energy)
+df_total_energy['neutrino_reach_earth'] = df_total_energy.apply(
+    calculate_neutrinos_reaching_earth,
+    axis=1
+)
 
-# Mostrar el DataFrame actualizado con la columna de neutrinos que alcanzan la Tierra
-st.write(df_total_energy)
+# Mostrar el DataFrame final con la columna de neutrinos que alcanzan la Tierra
+st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count', 'neutrino_reach_earth', 'D_L_mpc']].head())
 
 # Guardar el DataFrame actualizado en un archivo CSV
 df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
 st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
-
 
 
 
