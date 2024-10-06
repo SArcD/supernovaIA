@@ -2619,6 +2619,10 @@ def calculate_total_radiated_energy(df):
 
 df_total_energy = calculate_total_radiated_energy(df_flux)
 
+
+st.write("=)")
+st.write(df_total_energy)
+
 # Definir los porcentajes de energía en neutrinos para cada tipo de supernova
 def calculate_neutrino_energy(df):
     neutrino_energies = []
