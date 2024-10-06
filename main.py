@@ -2765,33 +2765,43 @@ fig_lines_supernovas.update_layout(
 
 # Mostrar el gráfico de supernovas
 st.plotly_chart(fig_lines_supernovas, use_container_width=True)
-import plotly.graph_objects as go
-import pandas as pd
 
-# Asegúrate de que 'neutrino_reach_earth' esté correctamente sumado por cada 'mjd'
-neutrino_counts_by_mjd = df_flux.groupby('mjd', as_index=False)['neutrino_reach_earth'].sum()
 
-# Crear el gráfico de líneas con la cantidad de neutrinos alcanzando la Tierra en función del MJD
-fig_lines = go.Figure()
+# Asegúrate de que 'snid' y 'mjd' existen en df_flux antes de realizar la fusión
+st.write("Columnas en df_flux:", df_flux.columns)
 
-# Añadir el rastro de la gráfica
-fig_lines.add_trace(go.Scatter(
-    x=neutrino_counts_by_mjd['mjd'],  # Valores de MJD
-    y=neutrino_counts_by_mjd['neutrino_reach_earth'],  # Suma de neutrinos
-    mode='lines',
-    name='Cantidad de Neutrinos',
-    line=dict(color='blue')
-))
+# Paso 1: Obtener el MJD correspondiente para cada supernova en df_flux
+if 'snid' in df_flux.columns and 'mjd' in df_flux.columns:
+    
+    # Usamos idxmin() o idxmax() según sea necesario para seleccionar un MJD relevante (pico o inicial)
+    df_mjd = df_flux.loc[df_flux.groupby('snid')['mjd'].idxmin()]  # Aquí obtenemos el MJD inicial
+    
+    # Paso 2: Unir el MJD a df_total_energy usando 'snid'
+    df_total_energy = df_total_energy.merge(df_mjd[['snid', 'mjd']], on='snid', how='left')
+    
+    # Asegurarse de que la fusión fue exitosa
+    st.write("Columnas en df_total_energy después de la fusión:", df_total_energy.columns)
 
-# Configurar el diseño del gráfico
-fig_lines.update_layout(
-    title='Cantidad de Neutrinos alcanzando la Tierra en función del MJD',
-    xaxis_title='MJD',
-    yaxis_title='Cantidad de Neutrinos que alcanzan la Tierra',
-    yaxis=dict(tickformat=".2e")  # Mostrar los valores en notación científica si son muy grandes
-)
+    # Paso 3: Crear una gráfica de línea usando Plotly con 'mjd' en el eje x y 'neutrino_reach_earth' en el eje y
+    fig = go.Figure()
 
-# Mostrar la gráfica en Streamlit
-st.plotly_chart(fig_lines, use_container_width=True)
+    # Añadir los datos de la gráfica
+    fig.add_trace(go.Scatter(
+        x=df_total_energy['mjd'],
+        y=df_total_energy['neutrino_reach_earth'],
+        mode='lines+markers',
+        name='Neutrinos alcanzando la Tierra'
+    ))
 
+    # Añadir etiquetas y título
+    fig.update_layout(
+        title='Número de neutrinos alcanzando la Tierra en función del MJD de cada supernova',
+        xaxis_title='MJD de la supernova',
+        yaxis_title='Número de neutrinos que alcanzan la Tierra'
+    )
+
+    # Mostrar la gráfica en Streamlit
+    st.plotly_chart(fig)
+else:
+    st.write("No se encontró la columna 'mjd' o 'snid' en df_flux")
 
