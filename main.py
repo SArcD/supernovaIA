@@ -2663,6 +2663,33 @@ df_total_energy = calculate_neutrino_energy(df_total_energy)
 # Verify the result
 st.write(df_total_energy[['snid', 'total_radiated_energy', 'parsnip_pred', 'neutrino_energy']].head())
 
+
+
+st.write("dff")
+# Energy of a single neutrino in erg (10 MeV = 1.6e-5 erg)
+E_neutrino_individual = 1.6e-5  # erg/neutrino
+
+# Step 1: Define a function to calculate the number of neutrinos produced
+def calculate_neutrino_count(df):
+    neutrino_counts = []
+    
+    for index, row in df.iterrows():
+        neutrino_energy = row['neutrino_energy']  # Energy in neutrinos for this supernova
+        
+        # Calculate the number of neutrinos (total neutrino energy / energy per neutrino)
+        N_neutrinos = neutrino_energy / E_neutrino_individual
+        neutrino_counts.append(N_neutrinos)
+    
+    df['neutrino_count'] = neutrino_counts  # Add the column to the DataFrame
+    return df
+
+# Step 2: Apply the function to calculate the number of neutrinos
+df_total_energy = calculate_neutrino_count(df_total_energy)
+
+# Step 3: Show the updated DataFrame with the calculated neutrino count
+st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count']].head())
+
+
 # Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
 
