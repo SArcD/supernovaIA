@@ -2766,8 +2766,12 @@ fig_lines_supernovas.update_layout(
 # Mostrar el gráfico de supernovas
 st.plotly_chart(fig_lines_supernovas, use_container_width=True)
 
+import plotly.graph_objects as go
+
+# Asegúrate de que no haya valores nulos en L_bol
+df_flux['L_bol'] = df_flux['L_bol'].fillna(0)
+
 # Encontrar el MJD del pico de luminosidad para cada supernova en df_flux
-df_flux['L_bol'] = df_flux['L_bol'].fillna(0)  # Asegúrate de que no haya valores nulos en L_bol
 mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd']]
 
 # Renombrar la columna MJD del pico para agregarla a df_total_energy
@@ -2781,6 +2785,10 @@ df_flux_with_neutrinos = df_flux.merge(df_total_energy[['snid', 'neutrino_reach_
 
 # Crear un grupo para sumar los neutrinos por MJD
 neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+
+# Calcular los tickvals y ticktext en notación científica
+tickvals = neutrino_counts_by_mjd.values
+ticktext = [f"{val:.2e}" for val in tickvals]
 
 # Crear el gráfico de líneas
 fig_neutrinos = go.Figure()
@@ -2799,11 +2807,13 @@ fig_neutrinos.update_layout(
     xaxis_title='MJD',
     yaxis_title='Cantidad de Neutrinos que Llegan a la Tierra',
     yaxis=dict(
-        tickformat=".2e",  # Formato de notación científica para valores en el eje Y
+        tickvals=tickvals,  # Valores en el eje Y
+        ticktext=ticktext,  # Etiquetas personalizadas en notación científica
         title="Cantidad de Neutrinos que Llegan a la Tierra"
     )
 )
 
 # Mostrar el gráfico en Streamlit
 st.plotly_chart(fig_neutrinos, use_container_width=True)
+
 
