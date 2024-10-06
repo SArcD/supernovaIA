@@ -2824,7 +2824,7 @@ import plotly.express as px
 fig_hist = px.histogram(df_total_energy, 
                         x='mjd', 
                         y='neutrino_reach_earth',
-                        nbins=50,  # Ajustar el número de bins
+                        nbins=10,  # Ajustar el número de bins
                         labels={'mjd': 'MJD', 'neutrino_reach_earth': 'Cantidad de Neutrinos que Llegaron a la Tierra'},
                         title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD')
 
