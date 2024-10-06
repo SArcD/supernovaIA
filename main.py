@@ -2815,6 +2815,6 @@ mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd'
 df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
 
 # Returning the first few rows to ensure the 'mjd' column was successfully added
-df_total_energy.head()
+st.write(df_total_energy.head())
 
 
