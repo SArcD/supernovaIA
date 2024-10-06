@@ -2769,7 +2769,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 # Asegúrate de que 'neutrino_reach_earth' esté correctamente sumado por cada 'mjd'
-neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd', as_index=False)['neutrino_reach_earth'].sum()
+neutrino_counts_by_mjd = df_flux.groupby('mjd', as_index=False)['neutrino_reach_earth'].sum()
 
 # Crear el gráfico de líneas con la cantidad de neutrinos alcanzando la Tierra en función del MJD
 fig_lines = go.Figure()
