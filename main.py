@@ -2818,3 +2818,15 @@ df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
 st.write(df_total_energy.head())
 
 
+import plotly.express as px
+
+# Crear el histograma usando Plotly Express
+fig_hist = px.histogram(df_total_energy, 
+                        x='mjd', 
+                        y='neutrino_reach_earth',
+                        nbins=50,  # Ajustar el número de bins
+                        labels={'mjd': 'MJD', 'neutrino_reach_earth': 'Cantidad de Neutrinos que Llegaron a la Tierra'},
+                        title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD')
+
+# Mostrar la gráfica en Streamlit
+st.plotly_chart(fig_hist, use_container_width=True)
