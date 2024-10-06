@@ -2768,7 +2768,7 @@ st.plotly_chart(fig_lines_supernovas, use_container_width=True)
 
 
 # Asegúrate de que 'snid' y 'mjd' existen en df_flux antes de realizar la fusión
-st.write("Columnas en df_flux:", df_flux.columns)
+#st.write("Columnas en df_flux:", df_flux.columns)
 
 # Paso 1: Obtener el MJD correspondiente para cada supernova en df_flux
 if 'snid' in df_flux.columns and 'mjd' in df_flux.columns:
@@ -2785,27 +2785,29 @@ if 'snid' in df_flux.columns and 'mjd' in df_flux.columns:
     # Paso 3: Agrupar por MJD en df_flux_with_neutrinos y sumar los neutrinos que llegan a la Tierra para cada MJD
     neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd', as_index=False)['neutrino_reach_earth'].sum()
 
-    # Paso 4: Crear un gráfico de línea usando Plotly con 'mjd' en el eje x y 'neutrino_reach_earth' en el eje y
+    # Ahora realizamos la suma acumulativa para obtener el total de neutrinos que llegan hasta cada MJD
+    neutrino_counts_by_mjd['cumulative_neutrinos'] = neutrino_counts_by_mjd['neutrino_reach_earth'].cumsum()
+
+    # Paso 4: Crear un gráfico de línea usando Plotly con 'mjd' en el eje x y la suma acumulativa de neutrinos en el eje y
     fig = go.Figure()
 
     # Añadir los datos de la gráfica
     fig.add_trace(go.Scatter(
         x=neutrino_counts_by_mjd['mjd'],
-        y=neutrino_counts_by_mjd['neutrino_reach_earth'],
+        y=neutrino_counts_by_mjd['cumulative_neutrinos'],  # Usamos la suma acumulada
         mode='lines+markers',
-        name='Neutrinos alcanzando la Tierra'
+        name='Neutrinos acumulados que alcanzan la Tierra'
     ))
 
     # Añadir etiquetas y título
     fig.update_layout(
-        title='Número de neutrinos alcanzando la Tierra en función del MJD',
+        title='Suma Acumulada de Neutrinos que Llegan a la Tierra por MJD',
         xaxis_title='MJD',
-        yaxis_title='Número de neutrinos que alcanzan la Tierra'
+        yaxis_title='Cantidad de Neutrinos acumulados que alcanzan la Tierra'
     )
 
     # Mostrar la gráfica en Streamlit
     st.plotly_chart(fig)
 else:
     st.write("No se encontró la columna 'mjd' o 'snid' en df_flux")
-
 
