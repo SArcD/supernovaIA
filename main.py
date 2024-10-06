@@ -2619,7 +2619,7 @@ def calculate_total_radiated_energy(df):
 
 df_total_energy = calculate_total_radiated_energy(df_flux)
 
-# Paso 7: Calcular la energía en neutrinos
+# Paso 7: Calcular la energía en neutrinos y la cuenta de neutrinos
 def calculate_neutrino_energy(row):
     energy_total = row['total_radiated_energy']
     sn_type = row.get('parsnip_pred', 'Unknown')
@@ -2635,29 +2635,62 @@ def calculate_neutrino_energy(row):
 
 df_total_energy['neutrino_energy'] = df_total_energy.apply(calculate_neutrino_energy, axis=1)
 
+# Definir la energía típica de un neutrino en ergios (10 MeV por neutrino)
+E_neutrino_individual = 1.6e-5  # en erg/neutrino
+
+# Calcular el número de neutrinos para cada supernova
+df_total_energy['neutrino_count'] = df_total_energy['neutrino_energy'] / E_neutrino_individual
+
+# Verificar si neutrino_count se calculó correctamente antes de continuar
+if 'neutrino_count' not in df_total_energy.columns:
+    st.write("Error: No se pudo calcular 'neutrino_count'. Revisa el cálculo de neutrinos.")
+
 # Paso 8: Calcular cuántos neutrinos alcanzan la Tierra
+
+# Radio de la Tierra en cm
+R_Tierra = 6.371e8  # en cm
+
+# Área efectiva de la Tierra (sección transversal)
+A_Tierra = np.pi * R_Tierra**2  # en cm^2
+
+# Merge para obtener 'D_L_mpc' en `df_total_energy`
 df_total_energy = df_total_energy.merge(
     df_flux[['snid', 'D_L_mpc']].drop_duplicates(),
     on='snid',
     how='left'
 )
 
-R_Tierra = 6.371e8
-A_Tierra = np.pi * R_Tierra**2
+# Verificar si D_L_mpc existe antes de calcular
+if 'D_L_mpc' not in df_total_energy.columns:
+    st.write("Error: No se pudo calcular 'D_L_mpc'. Revisa el cálculo de la distancia de luminosidad.")
 
+# Función para calcular cuántos neutrinos llegan a la Tierra
 def calculate_neutrinos_reaching_earth(row):
+    # Número total de neutrinos emitidos
     N_nu = row['neutrino_count']
+    
+    # Distancia de luminosidad en cm
     D_L_cm = row['D_L_mpc'] * 3.086e24
+    
+    # Área de la esfera a la distancia D_L
     A_esfera = 4 * np.pi * D_L_cm**2
-    return N_nu * (A_Tierra / A_esfera)
+    
+    # Calcular cuántos neutrinos alcanzan la Tierra
+    N_nu_earth = N_nu * (A_Tierra / A_esfera)
+    return N_nu_earth
 
-df_total_energy['neutrino_reach_earth'] = df_total_energy.apply(calculate_neutrinos_reaching_earth, axis=1)
+# Aplicar la función para calcular cuántos neutrinos llegan a la Tierra
+df_total_energy['neutrino_reach_earth'] = df_total_energy.apply(
+    calculate_neutrinos_reaching_earth,
+    axis=1
+)
 
 # Mostrar el DataFrame final
 st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count', 'neutrino_reach_earth', 'D_L_mpc']])
 
-
-
+# Guardar el DataFrame actualizado en un archivo CSV
+df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
+st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 
 import plotly.graph_objects as go
 
