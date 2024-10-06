@@ -2767,43 +2767,54 @@ fig_lines_supernovas.update_layout(
 # Mostrar el gráfico de supernovas
 st.plotly_chart(fig_lines_supernovas, use_container_width=True)
 
-# Encontrar el MJD del pico de luminosidad para cada supernova en df_flux
-df_flux['L_bol'] = df_flux['L_bol'].fillna(0)  # Asegúrate de que no haya valores nulos en L_bol
-mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd']]
+## Encontrar el MJD del pico de luminosidad para cada supernova en df_flux
+#df_flux['L_bol'] = df_flux['L_bol'].fillna(0)  # Asegúrate de que no haya valores nulos en L_bol
+#mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd']]
 
 # Renombrar la columna MJD del pico para agregarla a df_total_energy
-mjd_peak = mjd_peak.rename(columns={'mjd': 'mjd_peak'})
+#mjd_peak = mjd_peak.rename(columns={'mjd': 'mjd_peak'})
 
 # Hacer merge de los MJD pico en df_total_energy
-df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
+#df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
 
 # Agrupar por MJD en df_flux y sumar los neutrinos que llegan a la Tierra para cada MJD
-df_flux_with_neutrinos = df_flux.merge(df_total_energy[['snid', 'neutrino_reach_earth']], on='snid', how='left')
+#df_flux_with_neutrinos = df_flux.merge(df_total_energy[['snid', 'neutrino_reach_earth']], on='snid', how='left')
 
 # Crear un grupo para sumar los neutrinos por MJD
-neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+#neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
 
-# Crear el gráfico de líneas
-import plotly.graph_objects as go
-fig_neutrinos = go.Figure()
+## Crear el gráfico de líneas
+#import plotly.graph_objects as go
+#fig_neutrinos = go.Figure()
 
-fig_neutrinos.add_trace(go.Scatter(
-    x=neutrino_counts_by_mjd.index,
-    y=neutrino_counts_by_mjd.values,
-    mode='lines',
-    name='Neutrinos que Llegan a la Tierra',
-    line=dict(color='green')
-))
+#fig_neutrinos.add_trace(go.Scatter(
+#    x=neutrino_counts_by_mjd.index,
+#    y=neutrino_counts_by_mjd.values,
+#    mode='lines',
+#    name='Neutrinos que Llegan a la Tierra',
+#    line=dict(color='green')
+#))
 
 # Configurar el diseño del gráfico
-fig_neutrinos.update_layout(
-    title='Neutrinos que Llegan a la Tierra por MJD',
-    xaxis_title='MJD',
-    yaxis_title='Cantidad de Neutrinos que Llegan a la Tierra',
-)
+#fig_neutrinos.update_layout(
+#    title='Neutrinos que Llegan a la Tierra por MJD',
+#    xaxis_title='MJD',
+#    yaxis_title='Cantidad de Neutrinos que Llegan a la Tierra',
+#)
 
 # Mostrar el gráfico en Streamlit
-st.plotly_chart(fig_neutrinos, use_container_width=True)
+#st.plotly_chart(fig_neutrinos, use_container_width=True)
 
+# Implementing the request by calculating the maximum values of 'L_bol' for each 'snid'
+# in df_flux, then adding the corresponding 'mjd' as a new column in df_total_energy
+
+# Finding the max 'L_bol' for each 'snid' and extracting the corresponding 'mjd'
+mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd']]
+
+# Merging this data into df_total_energy based on 'snid'
+df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
+
+# Returning the first few rows to ensure the 'mjd' column was successfully added
+df_total_energy.head()
 
 
