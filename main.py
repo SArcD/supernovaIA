@@ -2639,7 +2639,7 @@ def calculate_total_radiated_energy(df):
     grouped = df.groupby('snid')  # Agrupar por supernova (SNID)
     
     for snid, group in grouped:
-        group = group.sort_values('MJD')  # Ordenar por MJD (fecha de observación)
+        group = group.sort_values('mjd')  # Ordenar por MJD (fecha de observación)
         total_energy = 0
         
         for i in range(len(group) - 1):
