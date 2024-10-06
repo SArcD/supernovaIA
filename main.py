@@ -2687,7 +2687,7 @@ df_total_energy['neutrino_reach_earth'] = df_total_energy.apply(
 )
 
 # Mostrar el DataFrame final
-st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count', 'neutrino_reach_earth', 'D_L_mpc']])
+st.write(df_total_energy)
 
 # Guardar el DataFrame actualizado en un archivo CSV
 df_total_energy.to_csv('neutrinos_reaching_earth.csv', index=False)
