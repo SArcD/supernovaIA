@@ -2766,32 +2766,41 @@ fig_lines_supernovas.update_layout(
 # Mostrar el gráfico de supernovas
 st.plotly_chart(fig_lines_supernovas, use_container_width=True)
 
-# --- Gráfico 2: Cantidad de Neutrinos que Llegan a la Tierra por MJD ---
+# Encontrar el MJD del pico de luminosidad para cada supernova en df_flux
+df_flux['L_bol'] = df_flux['L_bol'].fillna(0)  # Asegúrate de que no haya valores nulos en L_bol
+mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd']]
 
-# Agrupar por MJD y sumar los neutrinos que llegan a la Tierra para cada MJD en df_total_energy
-neutrino_counts_by_mjd = df_total_energy.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+# Renombrar la columna MJD del pico para agregarla a df_total_energy
+mjd_peak = mjd_peak.rename(columns={'mjd': 'mjd_peak'})
 
-# Crear el gráfico de líneas para los neutrinos que alcanzan la Tierra
-fig_lines_neutrinos = go.Figure()
+# Hacer merge de los MJD pico en df_total_energy
+df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
 
-# Añadir el trazo para la cantidad de neutrinos que llegan a la Tierra en función del MJD
-fig_lines_neutrinos.add_trace(go.Scatter(
+# Agrupar por MJD en df_flux y sumar los neutrinos que llegan a la Tierra para cada MJD
+df_flux_with_neutrinos = df_flux.merge(df_total_energy[['snid', 'neutrino_reach_earth']], on='snid', how='left')
+
+# Crear un grupo para sumar los neutrinos por MJD
+neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+
+# Crear el gráfico de líneas
+import plotly.graph_objects as go
+fig_neutrinos = go.Figure()
+
+fig_neutrinos.add_trace(go.Scatter(
     x=neutrino_counts_by_mjd.index,
     y=neutrino_counts_by_mjd.values,
     mode='lines',
-    name='Cantidad de Neutrinos',
+    name='Neutrinos que Llegan a la Tierra',
     line=dict(color='green')
 ))
 
-# Personalizar el diseño del gráfico
-fig_lines_neutrinos.update_layout(
-    title='Cantidad de Neutrinos que Llegan a la Tierra por MJD',
+# Configurar el diseño del gráfico
+fig_neutrinos.update_layout(
+    title='Neutrinos que Llegan a la Tierra por MJD',
     xaxis_title='MJD',
     yaxis_title='Cantidad de Neutrinos que Llegan a la Tierra',
 )
 
-# Mostrar el gráfico de neutrinos
-st.plotly_chart(fig_lines_neutrinos, use_container_width=True)
-
-
+# Mostrar el gráfico en Streamlit
+st.plotly_chart(fig_neutrinos, use_container_width=True)
 
