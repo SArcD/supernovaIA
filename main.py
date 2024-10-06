@@ -2623,7 +2623,14 @@ df_total_energy = calculate_total_radiated_energy(df_flux)
 st.write("=)")
 st.write(df_total_energy)
 
-# Definir los porcentajes de energía en neutrinos para cada tipo de supernova
+# Step 1: Merge 'parsnip_pred' into df_total_energy
+df_total_energy = df_total_energy.merge(
+    df_flux[['snid', 'parsnip_pred']].drop_duplicates(),
+    on='snid',
+    how='left'
+)
+
+# Step 2: Define the function to calculate the energy in neutrinos
 def calculate_neutrino_energy(df):
     neutrino_energies = []
     
@@ -2650,8 +2657,12 @@ def calculate_neutrino_energy(df):
     df['neutrino_energy'] = neutrino_energies  # Añadir la columna con la energía de neutrinos
     return df
 
-# Aplicar la función para calcular la energía de neutrinos
+# Step 3: Apply the function to calculate neutrino energy
 df_total_energy = calculate_neutrino_energy(df_total_energy)
+
+# Verify the result
+st.write(df_total_energy[['snid', 'total_radiated_energy', 'parsnip_pred', 'neutrino_energy']].head())
+
 # Radio de la Tierra en cm
 R_Tierra = 6.371e8  # en cm
 
