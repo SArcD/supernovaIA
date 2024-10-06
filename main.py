@@ -2645,8 +2645,8 @@ def calculate_total_radiated_energy(df):
         for i in range(len(group) - 1):
             L_i = group.iloc[i]['L_bol']      # Luminosidad bolométrica en erg/s en el tiempo t_i
             L_i1 = group.iloc[i + 1]['L_bol']  # Luminosidad bolométrica en erg/s en el tiempo t_{i+1}
-            t_i = group.iloc[i]['MJD']        # Tiempo MJD en t_i
-            t_i1 = group.iloc[i + 1]['MJD']    # Tiempo MJD en t_{i+1}
+            t_i = group.iloc[i]['mjd']        # Tiempo MJD en t_i
+            t_i1 = group.iloc[i + 1]['mjd']    # Tiempo MJD en t_{i+1}
             
             # Diferencia de tiempo en segundos
             delta_t = (t_i1 - t_i) * 86400  # 1 día = 86400 segundos
