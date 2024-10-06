@@ -2538,7 +2538,7 @@ repo_url = "https://github.com/SArcD/supernovaIA"
 df_flux = download_and_process_supernovas(repo_url)
 
 # Display resulting DataFrame
-st.write(df_flux)
+#st.write(df_flux)
 
 # Display resulting DataFrame
 #st.write(df_flux)
@@ -2599,7 +2599,7 @@ M_solar_bol = 4.74
 L_solar = 3.828e33
 
 df_flux['L_bol'] = df_flux['mag_bol'].apply(lambda mag_bol: L_solar * 10**((M_solar_bol - mag_bol) / 2.5))
-st.write("daf")
+#st.write("daf")
 st.write(df_flux)
 # Paso 6: Calcular la energía total radiada usando la regla trapezoidal
 def calculate_total_radiated_energy(df):
@@ -2621,8 +2621,8 @@ def calculate_total_radiated_energy(df):
 df_total_energy = calculate_total_radiated_energy(df_flux)
 
 
-st.write("=)")
-st.write(df_total_energy)
+#st.write("=)")
+#st.write(df_total_energy)
 
 # Step 1: Merge 'parsnip_pred' into df_total_energy
 df_total_energy = df_total_energy.merge(
@@ -2662,11 +2662,11 @@ def calculate_neutrino_energy(df):
 df_total_energy = calculate_neutrino_energy(df_total_energy)
 
 # Verify the result
-st.write(df_total_energy[['snid', 'total_radiated_energy', 'parsnip_pred', 'neutrino_energy']].head())
+#st.write(df_total_energy[['snid', 'total_radiated_energy', 'parsnip_pred', 'neutrino_energy']].head())
 
 
 
-st.write("dff")
+#st.write("dff")
 # Energy of a single neutrino in erg (10 MeV = 1.6e-5 erg)
 E_neutrino_individual = 1.6e-5  # erg/neutrino
 
@@ -2688,7 +2688,7 @@ def calculate_neutrino_count(df):
 df_total_energy = calculate_neutrino_count(df_total_energy)
 
 # Step 3: Show the updated DataFrame with the calculated neutrino count
-st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count']].head())
+#st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count']].head())
 
 
 # Radio de la Tierra en cm
@@ -2815,7 +2815,7 @@ mjd_peak = df_flux.loc[df_flux.groupby('snid')['L_bol'].idxmax()][['snid', 'mjd'
 df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
 
 # Returning the first few rows to ensure the 'mjd' column was successfully added
-st.write(df_total_energy.head())
+#st.write(df_total_energy.head())
 
 
 import plotly.graph_objects as go
