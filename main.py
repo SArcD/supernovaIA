@@ -2794,11 +2794,21 @@ fig_hist.add_trace(go.Bar(
 ))
 
 # Ajustar el diseño del gráfico
+#fig_hist.update_layout(
+#    title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD',
+#    xaxis_title='MJD (Modified Julian Date)',
+#    yaxis_title='Cantidad de Neutrinos que Llegaron a la Tierra',
+#    xaxis=dict(range=[mjd_min, mjd_max]),  # Limitar el eje x a los valores de MJD
+#    barmode='group'
+#)
+
+# Ajustar el diseño del gráfico, incluyendo el eje y logarítmico
 fig_hist.update_layout(
     title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD',
     xaxis_title='MJD (Modified Julian Date)',
     yaxis_title='Cantidad de Neutrinos que Llegaron a la Tierra',
     xaxis=dict(range=[mjd_min, mjd_max]),  # Limitar el eje x a los valores de MJD
+    yaxis=dict(type='log', title='Cantidad de Neutrinos (Escala Logarítmica)'),  # Eje y logarítmico
     barmode='group'
 )
 
