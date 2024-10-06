@@ -2768,19 +2768,16 @@ st.plotly_chart(fig_lines_supernovas, use_container_width=True)
 import plotly.graph_objects as go
 import pandas as pd
 
-# Hacer merge de df_total_energy con df_flux para obtener los valores de MJD utilizando 'snid'
-df_flux_with_neutrinos = df_flux.merge(df_total_energy[['snid', 'neutrino_reach_earth']], on='snid', how='left')
-
-# Agrupar por MJD en df_flux y sumar los neutrinos que llegan a la Tierra para cada MJD
-neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
+# Asegúrate de que 'neutrino_reach_earth' esté correctamente sumado por cada 'mjd'
+neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd', as_index=False)['neutrino_reach_earth'].sum()
 
 # Crear el gráfico de líneas con la cantidad de neutrinos alcanzando la Tierra en función del MJD
 fig_lines = go.Figure()
 
 # Añadir el rastro de la gráfica
 fig_lines.add_trace(go.Scatter(
-    x=neutrino_counts_by_mjd.index,
-    y=neutrino_counts_by_mjd.values,
+    x=neutrino_counts_by_mjd['mjd'],  # Valores de MJD
+    y=neutrino_counts_by_mjd['neutrino_reach_earth'],  # Suma de neutrinos
     mode='lines',
     name='Cantidad de Neutrinos',
     line=dict(color='blue')
@@ -2791,8 +2788,10 @@ fig_lines.update_layout(
     title='Cantidad de Neutrinos alcanzando la Tierra en función del MJD',
     xaxis_title='MJD',
     yaxis_title='Cantidad de Neutrinos que alcanzan la Tierra',
+    yaxis=dict(tickformat=".2e")  # Mostrar los valores en notación científica si son muy grandes
 )
 
 # Mostrar la gráfica en Streamlit
 st.plotly_chart(fig_lines, use_container_width=True)
+
 
