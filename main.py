@@ -2584,7 +2584,7 @@ def corregir_magnitud_extincion(m, MWEBV, filtro):
 
 # Aplicar corrección por extinción para cada observación según el filtro
 df_flux['mag_corr_ext'] = df_flux.apply(
-    lambda row: corregir_magnitud_extincion(row['MAG'], row['mwebv'], row['FLT']),
+    lambda row: corregir_magnitud_extincion(row['mag'], row['mwebv'], row['filter']),
     axis=1
 )
 
