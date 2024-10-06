@@ -2707,26 +2707,28 @@ df_total_energy = df_total_energy.merge(
 if 'D_L_mpc' not in df_total_energy.columns:
     st.write("Error: No se pudo calcular 'D_L_mpc'. Revisa el cálculo de la distancia de luminosidad.")
 
-# Función para calcular cuántos neutrinos llegan a la Tierra
+# Step 1: Update the function to calculate how many neutrinos reach the Earth
 def calculate_neutrinos_reaching_earth(row):
-    # Número total de neutrinos emitidos
+    # Number of total neutrinos emitted
     N_nu = row['neutrino_count']
     
-    # Distancia de luminosidad en cm
-    D_L_cm = row['D_L_mpc'] * 3.086e24
+    # Distance of luminosity in cm
+    D_L_cm = row['D_L_mpc'] * 3.086e24  # 1 Mpc = 3.086e24 cm
     
-    # Área de la esfera a la distancia D_L
-    A_esfera = 4 * np.pi * D_L_cm**2
+    # Area of the sphere at distance D_L
+    A_esfera = 4 * np.pi * D_L_cm**2  # in cm^2
     
-    # Calcular cuántos neutrinos alcanzan la Tierra
+    # Calculate how many neutrinos reach Earth
     N_nu_earth = N_nu * (A_Tierra / A_esfera)
-    return N_nu_earth
+    
+    # Format the result in scientific notation
+    return f"{N_nu_earth:.2e}"
 
-# Aplicar la función para calcular cuántos neutrinos llegan a la Tierra
-df_total_energy['neutrino_reach_earth'] = df_total_energy.apply(
-    calculate_neutrinos_reaching_earth,
-    axis=1
-)
+# Step 2: Apply the function to calculate and format neutrinos reaching Earth
+df_total_energy['neutrino_reach_earth'] = df_total_energy.apply(calculate_neutrinos_reaching_earth, axis=1)
+
+# Step 3: Display the updated DataFrame with neutrinos reaching Earth in scientific notation
+#st.write(df_total_energy[['snid', 'total_radiated_energy', 'neutrino_energy', 'neutrino_count', 'neutrino_reach_earth']].head())
 
 # Mostrar el DataFrame final
 st.write(df_total_energy)
@@ -2737,55 +2739,55 @@ st.write("Data saved in 'neutrinos_reaching_earth.csv'.")
 
 import plotly.graph_objects as go
 
-# Contar la cantidad de supernovas por MJD
-mjd_counts = df_total_energy['mjd'].value_counts().sort_index()
+# Assuming df_total_energy contains MJD and neutrino_reach_earth
+# First graph: Count of supernovas by MJD
+mjd_counts = df_flux['mjd'].value_counts().sort_index()
 
-# Crear el gráfico de líneas con la cantidad de supernovas en función del MJD
+# Create line plot for the count of supernovas by MJD
 fig_lines = go.Figure()
 
-# Añadir el rastro de la gráfica
+# Add trace to the plot
 fig_lines.add_trace(go.Scatter(
     x=mjd_counts.index,
     y=mjd_counts.values,
     mode='lines',
-    name='Cantidad de Supernovas',
+    name='Count of Supernovas',
     line=dict(color='blue')
 ))
 
-# Configurar el diseño del gráfico
+# Update layout of the figure
 fig_lines.update_layout(
-    title='Cantidad de Supernovas en función del MJD',
+    title='Count of Supernovas by MJD',
     xaxis_title='MJD',
-    yaxis_title='Cantidad de Supernovas',
+    yaxis_title='Count of Supernovas',
 )
 
-# Mostrar la gráfica en Streamlit
+# Show the plot in Streamlit
 st.plotly_chart(fig_lines, use_container_width=True)
 
-import plotly.graph_objects as go
-
-# Agrupar por MJD y sumar los neutrinos alcanzando la Tierra para cada MJD
+# Second graph: Neutrinos reaching Earth by MJD
 neutrino_counts_by_mjd = df_total_energy.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
 
-# Crear el gráfico de líneas con la cantidad de neutrinos alcanzando la Tierra en función del MJD
-fig_lines = go.Figure()
+# Create line plot for neutrinos reaching Earth by MJD
+fig_lines_neutrino = go.Figure()
 
-# Añadir el rastro de la gráfica
-fig_lines.add_trace(go.Scatter(
+# Add trace to the plot
+fig_lines_neutrino.add_trace(go.Scatter(
     x=neutrino_counts_by_mjd.index,
     y=neutrino_counts_by_mjd.values,
     mode='lines',
-    name='Cantidad de Neutrinos',
-    line=dict(color='blue')
+    name='Neutrinos Reaching Earth',
+    line=dict(color='green')
 ))
 
-# Configurar el diseño del gráfico
-fig_lines.update_layout(
-    title='Cantidad de Neutrinos alcanzando la Tierra en función del MJD',
+# Update layout of the figure
+fig_lines_neutrino.update_layout(
+    title='Neutrinos Reaching Earth by MJD',
     xaxis_title='MJD',
-    yaxis_title='Cantidad de Neutrinos que alcanzan la Tierra',
+    yaxis_title='Neutrinos Reaching Earth',
 )
 
-# Mostrar la gráfica en Streamlit
-st.plotly_chart(fig_lines, use_container_width=True, key="2")
+# Show the plot in Streamlit
+st.plotly_chart(fig_lines_neutrino, use_container_width=True, key="2")
+
 
