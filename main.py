@@ -2786,10 +2786,6 @@ df_flux_with_neutrinos = df_flux.merge(df_total_energy[['snid', 'neutrino_reach_
 # Crear un grupo para sumar los neutrinos por MJD
 neutrino_counts_by_mjd = df_flux_with_neutrinos.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
 
-# Calcular los tickvals y ticktext en notación científica
-tickvals = neutrino_counts_by_mjd.values
-ticktext = [f"{val:.2e}" for val in tickvals]
-
 # Crear el gráfico de líneas
 fig_neutrinos = go.Figure()
 
@@ -2807,13 +2803,10 @@ fig_neutrinos.update_layout(
     xaxis_title='MJD',
     yaxis_title='Cantidad de Neutrinos que Llegan a la Tierra',
     yaxis=dict(
-        tickvals=tickvals,  # Valores en el eje Y
-        ticktext=ticktext,  # Etiquetas personalizadas en notación científica
+        tickformat=".2e",  # Mostrar el formato en notación científica
         title="Cantidad de Neutrinos que Llegan a la Tierra"
     )
 )
 
 # Mostrar el gráfico en Streamlit
 st.plotly_chart(fig_neutrinos, use_container_width=True)
-
-
