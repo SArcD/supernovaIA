@@ -2818,26 +2818,35 @@ df_total_energy = df_total_energy.merge(mjd_peak, on='snid', how='left')
 st.write(df_total_energy.head())
 
 
-import plotly.express as px
+import plotly.graph_objects as go
 
 # Encontrar los valores mínimos y máximos de MJD
 mjd_min = df_total_energy['mjd'].min()
 mjd_max = df_total_energy['mjd'].max()
 
-# Crear el histograma correctamente usando Plotly Express
-fig_hist = px.histogram(df_total_energy, 
-                        x='mjd', 
-                        y='neutrino_reach_earth',
-                        histfunc='sum',  # Asegurarse de sumar solo los neutrinos en el eje y
-                        nbins=50,  # Ajustar el número de bins
-                        labels={'mjd': 'MJD', 'neutrino_reach_earth': 'Cantidad de Neutrinos que Llegaron a la Tierra'},
-                        title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD')
+# Agrupar por MJD y sumar los neutrinos que llegaron a la Tierra para cada MJD
+neutrino_counts_by_mjd = df_total_energy.groupby('mjd')['neutrino_reach_earth'].sum().sort_index()
 
-# Ajustar los límites del eje x para que correspondan a los valores de MJD
+# Crear el histograma correctamente usando barras verticales
+fig_hist = go.Figure()
+
+# Añadir las barras del histograma
+fig_hist.add_trace(go.Bar(
+    x=neutrino_counts_by_mjd.index,  # Los intervalos de MJD en el eje x
+    y=neutrino_counts_by_mjd.values,  # La suma de neutrinos que llegaron a la Tierra en el eje y
+    name='Cantidad de Neutrinos que Llegaron a la Tierra'
+))
+
+# Ajustar el diseño del gráfico
 fig_hist.update_layout(
-    xaxis=dict(range=[mjd_min, mjd_max])
+    title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD',
+    xaxis_title='MJD (Modified Julian Date)',
+    yaxis_title='Cantidad de Neutrinos que Llegaron a la Tierra',
+    xaxis=dict(range=[mjd_min, mjd_max]),  # Limitar el eje x a los valores de MJD
+    barmode='group'
 )
 
 # Mostrar la gráfica en Streamlit
 st.plotly_chart(fig_hist, use_container_width=True)
+
 
