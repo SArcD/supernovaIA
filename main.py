@@ -2794,23 +2794,23 @@ fig_hist.add_trace(go.Bar(
 ))
 
 # Ajustar el diseño del gráfico
-#fig_hist.update_layout(
-#    title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD',
-#    xaxis_title='MJD (Modified Julian Date)',
-#    yaxis_title='Cantidad de Neutrinos que Llegaron a la Tierra',
-#    xaxis=dict(range=[mjd_min, mjd_max]),  # Limitar el eje x a los valores de MJD
-#    barmode='group'
-#)
-
-# Ajustar el diseño del gráfico, incluyendo el eje y logarítmico
 fig_hist.update_layout(
     title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD',
     xaxis_title='MJD (Modified Julian Date)',
     yaxis_title='Cantidad de Neutrinos que Llegaron a la Tierra',
     xaxis=dict(range=[mjd_min, mjd_max]),  # Limitar el eje x a los valores de MJD
-    #yaxis=dict(type='log', title='Cantidad de Neutrinos (Escala Logarítmica)'),  # Eje y logarítmico
     barmode='group'
 )
+
+# Ajustar el diseño del gráfico, incluyendo el eje y logarítmico
+#fig_hist.update_layout(
+#    title='Histograma de Neutrinos que Llegaron a la Tierra vs MJD',
+#    xaxis_title='MJD (Modified Julian Date)',
+#    yaxis_title='Cantidad de Neutrinos que Llegaron a la Tierra',
+#    xaxis=dict(range=[mjd_min, mjd_max]),  # Limitar el eje x a los valores de MJD
+#    #yaxis=dict(type='log', title='Cantidad de Neutrinos (Escala Logarítmica)'),  # Eje y logarítmico
+#    barmode='group'
+#)
 
 # Mostrar la gráfica en Streamlit
 st.plotly_chart(fig_hist, use_container_width=True)
@@ -2818,7 +2818,7 @@ st.plotly_chart(fig_hist, use_container_width=True)
 
 #st.subheader("Simulated Detection")
 
-import numpy as np
+#import numpy as np
 
 # Parámetros de la simulación
 N_incident = 1e10  # Número de neutrinos incidentes (ajustable)
