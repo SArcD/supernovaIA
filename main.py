@@ -2816,7 +2816,7 @@ fig_hist.update_layout(
 st.plotly_chart(fig_hist, use_container_width=True)
 
 
-st.subheader("Simulated Detection")
+#st.subheader("Simulated Detection")
 
 import numpy as np
 
@@ -2836,5 +2836,5 @@ detecciones = np.random.rand(int(N_incident)) < P_deteccion
 # Calcular el número de neutrinos detectados
 N_detectados = np.sum(detecciones)
 
-print(f"Número de neutrinos detectados: {N_detectados}")
-print(f"Probabilidad de detección efectiva: {P_deteccion:.2e}")
+st.write(f"Número de neutrinos detectados: {N_detectados}")
+st.write(f"Probabilidad de detección efectiva: {P_deteccion:.2e}")
