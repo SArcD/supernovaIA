@@ -2816,3 +2816,25 @@ fig_hist.update_layout(
 st.plotly_chart(fig_hist, use_container_width=True)
 
 
+st.subheader("Simulated Detection")
+
+import numpy as np
+
+# Parámetros de la simulación
+N_incident = 1e10  # Número de neutrinos incidentes (ajustable)
+A_efectivo = 1e6  # Área efectiva del detector en cm² (ajustable)
+sigma = 1e-38  # Sección eficaz en cm² para neutrinos
+rho = 1  # Densidad del detector (en g/cm³, ajustable según material)
+d = 100  # Espesor del detector en cm
+
+# Calcular la probabilidad de detección
+P_deteccion = A_efectivo * sigma * rho * d
+
+# Generar valores aleatorios para los neutrinos incidentes
+detecciones = np.random.rand(int(N_incident)) < P_deteccion
+
+# Calcular el número de neutrinos detectados
+N_detectados = np.sum(detecciones)
+
+print(f"Número de neutrinos detectados: {N_detectados}")
+print(f"Probabilidad de detección efectiva: {P_deteccion:.2e}")
