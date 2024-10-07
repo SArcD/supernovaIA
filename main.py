@@ -2816,29 +2816,29 @@ fig_hist.update_layout(
 st.plotly_chart(fig_hist, use_container_width=True)
 
 
-import streamlit as st
-import numpy as np
+#import streamlit as st
+#import numpy as np
 
 # Título de la aplicación
-st.title("Simulación de Detección de Neutrinos")
+#st.title("Simulación de Detección de Neutrinos")
 
 # Parámetros ajustables en la interfaz de Streamlit
-N_incident = st.number_input("Número de neutrinos incidentes", value=1e10, format="%.0f")
-A_efectivo = st.number_input("Área efectiva del detector (cm²)", value=1e6, format="%.0f")
-sigma = st.number_input("Sección eficaz (cm²)", value=1e-38, format="%.1e")
-rho = st.number_input("Densidad del detector (g/cm³)", value=1.0)
-d = st.number_input("Espesor del detector (cm)", value=100.0, format="%.1f")
+#N_incident = st.number_input("Número de neutrinos incidentes", value=1e10, format="%.0f")
+#A_efectivo = st.number_input("Área efectiva del detector (cm²)", value=1e6, format="%.0f")
+#sigma = st.number_input("Sección eficaz (cm²)", value=1e-38, format="%.1e")
+#rho = st.number_input("Densidad del detector (g/cm³)", value=1.0)
+#d = st.number_input("Espesor del detector (cm)", value=100.0, format="%.1f")
 
 # Cálculo de la probabilidad de detección
-P_deteccion = A_efectivo * sigma * rho * d
+#P_deteccion = A_efectivo * sigma * rho * d
 
 # Generar valores aleatorios para los neutrinos incidentes
-detecciones = np.random.rand(int(N_incident)) < P_deteccion
+#detecciones = np.random.rand(int(N_incident)) < P_deteccion
 
 # Calcular el número de neutrinos detectados
-N_detectados = np.sum(detecciones)
+#N_detectados = np.sum(detecciones)
 
 # Mostrar los resultados
-st.write(f"**Número de neutrinos detectados:** {N_detectados}")
-st.write(f"**Probabilidad de detección efectiva:** {P_deteccion:.2e}")
+#st.write(f"**Número de neutrinos detectados:** {N_detectados}")
+#st.write(f"**Probabilidad de detección efectiva:** {P_deteccion:.2e}")
 
