@@ -2911,7 +2911,6 @@ st.write(df_total_energy[['mjd', 'neutrino_reach_earth', 'detecciones']])
 # Graficar los resultados de detección en función del MJD
 st.line_chart(df_total_energy.set_index('mjd')['detecciones'], width=700, height=400)
 
-
 # Parámetros del detector
 A_efectivo = 1e10  # Área efectiva del detector en cm²
 sigma = 1e-35  # Sección eficaz en cm² para neutrinos
