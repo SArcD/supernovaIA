@@ -2879,29 +2879,77 @@ fig_hist.update_layout(
 st.plotly_chart(fig_hist, use_container_width=True)
 
 
-#import streamlit as st
-#import numpy as np
+# Parámetros del detector
+A_efectivo = 1e10  # Área efectiva del detector en cm²
+sigma = 1e-35  # Sección eficaz en cm² para neutrinos
+rho = 1  # Densidad del detector (en g/cm³, agua)
+d = 100000  # Espesor del detector en cm (39 metros de altura)
 
-# Título de la aplicación
-#st.title("Simulación de Detección de Neutrinos")
 
-# Parámetros ajustables en la interfaz de Streamlit
-#N_incident = st.number_input("Número de neutrinos incidentes", value=1e10, format="%.0f")
-#A_efectivo = st.number_input("Área efectiva del detector (cm²)", value=1e6, format="%.0f")
-#sigma = st.number_input("Sección eficaz (cm²)", value=1e-38, format="%.1e")
-#rho = st.number_input("Densidad del detector (g/cm³)", value=1.0)
-#d = st.number_input("Espesor del detector (cm)", value=100.0, format="%.1f")
+# Función para calcular la probabilidad de detección para cada MJD
+def calcular_detecciones(df):
+    detecciones = []
+    for index, row in df.iterrows():
+        try:
+            N_incident = float(row['neutrino_reach_earth'])  # Convertir a flotante
+            # Calcular la probabilidad total de detección para el número de neutrinos incidentes en este MJD
+            P_deteccion_total = N_incident * A_efectivo * sigma * rho * d
+            # Usar la distribución de Poisson para estimar el número de detecciones en este MJD
+            N_detectados = np.random.poisson(P_deteccion_total)
+            detecciones.append(N_detectados)
+        except (ValueError, TypeError):
+            detecciones.append(0)  # Agregar un 0 si hay un error de conversión
+    return detecciones
 
-# Cálculo de la probabilidad de detección
-#P_deteccion = A_efectivo * sigma * rho * d
+# Aplicar la función al DataFrame y agregar resultados
+df_total_energy['detecciones'] = calcular_detecciones(df_total_energy)
 
-# Generar valores aleatorios para los neutrinos incidentes
-#detecciones = np.random.rand(int(N_incident)) < P_deteccion
+# Resultados
+st.write("Resultados de la detección de neutrinos en función del tiempo:")
+st.write(df_total_energy[['mjd', 'neutrino_reach_earth', 'detecciones']])
 
-# Calcular el número de neutrinos detectados
-#N_detectados = np.sum(detecciones)
+# Graficar los resultados de detección en función del MJD
+st.line_chart(df_total_energy.set_index('mjd')['detecciones'], width=700, height=400)
 
-# Mostrar los resultados
-#st.write(f"**Número de neutrinos detectados:** {N_detectados}")
-#st.write(f"**Probabilidad de detección efectiva:** {P_deteccion:.2e}")
+
+# Parámetros del detector
+A_efectivo = 1e10  # Área efectiva del detector en cm²
+sigma = 1e-35  # Sección eficaz en cm² para neutrinos
+rho = 1  # Densidad del detector (en g/cm³, agua)
+d = 100000  # Espesor del detector en cm (39 metros de altura)
+
+# Asegurarse de que 'neutrino_reach_earth' contiene solo valores numéricos
+df_total_energy['neutrino_reach_earth'] = pd.to_numeric(df_total_energy['neutrino_reach_earth'], errors='coerce').fillna(0)
+
+# Seleccionar el rango para la ventana de días en el deslizador
+mjd_min, mjd_max = int(df_total_energy['mjd'].min()), int(df_total_energy['mjd'].max())
+ventana_dias = st.slider("Selecciona el tamaño de la ventana temporal en días:", min_value=1, max_value=(mjd_max - mjd_min), value=30)
+
+# Paso 1: Agrupar los datos en ventanas de tamaño 'ventana_dias' días
+df_total_energy['mjd_window'] = (df_total_energy['mjd'] // ventana_dias) * ventana_dias
+df_suma_neutrinos = df_total_energy.groupby('mjd_window')['neutrino_reach_earth'].sum().reset_index()
+
+# Paso 2: Calcular las detecciones para cada ventana de tiempo
+def calcular_detecciones_ventana(df):
+    detecciones = []
+    for index, row in df.iterrows():
+        N_incident = row['neutrino_reach_earth']  # Suma de neutrinos en la ventana
+        # Calcular la probabilidad de detección para la ventana
+        P_deteccion_total = N_incident * A_efectivo * sigma * rho * d
+        # Calcular el número de neutrinos detectados en la ventana
+        N_detectados = np.random.poisson(P_deteccion_total) if P_deteccion_total > 0 else 0
+        detecciones.append(N_detectados)
+    return detecciones
+
+# Aplicar la función al DataFrame
+df_suma_neutrinos['detecciones'] = calcular_detecciones_ventana(df_suma_neutrinos)
+
+# Resultados
+st.write(f"Resultados de detección de neutrinos en función del tiempo (ventana de {ventana_dias} días):")
+st.write(df_suma_neutrinos[['mjd_window', 'neutrino_reach_earth', 'detecciones']])
+
+# Graficar los resultados de detección en función de la ventana temporal
+st.line_chart(df_suma_neutrinos.set_index('mjd_window')['detecciones'], width=700, height=400)
+
+#---------------------------------------------------
 
