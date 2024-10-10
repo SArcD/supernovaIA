@@ -132,8 +132,6 @@ st.write("Data saved in 'light_curves_with_parsnip_and_ra_decl_redshift_snid.csv
 
 import streamlit as st
 
-import streamlit as st
-
 st.markdown("""
 # Young Supernova Experiment (YSE) Database
 
@@ -168,12 +166,38 @@ st.write("""
 In this section, you can plot the position of each type of supernova based on celestial coordinates and redshift. The available plots are Right Ascension vs Redshift, Declination vs Redshift, and Declination vs Right Ascension.
 """)
 
+###
+import plotly.express as px
+
 def create_position_plot():
+    color_dict = {
+    'SN Ia': 'blue',
+    'SN II': 'red',
+    'SN Ibc': 'green'
+    }
     # Obtener el valor máximo del redshift en los datos
     max_redshift = df_light_curves['redshift'].max()
 
-    fig = px.scatter_polar(df_light_curves, r='redshift', theta='ra', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae')
+    fig = px.scatter_polar(
+        df_light_curves, 
+        r='redshift', 
+        theta='ra', 
+        color='parsnip_pred', 
+        hover_data=['snid', 'redshift'], 
+        title='Polar Positions of Supernovae',
+        color_discrete_map=color_dict
+    )
+
+    # Cambiar el símbolo de los puntos a asteriscos
+    #fig.update_traces(marker_symbol="asterisk")
+    #fig.update_traces(marker=dict(symbol="star", size=14))  # Ajusta el valor de 'size' según prefieras
+    # Cambiar el símbolo de los puntos a estrellas, ajustar su tamaño y añadir borde
+    fig.update_traces(marker=dict(
+        symbol="star", 
+        size=14,
+        line=dict(width=1, color='black')  # Define el ancho y color del borde
+    ))
+
 
     # Habilitar el botón de reset y zoom out desde la barra de herramientas
     fig.update_layout(
@@ -198,9 +222,8 @@ def create_position_plot():
                           x=0.8,
                           xanchor="left",
                           y=1.15,
-                          # Personalizar estilo del botón
                           font=dict(size=10, color="black"),
-                          bgcolor="orange",  # Color de fondo del botón
+                          bgcolor="orange",  
                           bordercolor="black",
                           borderwidth=1
                          )]
@@ -209,28 +232,73 @@ def create_position_plot():
     return fig
 
 
+##
+
+
 # Show the position plot in Streamlit
 #st.plotly_chart(create_position_plot())
 
 def create_rectangular_position_plot():
+    # Definir el diccionario de colores para cada valor de `parsnip_pred`
+    color_dict = {
+        'SN Ia': 'blue',
+        'SN II': 'red',
+        'SN Ibc': 'green'
+    }
+    
     fig = px.scatter(df_light_curves,
                      x='ra',
-                     y='decl',
+                     y='decl', 
                      color='parsnip_pred',  # Color by PARSNIP_PRED
                      hover_data=['snid', 'redshift', 'superraenn_pred'],  # Show SNID, redshift, and SUPERRAENN on hover
                      title='Position of Supernovae in the Sky (RA vs Dec)',
-                     labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'}
+                     labels={'ra': 'Right Ascension (RA)', 'decl': 'Declination (Dec)'},
+                     color_discrete_map=color_dict
                      #color_discrete_sequence=px.colors.sequential.Viridis  # Use the Viridis color palette
                      )
+    
+    # Cambiar el símbolo de los puntos a asteriscos
+    #fig.update_traces(marker=dict(symbol="star", size=14))  # Ajusta el valor de 'size' según prefieras
+
+    # Cambiar el símbolo de los puntos a estrellas, ajustar su tamaño y añadir borde
+    fig.update_traces(marker=dict(
+        symbol="star", 
+        size=12,
+        line=dict(width=1, color='black')  # Define el ancho y color del borde
+    ))
+
+
+    # Configurar cuadrícula completa en los ejes x e y
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')  # Cuadrícula vertical
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')  # Cuadrícula horizontal
+    
     return fig
 
 def create_decl_vs_redshift_plot():
+    color_dict = {
+    'SN Ia': 'blue',
+    'SN II': 'red',
+    'SN Ibc': 'green'
+    }
+
     # Obtener el valor máximo del redshift en los datos
     max_redshift = df_light_curves['redshift'].max()
 
     # Crear la gráfica de dispersión polar para Declinación vs Redshift
     fig = px.scatter_polar(df_light_curves, r='redshift', theta='decl', color='parsnip_pred', 
-                           hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae (Dec) vs Redshift')
+                           hover_data=['snid', 'redshift'], title='Polar Positions of Supernovae (Dec) vs Redshift', color_discrete_map=color_dict)
+
+    # Cambiar el símbolo de los puntos a asteriscos
+    #fig.update_traces(marker_symbol="asterisk")
+    #fig.update_traces(marker=dict(symbol="star", size=14))  # Ajusta el valor de 'size' según prefieras
+
+    # Cambiar el símbolo de los puntos a estrellas, ajustar su tamaño y añadir borde
+    fig.update_traces(marker=dict(
+        symbol="star", 
+        size=14,
+        line=dict(width=1, color='black')  # Define el ancho y color del borde
+    ))
+
 
     # Habilitar el botón de reset y zoom out desde la barra de herramientas
     fig.update_layout(
@@ -278,12 +346,6 @@ elif plot_option == "Declination vs Redshift" :
     st.plotly_chart(create_decl_vs_redshift_plot())
 
 ##########-----#############
-
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import streamlit as st
 
 import numpy as np
 import pandas as pd
@@ -340,7 +402,7 @@ if not filtered_data.empty:
                 x=[ra],
                 y=[decl],
                 mode='markers',
-                marker=dict(size=10, color=color, symbol='star'),  # Use asterisks
+                marker=dict(size=12, color=color, symbol='star', line=dict(width=1, color='black')),  # Use asterisks
                 name=row['snid'],
                 hoverinfo='text',
                 text=f'SNID: {row["snid"]}, MJD: {selected_mjd}'  # Show SNID on hover
@@ -507,7 +569,7 @@ if not filtered_supernovae.empty:
             x=ra_filtered[mask],
             y=decl_filtered[mask],
             mode='markers',
-            marker=dict(size=5),
+            marker=dict(symbol="star", size=12, line=dict(width=1, color='black')),
             name=t,  # Asignar el nombre del tipo de supernova a la leyenda
             text=t,  # Texto de hover para mostrar el tipo de supernova
             hoverinfo='text'
@@ -535,6 +597,7 @@ if not filtered_supernovae.empty:
 
 else:
     st.write("There are no supernovas within the selected range ")
+
 
 
 ############################
